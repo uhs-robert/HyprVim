@@ -1,0 +1,25 @@
+- **[Home](README.md)**
+- **[Configuration](Configuration.md)**
+- **[Basics](Basics.md)**
+  - [Enter Vim Mode](Basics.md)
+  - [Navigation](Basics.md#-navigation)
+  - [Counts](Basics.md#-counts)
+  - [Operators](Basics.md#%EF%B8%8F-operators)
+  - [Common Edit Actions](Basics.md#-common-edit-actions)
+  - [Surround](Basics.md#-surround)
+  - [Find](Basics.md#-find)
+  - [Exit Vim Mode](Basics.md#-exiting)
+- **[Modes](Modes.md)**
+  - [Visual Mode](Modes.md)
+  - [Insert Mode](Modes.md#%EF%B8%8F-insert-mode)
+  - [Command Mode](Modes.md#%EF%B8%8F-command-mode)
+- **[Advanced](Advanced.md)**
+  - [Marks](Advanced.md)
+  - [Registers](Advanced.md#-registers)
+  - [Edit Text in Vim/Nvim](Advanced.md#%EF%B8%8F-edit-text-in-vimnvim)
+  - [WhichKey](WhichKey.md)
+- **[Tips & Tricks](Tips-and-Tricks.md)**
+  - [Extras](Tips-and-Tricks.md)
+  - [Using HyprVim Keybinds Outside Vim Modes](Tips-and-Tricks.md#using-hyprvim-keybinds-outside-of-vim-modes)
+  - [Combining Features](Tips-and-Tricks.md#combining-features)
+  - [Example Usage](Tips-and-Tricks.md#common-workflows)

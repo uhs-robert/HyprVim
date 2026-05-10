@@ -20,14 +20,16 @@
 
 <p align=center><i>Think of it as a lightweight, system-wide Vim mode for all of your GUI applications.</i></p>
 
-> [!IMPORTANT]
-> With release 0.55 of Hyprland, work has begun to get HyprVim lua ready.
+> [!WARNING]
+> With release 0.55 of Hyprland, HyprVim has transitioned to the new lua configuration system.
 >
-> For now, this only works with the non-lua version of Hyprland. Watch the repo for the next release and stay tuned!
+> This legacy branch no longer receives updates but remains compatible with the non-lua version of Hyprland.
+>
+> For the latest updates, please see the `main` branch which only supports lua.
 
 ## ✨ Features
 
-> **📚 Full Reference:** For a complete, searchable reference of all features, visit the [Wiki](https://github.com/uhs-robert/hyprvim/wiki).
+> **📚 Full Reference:** For a complete, searchable reference of all features, visit the [Legacy Wiki](/docs/README.md).
 >
 > **📰 Latest News:** For the latest release information, visit the [News](./NEWS.md).
 
@@ -61,15 +63,16 @@ To use the extras, refer to their respective documentation.
 
 <!-- extras:start -->
 
-| Tool            | Description                                                               | Extra                                                                |
-| --------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Hyprland Basics | Hyprland keymap kickstart config for HyprVim (Resize, Move, Windows, etc) | [extras/hyprland-basics](extras/hyprland-basics)                     |
-| Keyd            | System-wide key remaps and tap/hold layers                                | [extras/keyd](extras/keyd)                                           |
-| Thunderbird     | Keybinds for Vim driven navigation                                        | [extras/thunderbird](extras/thunderbird)                             |
-| Vimium          | Vim-style navigation for web browsers                                     | [extras/vimium](extras/vimium)                                       |
-| Waybar Submap   | Waybar submap visual Indicator                                            | [extras/waybar](extras/waybar)                                       |
-| WhichKey        | WhichKey like display built using `eww` to see keybinds for submaps       | [wiki/whichkey](https://github.com/uhs-robert/hyprvim/wiki/WhichKey) |
-| Wl-kbptr        | Keyboard-driven mouse cursor control on Wayland                           | [extras/wl-kbptr](extras/wl-kbptr)                                   |
+| Tool            | Description                                                               | Extra                                            |
+| --------------- | ------------------------------------------------------------------------- | ------------------------------------------------ |
+| Hyprland Basics | Hyprland keymap kickstart config for HyprVim (Resize, Move, Windows, etc) | [extras/hyprland-basics](extras/hyprland-basics) |
+| Keyd            | System-wide key remaps and tap/hold layers                                | [extras/keyd](extras/keyd)                       |
+| Thunderbird     | Keybinds for Vim driven navigation                                        | [extras/thunderbird](extras/thunderbird)         |
+| Tridactyl       | Vim-style navigation for Firefox (advanced)                               | [extras/tridactyl](extras/tridactyl)             |
+| Vimium          | Vim-style navigation for web browsers (basic)                             | [extras/vimium](extras/vimium)                   |
+| Waybar Submap   | Waybar submap visual Indicator                                            | [extras/waybar](extras/waybar)                   |
+| WhichKey        | WhichKey like display built using `eww` to see keybinds for submaps       | [wiki/whichkey](/docs/WhichKey.md)               |
+| Wl-kbptr        | Keyboard-driven mouse cursor control on Wayland                           | [extras/wl-kbptr](extras/wl-kbptr)               |
 
 If you'd like an extra config added, raise a feature request or put one together and send a pull request.
 
@@ -142,7 +145,7 @@ Stay informed about new releases:
 
 ## 🚀 Usage
 
-> **📚 Full Reference:** For a complete usage guide, visit the [Wiki](https://github.com/uhs-robert/hyprvim/wiki).
+> **📚 Full Reference:** For a complete usage guide, visit the [Legacy Wiki](/docs/README.md).
 
 ### Quick Start
 
@@ -162,19 +165,19 @@ Press `SUPER + ESCAPE` (or your configured leader key + activation key) to enter
 
 Save and jump to window positions across workspaces and monitors using `m{mark}` to set, `` `{mark} `` to jump.
 
-> **📖 Learn more:** [Marks wiki](https://github.com/uhs-robert/hyprvim/wiki/Advanced#-marks)
+> **📖 Learn more:** [Marks wiki](/docs/Advanced.md)
 
 ### Registers
 
 Multi-clipboard management with named registers (`"a` - `"z`) and special registers (`""` unnamed, `"0` yank, `"_` black hole). Use `"{register}{operation}` (e.g., `"ayy` to yank to register a, `"ap` to paste from register a).
 
-> **📖 Learn more:** [Registers wiki](https://github.com/uhs-robert/hyprvim/wiki/Advanced#-registers)
+> **📖 Learn more:** [Registers wiki](/docs/Advanced.md)
 
 ### Commands
 
 Press `:` in NORMAL mode to execute Vim-style commands. Common commands: `:w` (save), `:q` (quit), `:wq` (save & quit), `:split` (split window), `:float` (toggle floating), `:ws <num>` (switch workspace), `:reload` (reload Hyprland config).
 
-> **📖 Learn more:** [Command Mode wiki](https://github.com/uhs-robert/hyprvim/wiki/Modes#-command-mode)
+> **📖 Learn more:** [Command Mode wiki](/docs/Modes.md)
 
 ### Access to Common Keyboard Shortcuts Too
 
@@ -202,7 +205,7 @@ cd ~/.config/hypr/hyprvim
 cp settings.conf.example settings.conf
 ```
 
-> **📖 Learn more:** [Configuration wiki](https://github.com/uhs-robert/hyprvim/wiki/Configuration)
+> **📖 Learn more:** [Configuration wiki](/docs/Configuration.md)
 
 ## 🗑️ Uninstalling
 
@@ -244,7 +247,7 @@ WhichKey requires `eww` to display. It is an optional feature that is **disabled
 
 We **highly recommend using WhichKey** to learn the keybindings. It also displays active marks and works with your other submaps too.
 
-You can find the demo and setup instructions [in the Wiki for WhichKey](https://github.com/uhs-robert/hyprvim/wiki/WhichKey).
+You can find the demo and setup instructions [in the Legacy Wiki for WhichKey](/docs/README.md).
 
 ### More Extras
 
