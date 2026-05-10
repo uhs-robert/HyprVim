@@ -66,7 +66,8 @@ To use the extras, refer to their respective documentation.
 | Hyprland Basics | Hyprland keymap kickstart config for HyprVim (Resize, Move, Windows, etc) | [extras/hyprland-basics](extras/hyprland-basics)                     |
 | Keyd            | System-wide key remaps and tap/hold layers                                | [extras/keyd](extras/keyd)                                           |
 | Thunderbird     | Keybinds for Vim driven navigation                                        | [extras/thunderbird](extras/thunderbird)                             |
-| Vimium          | Vim-style navigation for web browsers                                     | [extras/vimium](extras/vimium)                                       |
+| Tridactyl       | Vim-style navigation for Firefox (advanced)                               | [extras/tridactyl](extras/tridactyl)                                 |
+| Vimium          | Vim-style navigation for web browsers (basic)                             | [extras/vimium](extras/vimium)                                       |
 | Waybar Submap   | Waybar submap visual Indicator                                            | [extras/waybar](extras/waybar)                                       |
 | WhichKey        | WhichKey like display built using `eww` to see keybinds for submaps       | [wiki/whichkey](https://github.com/uhs-robert/hyprvim/wiki/WhichKey) |
 | Wl-kbptr        | Keyboard-driven mouse cursor control on Wayland                           | [extras/wl-kbptr](extras/wl-kbptr)                                   |

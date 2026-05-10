@@ -1,0 +1,285 @@
+" vim: set filetype=tridactyl
+
+" --- THEME / START PAGE ---
+" This is up to you to fill out, I use Oasis, check out the theme pack here: https://github.com/uhs-robert/oasis.nvim/tree/main/extras/tridactyl
+
+" set theme oasis_moonlight_dark
+" set newtab https://web.tabliss.io/
+
+" --- GENERAL SETTINGS ---
+
+set allowautofocus true
+set smoothscroll false
+set scrollduration 100
+set bmarkfoldersearch false
+set modeindicatorshowkeys true
+set tabopencontaineraware true
+set containerindicator false
+
+" --- COMMANDS ---
+command this js -d@ (function(){var q=JS_ARGS.join(' ');var h=location.hostname;var u='https://www.google.com/search?num=100&q='+encodeURIComponent('site:'+h+' '+q);location.href=u;})()@
+command tabthis js -d@ (function(){var q=JS_ARGS.join(' ');var h=location.hostname;var u='https://www.google.com/search?num=100&q='+encodeURIComponent('site:'+h+' '+q);tri.excmds.tabopen(u);})()@
+
+" --- BINDS ---
+"" -- MOVEMENT --
+bind h scrollpx -50
+bind j scrollline 10
+bind k scrollline -10
+bind l scrollpx 50
+bind H back
+bind J tabnext
+bind K tabprev
+bind L forward
+bind $ scrollto 100 x
+bind ^ scrollto 0 x
+
+"" -- BASIC --
+bind a current_url bmark
+bind A bmark
+bind b fillcmdline bmarks
+bind B fillcmdline bmarks -t
+bind f hint
+bind F hint -b
+bind m gobble 1 markadd
+bind M gobble 1 quickmark
+bind o fillcmdline open
+bind O fillcmdline tabopen
+bind p clipboard open
+bind P clipboard tabopen
+bind r reload
+bind R reloadhard
+bind t fillcmdline tabopen
+bind T fillcmdline tab
+bind u undo
+bind U undo window
+bind v hint -h
+bind V mode visual
+bind w fillcmdline winopen
+bind W current_url winopen
+bind . repeat
+bind : fillcmdline_notrail
+bind << tabmove -1
+bind >> tabmove +1
+bind [[ followpage prev
+bind [c urlincrement -1
+bind ]] followpage next
+bind ]c urlincrement 1
+bind ` gobble 1 markjump
+
+"" -- MODE SWITCH --
+bind --mode=browser <A-,> escapehatch
+bind <S-Insert> mode ignore
+bind <AC-Escape> mode ignore
+bind <AC-`> mode ignore
+bind <S-Escape> mode ignore
+bind <Escape> composite mode normal ; hidecmdline
+bind <C-[> composite mode normal ; hidecmdline
+
+"" -- ALT --
+bind <A-p> pin
+bind <A-m> mute toggle
+
+"" -- CTRL --
+bind <C-u> scrollpage -0.5
+bind <C-d> scrollpage 0.5
+bind <C-f> scrollpage 1
+bind <C-b> scrollpage -1
+bind <C-v> nmode ignore 1 mode normal
+bind <C-o> jumpprev
+bind <C-i> jumpnext
+bind <C-x> urlincrement -1
+bind <C-a> urlincrement 1
+unbind --mode=normal <C-y>
+" bind <C-y> scrollline -10
+unbind --mode=normal <C-e>
+" bind <C-e> scrollline 10
+
+"" -- F-KEYS --
+bind <F1> help
+
+"" -- YANK --
+bind yc clipboard yankcanon
+bind ym clipboard yankmd
+bind yo clipboard yankorg
+bind yq text2qr --timeout 5
+bind ys clipboard yankshort
+bind yt clipboard yanktitle
+bind yy clipboard yank
+
+"" -- CONTAINERS --
+"" This is something you need to configure yourself if you use containers
+""  - Here is an example below (sub ContainerName with your... Container's Name):
+
+" bind ca composite js document.location.href | tabopenwait -b -c ContainerName; tabclose
+" bind cA current_url tabopen -c ContainerName
+
+"" -- GO --
+bind G scrollto 100
+bind ga tabaudio
+bind gg scrollto 0
+bind gf viewsource
+bind gF hint -qb
+bind gh home
+bind gH home true
+bind gi focusinput
+bind go current_url open
+bind gO current_url tabopen
+bind gt tabnext_gt
+bind gT tabprev
+bind gu urlparent
+bind gU urlroot
+bind gx0 tabclosealltoleft
+bind gx$ tabclosealltoright
+bind g! jumble
+bind g$ tablast
+bind g0 tabfirst
+bind g; changelistjump -1
+bind g? rot13
+bind g^ tabfirst
+
+"" -- DELETE --
+unbind --mode=normal d
+bind dd tabclose
+bind dL tabclosealltoright
+bind dH tabclosealltoleft
+bind D js tri.excmds.composite('tabprev;', 'tabclose #')
+
+"" -- ZOOM --
+bind zi zoom 0.1 true
+bind z+ zoom 0.1 true
+bind zI zoom 3
+bind zo zoom -0.1 true
+bind z- zoom -0.1 true
+bind zO zoom -3
+bind zm zoom 0.5 true
+bind zM zoom 0.5 true
+bind zr zoom -0.5 true
+bind zR zoom -0.5 true
+bind zz zoom 1
+bind z= zoom 1
+bind zO zoom 0.3
+bind ZZ qall
+bind zb js document?.activeElement?.blur()
+
+"" -- HINTS --
+""" - MOUSE -
+bind ;x hint -F e => { const pos = tri.dom.getAbsoluteCentre(e); tri.excmds.exclaim_quiet("xdotool mousemove --sync " + window.devicePixelRatio * pos.x + " " + window.devicePixelRatio * pos.y + "; xdotool click 1")}
+bind ;X hint -F e => { const pos = tri.dom.getAbsoluteCentre(e); tri.excmds.exclaim_quiet("xdotool mousemove --sync " + window.devicePixelRatio * pos.x + " " + window.devicePixelRatio * pos.y + "; xdotool keydown ctrl+shift; xdotool click 1; xdotool keyup ctrl+shift")}
+bind ;c hint -F e => { const pos = tri.dom.getAbsoluteCentre(e); tri.excmds.exclaim_quiet("xdotool mousemove --sync " + window.devicePixelRatio * pos.x + " " + window.devicePixelRatio * pos.y + "; xdotool click 3")}
+bind ;: hint -F e => { const pos = tri.dom.getAbsoluteCentre(e); tri.excmds.exclaim_quiet("xdotool mousemove --sync " + window.devicePixelRatio * pos.x + " " + window.devicePixelRatio * pos.y)}
+
+""" - REGULAR -
+bind ;a hint -a
+bind ;A hint -A
+bind ;b hint -Jc a:not([href]),button,input[type=button],input[type=submit],input[type=reset],[role=button]
+bind ;B hint -b
+bind ;d hint -W tabopen --discard
+bind ;f fillcmdline hint -f
+bind ;/ fillcmdline hint -f
+" bind ;h hint -h
+" bind ;i hint -i
+bind ;i hint -Jc input:not([type=hidden]),textarea,select,[contenteditable=true]
+" bind ;o hint
+bind ;I hint -I
+bind ;k hint -k
+bind ;K hint -K
+bind ;l hint -Jc a[href]
+bind ;m hint -JFc img i => tri.excmds.open('https://lens.google.com/uploadbyurl?url='+i.src)
+bind ;M hint -JFc img i => tri.excmds.tabopen('https://lens.google.com/uploadbyurl?url='+i.src)
+bind ;O hint -W fillcmdline_notrail open 
+bind ;p hint -p
+bind ;P hint -P
+bind ;r hint -r
+bind ;s hint -s
+bind ;S hint -S
+bind ;t hint -W tabopen
+bind ;T hint -W fillcmdline_notrail tabopen 
+" bind ;v hint -W mpvsafe
+bind ;v hint -h
+bind ;V hint -V
+bind ;w hint -w
+bind ;W hint -W fillcmdline_notrail winopen 
+bind ;y hint -y
+bind ;Y hint -cF img i => tri.excmds.yankimage(tri.urlutils.getAbsoluteURL(i.src))
+bind ;; hint -; *
+bind ;# hint -#
+bind ;z hint -z
+
+""" - Quiet (;g) -
+bind ;ga hint -qa
+bind ;gA hint -qA
+bind ;gb hint -qb
+bind ;gd hint -qW tabopen --discard
+bind ;gf hint -q
+bind ;gF hint -qb
+bind ;gi hint -qi
+bind ;gI hint -qI
+bind ;gk hint -qk
+bind ;gp hint -qp
+bind ;gP hint -qP
+bind ;gr hint -qr
+bind ;gs hint -qs
+bind ;gS hint -qS
+bind ;gv hint -qW mpvsafe
+bind ;gw hint -qw
+bind ;gy hint -qy
+bind ;g; hint -q;
+bind ;g# hint -q#
+
+"" -- LEADER --
+bind ,, fillcmdline open search
+bind ,< fillcmdline tabopen search
+bind ,r source
+
+"" -- Ex maps --
+bind --mode=ex <A-ArrowDown> ex.next_completion
+bind --mode=ex <A-ArrowUp>   ex.prev_completion
+
+" --- Search Ranking ---
+set searchurlweight 100000
+set bmarkweight 10000
+
+" --- Search Completions ---
+set searchurls.1337 https://1337x.to/search/%s/1/
+set searchurls.arch https://wiki.archlinux.org/index.php?search=%s
+set searchurls.amazon https://www.amazon.com/s?k=%s
+set searchurls.brave https://search.brave.com/search?q=%s
+set searchurls.gpt https://chatgpt.com/?q=%s
+set searchurls.calendar https://calendar.google.com/calendar/u/0/r/search?q=%s
+set searchurls.commons https://ccsearch.creativecommons.org/?search_fields=title&search_fields=creator&search_fields=tags&search=%s
+set searchurls.crates https://crates.io/search?q=%s
+set searchurls.duck https://duckduckgo.com/?q=%s
+set searchurls.define http://www.merriam-webster.com/dictionary/%s
+set searchurls.sitedown https://www.isitdownrightnow.com/%s
+set searchurls.drive https://drive.google.com/drive/search?q=%s
+set searchurls.gmail https://mail.google.com/mail/u/0/#search/%s
+set searchurls.fedora https://packages.fedoraproject.org/search?query=%s
+set searchurls.flathub https://flathub.org/apps/search?q=%s
+set searchurls.google https://www.google.com/search?q=%s
+set searchurls.github https://github.com/search?q=%s
+set searchurls.greasyfork https://greasyfork.org/en/scripts?q=%s
+set searchurls.image https://www.google.com/search?tbm=isch&q=%s
+set searchurls.lastyear https://www.google.com/search?hl=en&tbo=1&tbs=qdr:y&q=%s
+set searchurls.lastmonth https://www.google.com/search?hl=en&tbo=1&tbs=qdr:m&q=%s
+set searchurls.lastweek https://www.google.com/search?hl=en&tbo=1&tbs=qdr:w&q=%s
+set searchurls.lastday https://www.google.com/search?hl=en&tbo=1&tbs=qdr:d&q=%s
+set searchurls.lasthour https://www.google.com/search?hl=en&tbo=1&tbs=qdr:h&q=%s
+set searchurls.maps http//maps.google.com/maps?f=q&source=s_q&hl=en&q=from+my+home+address+to+%s
+set searchurls.nexusmods https://www.nexusmods.com/games?keyword=%s&sort=approved
+set searchurls.gamebanana https://gamebanana.com/search?_sModelName=Game&_sOrder=best_match&_sSearchString=%s
+set searchurls.hackernews https://www.hnsearch.com/search#request/submissions&q=%s
+set searchurls.imdb https://www.imdb.com/find?s=all&q=%s
+set searchurls.mdn https://developer.mozilla.org/en-US/search?q=%s
+set searchurls.npm https://www.npmjs.com/search?q=%s
+set searchurls.proton https://www.protondb.com/search?q=%s
+set searchurls.reddit https://www.reddit.com/search/?q=%s
+set searchurls.redditgoogle https://www.google.com/search?q=site:reddit.com+%s
+set searchurls.rubygems https://rubygems.org/search?query=%s
+set searchurls.stackoverflow https://stackoverflow.com/search?q=%s
+set searchurls.steam https://store.steampowered.com/search?term=%s
+set searchurls.synonym https://www.thesaurus.com/browse/%s
+set searchurls.translate https://translate.google.com/?sl=auto&tl=en&text=%s
+set searchurls.urbandictionary https://www.urbandictionary.com/define.php?term=%s
+set searchurls.wikipedia https://www.wikipedia.org/w/index.php?search=%s
+set searchurls.wolframalpha https://www.wolframalpha.com/input/?i=%s
+set searchurls.youtube https://www.youtube.com/results?search_query=%s
