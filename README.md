@@ -20,6 +20,11 @@
 
 <p align=center><i>Think of it as a lightweight, system-wide Vim mode for all of your GUI applications.</i></p>
 
+> [!IMPORTANT]
+> With release 0.55 of Hyprland, work has begun to get HyprVim lua ready.
+>
+> For now, this only works with the non-lua version of Hyprland. Watch the repo for the next release and stay tuned!
+
 ## ✨ Features
 
 > **📚 Full Reference:** For a complete, searchable reference of all features, visit the [Wiki](https://github.com/uhs-robert/hyprvim/wiki).
@@ -95,15 +100,15 @@ cd ~/.config/hypr
 git clone https://github.com/uhs-robert/hyprvim.git
 ```
 
-2. Add the following line to your `~/.config/hypr/hyprland.conf`:
+1. Add the following line to your `~/.config/hypr/hyprland.conf`:
 
 ```bash
 source = ~/.config/hypr/hyprvim/init.conf
 ```
 
-3. Set up any settings in `~/.config/hypr/hyprvim/settings.conf`, see [configuration](#️-configuration)
+1. Set up any settings in `~/.config/hypr/hyprvim/settings.conf`, see [configuration](#️-configuration)
 
-4. Reload your Hyprland configuration:
+2. Reload your Hyprland configuration:
 
 ```bash
 hyprctl reload
@@ -210,13 +215,13 @@ Removing HyprVim from your system is a three step process:
 source = ~/.config/hypr/hyprvim/init.conf
 ```
 
-2. Delete the HyprVim directory:
+1. Delete the HyprVim directory:
 
 ```bash
 rm -rf ~/.config/hypr/hyprvim
 ```
 
-3. Reload your Hyprland configuration:
+1. Reload your Hyprland configuration:
 
 ```bash
 hyprctl reload
