@@ -5,8 +5,8 @@ local dir = debug.getinfo(1, "S").source:sub(2):match("(.*/)") or "./"
 local root = dir .. "../"
 package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
 
-local WhichKey = require("whichkey.render") ---@class WhichKey
-local Utils = require("lib.utils") ---@class Utils
+local Render = require("whichkey.render") ---@class Render
+local Utils = require("lib.utils") ---@class HyprVimUtils
 local sh_escape = Utils.sh_escape
 local read_file = Utils.read_file
 
@@ -75,8 +75,8 @@ local function should_auto_show(sm, config)
 end
 
 --- Returns the millisecond delay before showing the HUD for sm.
---- next_delay (from the one-shot flag file) overrides everything; otherwise operator-pending
---- modes use delay_ms on first entry and 0 when chaining from another delayed mode.
+--- next_delay (from the one-shot flag file) overrides everything; otherwise all submaps use
+--- delay_ms, except operator-pending modes that chain from another operator mode (0 ms).
 --- @param sm string
 --- @param prev_sm string
 --- @param next_delay string  raw file contents, "" if absent
@@ -86,9 +86,10 @@ local function compute_delay(sm, prev_sm, next_delay, delay_ms)
   if next_delay ~= "" then
     return tonumber(next_delay) or 0
   elseif requires_delay(sm) then
+    -- Operator-pending chains: no extra delay when coming from another operator mode.
     return (prev_sm ~= "" and requires_delay(prev_sm)) and 0 or delay_ms
   end
-  return 0
+  return delay_ms
 end
 
 --- Starts the eww daemon in the background (or pings it if already running),
@@ -220,7 +221,7 @@ local function make_submap_handler(config, state_dir, spawn_render)
       pending_timer = nil
     end
 
-    WhichKey.close()
+    Render.close()
 
     -- Maintain current-submap state file for stale-render detection.
     if sm ~= "" then
@@ -246,14 +247,10 @@ local function make_submap_handler(config, state_dir, spawn_render)
 
     local dms = compute_delay(sm, prev_sm, next_delay, config.delay_ms)
 
-    if dms <= 0 then
-      spawn_render(sm)
-    else
-      pending_timer = hl.timer(function()
-        pending_timer = nil
-        spawn_render(sm)
-      end, { timeout = dms, type = "oneshot" })
-    end
+    pending_timer = hl.timer(function()
+      pending_timer = nil
+      if last_sm == sm then spawn_render(sm) end
+    end, { timeout = math.max(dms, 1), type = "oneshot" })
   end
 end
 
@@ -263,15 +260,15 @@ end
 function Listen.init(Config)
   local config = parse_config(Config)
   local home = os.getenv("HOME") or ""
-  local eww_dir = WhichKey.eww_dir
-  local state_dir = WhichKey.state_dir
+  local eww_dir = Render.eww_dir
+  local state_dir = Render.state_dir
   local render = dir .. "render.lua"
 
   init_eww(home, eww_dir)
 
   local spawn_render = make_spawner(eww_dir, state_dir, render, config.position)
 
-  hl.on("window.open", function() WhichKey.close() end)
+  hl.on("window.open", function() Render.close() end)
   hl.on("keybinds.submap", make_submap_handler(config, state_dir, spawn_render))
 end
 
