@@ -33,6 +33,7 @@ local function setup(overrides)
   os.execute("mkdir -p " .. Config.state_dir .. "/registers")
   os.execute("mkdir -p " .. Config.state_dir .. "/marks")
 
+  require("hypr.rules").setup()
   require("vim").setup(Config)
 
   if Config.which_key and Config.which_key.enabled then require("whichkey").start(Config) end
