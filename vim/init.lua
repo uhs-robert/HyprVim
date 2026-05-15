@@ -15,10 +15,9 @@ package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
 local lib      = require("vim.lib") ---@class VimLib
 local features = require("vim.features") ---@class VimFeatures
 local commands = require("vim.commands") ---@class VimCommands
+local Window   = require("hypr.window") ---@class HyprVimWindow
 
--- Initialise motion routing with merged config (optional).
--- Config: hyprvim config table from config.lua
-local function setup(Config) lib.motion.init(Config) end
+local function setup(Config) Window.init(Config) end
 
 -- stylua: ignore
 --- @class Vim

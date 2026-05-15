@@ -5,6 +5,7 @@
 
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
+local Window = require("hypr.window") ---@class HyprVimWindow
 
 --- @class EditorModule
 local Editor = {}
@@ -31,6 +32,7 @@ function Editor.open(opts)
     "--menu",   Config.applications.menu,
     "--ext",    ext,
   }
+  if Window.is_terminal() then args[#args + 1] = "--terminal" end
   if copy_sel then args[#args + 1] = "--copy-selected" end
   if opts.insert_mode then args[#args + 1] = "--insert-mode" end
   Hypr.exec(table.concat(args, " "))

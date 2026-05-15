@@ -3,21 +3,10 @@
 
 local Count = require("vim.lib.count") ---@class Count
 local Hypr = require("hypr") ---@class HyprVimHyprland
+local Window = require("hypr.window") ---@class HyprVimWindow
 
 --- @class Motion
 local Motion = {}
-
----Window classes treated as terminals: they receive raw vim keys instead of GUI shortcuts.
----Overridden by `Motion.init` if `Config.terminal_classes` is provided.
----@type table<string, true>
-local terminal_classes = {
-  kitty = true,
-  alacritty = true,
-  foot = true,
-  wezterm = true,
-  ghostty = true,
-  ["org.wezfurlong.wezterm"] = true,
-}
 
 ---Maps vim motion keys to `{mods, key}` pairs for GUI applications.
 ---@type table<string, {[1]: string, [2]: string}>
@@ -53,23 +42,6 @@ local GUI_MOTIONS = {
   E = { "CTRL SHIFT", "RIGHT" },
 }
 
----Merge config into the motion module. Called once from `vim/init.lua` at startup.
----@param Config { terminal_classes?: string[] }|nil
-function Motion.init(Config)
-  if Config and Config.terminal_classes then
-    terminal_classes = {}
-    for _, cls in ipairs(Config.terminal_classes) do
-      terminal_classes[cls] = true
-    end
-  end
-end
-
----@return boolean
-local function is_terminal()
-  local win = hl.get_active_window()
-  return win ~= nil and terminal_classes[win.class] == true
-end
-
 ---Send a raw `{mods, key}` shortcut `n` times, consuming the count accumulator.
 ---@param shortcut {[1]: string, [2]: string}
 ---@param n        integer|nil  defaults to current count
@@ -89,7 +61,7 @@ function Motion.send(key, opts)
   opts = opts or {}
   local n = opts.count or Count.get()
 
-  if is_terminal() and not opts.force_gui then
+  if Window.is_terminal() and not opts.force_gui then
     for _ = 1, n do
       hl.dispatch(hl.dsp.send_shortcut({ mods = "", key = key }))
     end
