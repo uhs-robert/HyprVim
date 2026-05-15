@@ -8,7 +8,7 @@ package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
 
 math.randomseed(os.time())
 
-local Utils = require("lib.utils") ---@class Utils
+local Utils = require("lib.utils") ---@class HyprVimUtils
 local read_file = Utils.read_file
 local write_file = Utils.write_file
 local file_exists = Utils.file_exists
@@ -143,6 +143,12 @@ function Render.show(submap, screen)
   end
 
   if not Eww.open_window(window, screen) then return end
+
+  -- Final stale check: the submap may have changed while eww was opening the window.
+  if not is_submap_active(submap) then
+    Render.close()
+    return
+  end
 
   write_file(Render.state_dir .. "/whichkey-current-window", window)
   local vf = io.open(Render.state_dir .. "/whichkey-visible", "w")

@@ -56,7 +56,7 @@ local function parse_config(Config)
     has_allow = true
   end
   return {
-    delay_ms = wk.delay_ms or 200,
+    delay_ms = wk.delay_ms or 100,
     position = wk.position or "bottom-right",
     deny_set = deny_set,
     allow_set = allow_set,
@@ -207,6 +207,7 @@ local function make_submap_handler(config, state_dir, spawn_render)
   local last_sm = ""
   local prev_sm = ""
   local pending_timer = nil
+  local stale_check_timer = nil
 
   return function(sm)
     sm = sm or ""
@@ -218,6 +219,11 @@ local function make_submap_handler(config, state_dir, spawn_render)
     if pending_timer then
       pending_timer:set_enabled(false)
       pending_timer = nil
+    end
+
+    if stale_check_timer then
+      stale_check_timer:set_enabled(false)
+      stale_check_timer = nil
     end
 
     Render.close()
@@ -248,7 +254,16 @@ local function make_submap_handler(config, state_dir, spawn_render)
 
     pending_timer = hl.timer(function()
       pending_timer = nil
-      if last_sm == sm then spawn_render(sm) end
+      if last_sm ~= sm then return end
+      spawn_render(sm)
+      -- Stale-render guard: if the submap changed while the subprocess was rendering,
+      -- the close() that fired during the handler ran before eww opened the window.
+      -- Check after a render-completion window and close any now-orphaned HUD.
+      local render_sm = sm
+      stale_check_timer = hl.timer(function()
+        stale_check_timer = nil
+        if last_sm ~= render_sm then Render.close() end
+      end, { timeout = 500, type = "oneshot" })
     end, { timeout = math.max(dms, 1), type = "oneshot" })
   end
 end

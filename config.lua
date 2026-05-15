@@ -101,7 +101,7 @@ Config.defaults = {
   },
   which_key = {
     enabled  = true,
-    delay_ms = 200,
+    delay_ms = 100,
     position = "bottom-right",
     auto_show = {
       disabled = { "NORMAL", "VISUAL", "V-LINE" },
