@@ -14,16 +14,16 @@
 
 ## 🌅 Overview
 
-**HyprVim** brings the power of Vim keybindings and motions to your Hyprland GUI desktop environment.
+**HyprVim** brings the power of Vim keybindings and motions to your Hyprland desktop environment.
 
 <https://github.com/user-attachments/assets/1a9c9459-2bfa-4d1d-bf05-24d5174431a9>
 
-<p align=center><i>Think of it as a lightweight, system-wide Vim mode for all of your GUI applications.</i></p>
+<p align=center><i>Think of it as a lightweight, system-wide Vim mode for all of your applications.</i></p>
 
 > [!IMPORTANT]
-> With release 0.55 of Hyprland, work has begun to get HyprVim lua ready.
+> With release 0.55 of Hyprland, Lua became the new standard for configuration and is now compatible with HyprVim!
 >
-> For now, this only works with the non-lua version of Hyprland. Watch the repo for the next release and stay tuned!
+> To use the deprecated non-lua version of HyrpVim, please pin to release [v1.2.3 of HyprVim](https://github.com/uhs-robert/hyprvim/releases/tag/v1.2.3).
 
 ## ✨ Features
 
@@ -49,7 +49,7 @@ Built on Hyprland’s native submap system, uses standard GUI application keyboa
 - **Open Vim/Nvim Anywhere** - Press `SUPER + N` to open selected text in Vim/Nvim for complex editing. Save/close to paste.
 
 > [!WARNING]
-> Just like real Vim, you also need to know how to exit HyprVim: press `SUPER + ESC` or `ALT+ESC`
+> Just like real Vim, you also need to know how to exit HyprVim: press `SUPER + ESC` or `ALT + ESC`
 
 <details>
 <summary><h3>🍭 Extras</h3></summary>
@@ -94,29 +94,30 @@ If you'd like an extra config added, raise a feature request or put one together
 
 ### Quick Install
 
-1. Clone this repository into your Hyprland config directory:
+#### 1. Clone this repository into your Hyprland config directory
 
 ```bash
 cd ~/.config/hypr
 git clone https://github.com/uhs-robert/hyprvim.git
 ```
 
-1. Add the following line to your `~/.config/hypr/hyprland.conf`:
+#### 2. Add the following line to your `~/.config/hypr/hyprland.lua`
 
 ```bash
-source = ~/.config/hypr/hyprvim/init.conf
+require("hyprvim").setup()
 ```
 
-1. Set up any settings in `~/.config/hypr/hyprvim/settings.conf`, see [configuration](#️-configuration)
+> [!TIP]
+> You may also pass a table of [configuration settings](#️-configuration) to customize your experience.
 
-2. Reload your Hyprland configuration:
+#### 3. Save and reload your Hyprland config
 
 ```bash
 hyprctl reload
 ```
 
 > [!TIP]
-> **Verify installation**: Press `SUPER + ESC` and you should enter NORMAL mode. Press `gh` to view help.
+> **Verify installation**: Press `SUPER + ESC` and you should enter **NORMAL** mode. Press `gh` to view help.
 
 ## 🔄 Staying Updated
 
@@ -134,9 +135,9 @@ hyprctl reload
 
 Stay informed about new releases:
 
-1. **Watch the repository** - Click "Watch" → "Custom" → Check "Releases" on this page
+1. **Watch the repository** - Click `Watch` → `Custom` → Check `Releases` on this page
 2. **Check the releases page** - View all releases at <https://github.com/uhs-robert/hyprvim/releases>
-3. **RSS Feed** - Subscribe to releases: `https://github.com/uhs-robert/hyprvim/releases.atom`
+3. **RSS Feed** - Subscribe to releases: <https://github.com/uhs-robert/hyprvim/releases.atom>
 
 > [!NOTE]
 > Each release includes a detailed changelog with new features, improvements, and bug fixes.
@@ -147,7 +148,7 @@ Stay informed about new releases:
 
 ### Quick Start
 
-Press `SUPER + ESCAPE` (or your configured leader key + activation key) to enter NORMAL mode.
+Press `SUPER + ESCAPE` (or your configured leader key + activation key) to enter **NORMAL** mode.
 
 #### Basic Workflow
 
@@ -173,13 +174,13 @@ Multi-clipboard management with named registers (`"a` - `"z`) and special regist
 
 ### Commands
 
-Press `:` in NORMAL mode to execute Vim-style commands. Common commands: `:w` (save), `:q` (quit), `:wq` (save & quit), `:split` (split window), `:float` (toggle floating), `:ws <num>` (switch workspace), `:reload` (reload Hyprland config).
+Press `:` in **NORMAL** mode to execute Vim-style commands. Common commands: `:w` (save), `:q` (quit), `:wq` (save & quit), `:split` (split window), `:float` (toggle floating), `:ws <num>` (switch workspace), `:reload` (reload Hyprland config).
 
 > **📖 Learn more:** [Command Mode wiki](https://github.com/uhs-robert/hyprvim/wiki/Modes#-command-mode)
 
 ### Access to Common Keyboard Shortcuts Too
 
-HyprVim includes pragmatic pass-through bindings in NORMAL mode for better GUI interaction: `TAB`, `RETURN`, `CTRL+V/X/A/S/W/Z`.
+HyprVim includes pragmatic pass-through bindings in **NORMAL** mode for better GUI interaction: `TAB`, `RETURN`, `CTRL+V/X/A/S/W/Z`.
 
 This enables dialog navigation and clipboard operations without constantly switching to INSERT mode.
 
@@ -188,20 +189,49 @@ This enables dialog navigation and clipboard operations without constantly switc
 
 ## ⚙️ Configuration
 
-HyprVim sets a few global defaults in `./init.conf`.
+HyprVim offers _many_ different options to choose from. Have fun customizing with `setup()`!
 
-You can override any of these settings by creating your own `./settings.conf` in the `hyprvim` directory:
+<details>
+  <summary>🍦 Default Options</summary>
+  <br>
+<!-- config:start -->
 
-> [!TIP]
-> To override or append keys in each submap, be sure to source your overriding keybindings after HyprVim
-
-1. Copy `settings.conf.example` to `settings.conf`:
-2. Edit `./settings.conf` to override any defaults from `./init.conf`
-
-```bash
-cd ~/.config/hypr/hyprvim
-cp settings.conf.example settings.conf
+```lua
+require("hyprvim").setup({
+  keys = {
+    leader = "SUPER",
+    activate = "ESCAPE",
+  },
+  applications = {
+    menu = "rofi",
+    terminal = "kitty --class floating-help -e",
+    lock = "hyprlock",
+    vim_editor = "nvim",                          -- `vim` or `nvim`
+  },
+  theme = "./theme.conf",
+  notifications = {
+    all = false,                -- Enable to bypass settings below and just enable all
+    marks = true,
+  },
+  enable_debug = false,
+  which_key = {
+    enabled = true,             -- This requires eww
+    delay_ms = 200,
+    position = "bottom-right",
+    auto_show = {
+      disabled = {
+        "NORMAL",
+        "VISUAL",
+        "V-LINE",
+      },
+      enabled = nil, -- nil enables all except those in disabled. You could make disabled = nil and then it would work the opposite.
+    },
+  },
+})
 ```
+
+<!-- config:end -->
+</details>
 
 > **📖 Learn more:** [Configuration wiki](https://github.com/uhs-robert/hyprvim/wiki/Configuration)
 

@@ -1,0 +1,238 @@
+-- vim/features/marks.lua
+-- Window/workspace bookmark system.
+-- Marks store: workspace id, window address, monitor name, class, title.
+-- State: $XDG_RUNTIME_DIR/hyprvim/marks.json
+
+local Hypr = require("hypr") ---@class HyprVimHyprland
+local Config = require("config") ---@class HyprVimConfigModule
+
+--- @class Marks
+local Marks = {}
+
+---@return string  absolute path to the marks state file
+local function marks_path() return Config.state_dir .. "/marks.json" end
+
+---@class Mark
+---@field workspace integer
+---@field window    string   hex window address
+---@field monitor   string   monitor name
+---@field class     string   window class
+---@field title     string   window title
+
+---Read all marks from the JSON state file.
+---@return table<string, Mark>
+local function json_read()
+  local f = io.open(marks_path(), "r")
+  if not f then return {} end
+  local s = f:read("*a")
+  f:close()
+  local t = {}
+  -- Each mark: "X": { "workspace": N, "window": "0x...", "monitor": "...", ... }
+  for key, body in s:gmatch('"(.)"%s*:%s*(%b{})') do
+    local m = {}
+    m.workspace = tonumber(body:match('"workspace"%s*:%s*(%d+)'))
+    m.window = body:match('"window"%s*:%s*"([^"]*)"')
+    m.monitor = body:match('"monitor"%s*:%s*"([^"]*)"')
+    m.class = body:match('"class"%s*:%s*"([^"]*)"')
+    m.title = body:match('"title"%s*:%s*"([^"]*)"')
+    t[key] = m
+  end
+  return t
+end
+
+---Serialise `t` and write it to the marks state file.
+---@param t table<string, Mark>
+local function json_write(t)
+  local parts = {}
+  for k, m in pairs(t) do
+    parts[#parts + 1] = string.format(
+      '  %q: {"workspace":%d,"window":%q,"monitor":%q,"class":%q,"title":%q}',
+      k,
+      m.workspace or 0,
+      m.window or "",
+      m.monitor or "",
+      m.class or "",
+      (m.title or ""):gsub('"', '\\"')
+    )
+  end
+  table.sort(parts)
+  local f = io.open(marks_path(), "w")
+  if f then
+    f:write("{\n" .. table.concat(parts, ",\n") .. "\n}\n")
+    f:close()
+  end
+end
+
+---@return string  absolute path to the after-submap state file
+local function after_path() return Config.state_dir .. "/marks-after" end
+
+---Store which submap to return to after a mark operation completes.
+---@param submap string|nil  submap name; defaults to `"NORMAL"`
+function Marks.set_after(submap)
+  local f = io.open(after_path(), "w")
+  if f then
+    f:write(submap or "NORMAL")
+    f:close()
+  end
+end
+
+---Read the stored after-submap, remove the state file, and switch to that mode.
+function Marks.dispatch_after()
+  local f = io.open(after_path(), "r")
+  local target = "NORMAL"
+  if f then
+    target = f:read("*a"):gsub("%s+$", "")
+    f:close()
+    os.remove(after_path())
+  end
+  Hypr.switch_mode(target ~= "" and target or "NORMAL")
+end
+
+---Send a notification via Hyprland if marks notifications are enabled in config.
+---@param msg     string
+---@param urgency string|nil  `"low"` (hint), `"normal"` (default/info), or `"critical"` (error)
+local function notify(msg, urgency)
+  local notifications = Config.notifications or {}
+  if not (notifications.all or notifications.marks) then return end
+  local icon = ({ low = "hint", normal = "info", critical = "error" })[urgency or "normal"] or "info"
+  Hypr.notify(msg, icon, 3000)
+end
+
+---Save the active window and workspace as mark `char`.
+---@param char string  single character mark name
+function Marks.set(char)
+  if not char or char == "" then return end
+
+  local win = hl.get_active_window()
+  local mon = hl.get_active_monitor()
+  if not win then
+    notify("No active window", "critical")
+    Marks.dispatch_after()
+    return
+  end
+
+  local ws = win.workspace and win.workspace.id or 0
+  local addr = win.address or ""
+  local cls = win.class or ""
+  local ttl = win.title or ""
+  local mname = mon and mon.name or ""
+
+  local marks = json_read()
+  marks[char] = { workspace = ws, window = addr, monitor = mname, class = cls, title = ttl }
+  json_write(marks)
+
+  local short = #ttl > 30 and (ttl:sub(1, 30) .. "…") or ttl
+  notify(string.format("Mark '%s' → %s (ws:%d)", char, cls, ws))
+  _ = short
+  Marks.dispatch_after()
+end
+
+---Focus the monitor, workspace, and window stored in mark `char`.
+---Removes the mark if the window no longer exists.
+---@param char string
+function Marks.jump(char)
+  if not char or char == "" then return end
+
+  local marks = json_read()
+  local m = marks[char]
+  if not m then
+    notify("Mark '" .. char .. "' not set", "critical")
+    Marks.dispatch_after()
+    return
+  end
+
+  -- Focus the monitor if it still exists.
+  local monitors = hl.get_monitors()
+  local mon_exists = false
+  for _, mon in ipairs(monitors or {}) do
+    if mon.name == m.monitor then
+      mon_exists = true
+      break
+    end
+  end
+
+  if mon_exists then hl.dispatch(hl.dsp.focus(m.monitor)) end
+
+  -- Switch to workspace.
+  hl.dispatch(hl.dsp.workspace.move(tostring(m.workspace)))
+
+  -- Check if window still exists.
+  local windows = hl.get_windows()
+  local win_exists = false
+  for _, w in ipairs(windows or {}) do
+    if w.address == m.window then
+      win_exists = true
+      break
+    end
+  end
+
+  if win_exists then
+    Hypr.focus_window(m.window)
+    notify(string.format("Jumped to '%s' → %s", char, m.class or ""))
+  else
+    -- Stale mark: remove it.
+    marks[char] = nil
+    json_write(marks)
+    notify(string.format("Mark '%s' deleted (window closed)", char), "low")
+  end
+
+  Marks.dispatch_after()
+end
+
+---Remove mark `char` from the state file.
+---@param char string
+function Marks.delete(char)
+  if not char or char == "" then return end
+  local marks = json_read()
+  if not marks[char] then
+    notify("Mark '" .. char .. "' not set", "critical")
+    Marks.dispatch_after()
+    return
+  end
+  marks[char] = nil
+  json_write(marks)
+  notify("Deleted mark '" .. char .. "'")
+  Marks.dispatch_after()
+end
+
+---Delete every mark and notify with the count cleared.
+function Marks.clear()
+  local marks = json_read()
+  local n = 0
+  for _ in pairs(marks) do
+    n = n + 1
+  end
+  if n == 0 then
+    notify("No marks to clear", "low")
+    Marks.dispatch_after()
+    return
+  end
+  json_write({})
+  notify(string.format("Cleared %d marks", n))
+  Marks.dispatch_after()
+end
+
+---Return all marks as a formatted multiline string and post a desktop notification.
+---@return string
+function Marks.list()
+  local marks = json_read()
+  local lines = {}
+  local keys = {}
+  for k in pairs(marks) do
+    keys[#keys + 1] = k
+  end
+  table.sort(keys)
+  for _, k in ipairs(keys) do
+    local m = marks[k]
+    local ttl = (m.title or ""):sub(1, 30)
+    lines[#lines + 1] = string.format("%s: %s (ws:%d)", k, ttl, m.workspace or 0)
+  end
+  local result = (#lines > 0) and table.concat(lines, "\n") or "No marks set"
+  local notifications = Config.notifications or {}
+  if notifications.all or notifications.marks then
+    Hypr.notify(string.format("Marks (%d)\n%s", #lines, result), "info", 5000)
+  end
+  return result
+end
+
+return Marks
