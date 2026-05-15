@@ -4,6 +4,13 @@
 local Config = require("config") ---@class HyprVimConfigModule
 
 local function setup()
+  -- whichkey: submap display layer
+  hl.layer_rule({
+    name = "hyprvim-whichkey",
+    match = { namespace = "hyprvim-whichkey" },
+    animation = "slide",
+  })
+
   -- floating-help: help viewer opened by `gh`
   hl.window_rule({
     name = "hyprvim-floating-help",
@@ -28,7 +35,7 @@ local function setup()
     match = { class = "^hyprvim-open-vim$" },
     float = true,
     center = true,
-    size = "(monitor_w*0.6) (monitor_h*0.6)",
+    size = "(monitor_w*0.7) (monitor_h*0.7)",
   })
 end
 
