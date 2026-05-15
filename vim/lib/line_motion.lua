@@ -1,11 +1,11 @@
 -- vim/lib/line_motion.lua
 -- V-LINE mode motions with first-motion anchoring behavior.
 
-local Count = require("vim.lib.count") ---@class Count
+local VimCount = require("vim.lib.count") ---@class VimCount
 local Hypr = require("hypr") ---@class HyprVimHyprland
 
---- @class LineMotion
-local LineMotion = {}
+--- @class VLineMotion
+local VLineMotion = {}
 
 ---@return string
 local function state_dir() return require("config").state_dir end
@@ -27,7 +27,7 @@ local function clear_first_motion() os.remove(flag_path()) end
 
 ---Select the current line (End → Shift+Home) and enter V-LINE mode.
 ---Sets the first-motion flag so the next `j`/`k` anchors correctly.
-function LineMotion.enter()
+function VLineMotion.enter()
   os.execute("mkdir -p " .. state_dir())
   local f = io.open(flag_path(), "w")
   if f then f:close() end
@@ -36,13 +36,13 @@ function LineMotion.enter()
 end
 
 ---Clear the first-motion flag. Called on V-LINE exit to avoid stale state.
-function LineMotion.reset() clear_first_motion() end
+function VLineMotion.reset() clear_first_motion() end
 
 ---Extend the V-LINE selection downward by `n` lines.
 ---On first motion, anchors the top of the selection at the start of the current line.
 ---@param n integer|nil  defaults to current count
-function LineMotion.down(n)
-  n = n or Count.get()
+function VLineMotion.down(n)
+  n = n or VimCount.get()
   if first_motion() then
     Hypr.send_all({ { "", "HOME" }, { "SHIFT", "END" } })
     clear_first_motion()
@@ -55,8 +55,8 @@ end
 ---Extend the V-LINE selection upward by `n` lines.
 ---On first motion, anchors the bottom of the selection at the end of the current line.
 ---@param n integer|nil
-function LineMotion.up(n)
-  n = n or Count.get()
+function VLineMotion.up(n)
+  n = n or VimCount.get()
   if first_motion() then
     Hypr.send_all({ { "", "END" }, { "SHIFT", "HOME" } })
     clear_first_motion()
@@ -68,8 +68,8 @@ end
 
 ---Extend the V-LINE selection up by `n` paragraphs (`{`).
 ---@param n integer|nil
-function LineMotion.paragraph_up(n)
-  n = n or Count.get()
+function VLineMotion.paragraph_up(n)
+  n = n or VimCount.get()
   if first_motion() then
     Hypr.send("SHIFT", "HOME")
     clear_first_motion()
@@ -81,8 +81,8 @@ end
 
 ---Extend the V-LINE selection down by `n` paragraphs (`}`).
 ---@param n integer|nil
-function LineMotion.paragraph_down(n)
-  n = n or Count.get()
+function VLineMotion.paragraph_down(n)
+  n = n or VimCount.get()
   if first_motion() then
     Hypr.send("SHIFT", "END")
     clear_first_motion()
@@ -93,7 +93,7 @@ function LineMotion.paragraph_down(n)
 end
 
 ---Extend the V-LINE selection to the document start (`gg`).
-function LineMotion.goto_start()
+function VLineMotion.goto_start()
   if first_motion() then
     Hypr.send("", "END")
     clear_first_motion()
@@ -102,7 +102,7 @@ function LineMotion.goto_start()
 end
 
 ---Extend the V-LINE selection to the document end (`G`).
-function LineMotion.goto_end()
+function VLineMotion.goto_end()
   if first_motion() then
     Hypr.send("", "HOME")
     clear_first_motion()
@@ -110,4 +110,4 @@ function LineMotion.goto_end()
   Hypr.send("CTRL SHIFT", "END")
 end
 
-return LineMotion
+return VLineMotion

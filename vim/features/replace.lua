@@ -1,7 +1,7 @@
 -- vim/features/replace.lua
 -- r (replace count chars) and R (replace with string) commands.
 
-local Count = require("vim.lib.count") ---@class Count
+local VimCount = require("vim.lib.count") ---@class VimCount
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
 
@@ -39,7 +39,7 @@ end
 
 ---`r`: prompt for a single character and overwrite the next [count] characters with it.
 function Replace.character()
-  local n = Count.get()
+  local n = VimCount.get()
 
   Hypr.exit_vim()
   hl.timer(function()
@@ -63,7 +63,7 @@ end
 
 ---`R`: prompt for a replacement string and overwrite the next `#string` characters with it.
 function Replace.string()
-  Count.get() -- clear
+  VimCount.get() -- clear
 
   Hypr.exit_vim()
   hl.timer(function()

@@ -1,12 +1,12 @@
 -- home/hypr/.config/hypr/hyprvim/vim/lib/operator.lua
--- Operator + motion combinations: d{motion}, c{motion}, y{motion}.
+-- VimOperator + motion combinations: d{motion}, c{motion}, y{motion}.
 -- Also handles text objects: iw/aw/ip/ap.
 
-local Count = require("vim.lib.count") ---@class Count
+local VimCount = require("vim.lib.count") ---@class VimCount
 local Hypr = require("hypr") ---@class HyprVimHyprland
 
---- @class Operator
-local Operator = {}
+--- @class VimOperator
+local VimOperator = {}
 
 ---Key sequences that select each text object.
 ---`iw`/`aw` use word boundaries; `ip`/`ap` use paragraph boundaries.
@@ -23,8 +23,8 @@ local TEXT_OBJECTS = {
 ---@param action_fn   fun()                        yank / delete / change operation
 ---@param return_mode string|nil                   submap to switch to after (default `"NORMAL"`)
 ---@param n           integer|nil                  defaults to current count
-function Operator.execute(selection, action_fn, return_mode, n)
-  n = n or Count.get()
+function VimOperator.execute(selection, action_fn, return_mode, n)
+  n = n or VimCount.get()
   return_mode = return_mode or "NORMAL"
 
   for _ = 1, n do
@@ -39,8 +39,8 @@ end
 ---@param obj         string    `"iw"`, `"aw"`, `"ip"`, or `"ap"`
 ---@param action_fn   fun()
 ---@param return_mode string|nil
-function Operator.execute_text_object(obj, action_fn, return_mode)
-  Count.get() -- clear count
+function VimOperator.execute_text_object(obj, action_fn, return_mode)
+  VimCount.get() -- clear count
   return_mode = return_mode or "NORMAL"
 
   local sequences = TEXT_OBJECTS[obj]
@@ -52,15 +52,15 @@ function Operator.execute_text_object(obj, action_fn, return_mode)
 end
 
 ---`y` — copy selection to clipboard via Ctrl+C.
-function Operator.yank_action() Hypr.send("CTRL", "c") end
+function VimOperator.yank_action() Hypr.send("CTRL", "c") end
 
 ---`d` — cut selection via Ctrl+X.
-function Operator.delete_action() Hypr.send("CTRL", "x") end
+function VimOperator.delete_action() Hypr.send("CTRL", "x") end
 
 ---`c` — cut selection then enter INSERT mode.
-function Operator.change_action()
+function VimOperator.change_action()
   Hypr.send("CTRL", "x")
   Hypr.switch_mode("INSERT")
 end
 
-return Operator
+return VimOperator

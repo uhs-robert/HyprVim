@@ -1,12 +1,12 @@
 -- vim/lib/motion.lua
 -- Execute vim motions with count support and terminal vs GUI routing.
 
-local Count = require("vim.lib.count") ---@class Count
+local VimCount = require("vim.lib.count") ---@class VimCount
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Window = require("hypr.window") ---@class HyprVimWindow
 
---- @class Motion
-local Motion = {}
+--- @class VimMotion
+local VimMotion = {}
 
 ---Maps vim motion keys to `{mods, key}` pairs for GUI applications.
 ---@type table<string, {[1]: string, [2]: string}>
@@ -45,8 +45,8 @@ local GUI_MOTIONS = {
 ---Send a raw `{mods, key}` shortcut `n` times, consuming the count accumulator.
 ---@param shortcut {[1]: string, [2]: string}
 ---@param n        integer|nil  defaults to current count
-function Motion.send_raw(shortcut, n)
-  n = n or Count.get()
+function VimMotion.send_raw(shortcut, n)
+  n = n or VimCount.get()
   for _ = 1, n do
     Hypr.send(shortcut[1], shortcut[2])
   end
@@ -57,9 +57,9 @@ end
 ---GUI apps receive the mapped shortcut from `GUI_MOTIONS`.
 ---@param key  string  vim motion key, e.g. `"j"`, `"w"`, `"gg"`, `"{"`
 ---@param opts { count?: integer, force_gui?: boolean, shortcut?: {[1]:string,[2]:string}, after?: fun() }|nil
-function Motion.send(key, opts)
+function VimMotion.send(key, opts)
   opts = opts or {}
-  local n = opts.count or Count.get()
+  local n = opts.count or VimCount.get()
 
   if Window.is_terminal() and not opts.force_gui then
     for _ = 1, n do
@@ -82,8 +82,8 @@ end
 ---@param mods string
 ---@param key  string
 ---@param n    integer|nil
-function Motion.send_gui(mods, key, n)
-  n = n or Count.get()
+function VimMotion.send_gui(mods, key, n)
+  n = n or VimCount.get()
   for _ = 1, n do
     Hypr.send(mods, key)
   end
@@ -91,6 +91,6 @@ end
 
 ---Send multiple `{mods, key}` pairs in order, each exactly once.
 ---@param shortcuts {[1]: string, [2]: string}[]
-function Motion.send_sequence(shortcuts) Hypr.send_all(shortcuts) end
+function VimMotion.send_sequence(shortcuts) Hypr.send_all(shortcuts) end
 
-return Motion
+return VimMotion
