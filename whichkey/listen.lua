@@ -7,6 +7,7 @@ package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
 
 local Render = require("whichkey.render") ---@class Render
 local Utils = require("lib.utils") ---@class HyprVimUtils
+local Theme = require("whichkey.theme")
 local sh_escape = Utils.sh_escape
 local read_file = Utils.read_file
 
@@ -97,12 +98,10 @@ end
 --- @param home string
 --- @param eww_dir string
 local function init_eww(home, eww_dir)
-  local apply = home .. "/.config/hypr/hyprvim/scripts/apply-theme.sh"
+  Theme.apply(home)
 -- stylua: ignore
   os.execute(
     "("
-      .. apply
-      .. " >/dev/null 2>&1; "
       .. "eww -c "
       .. sh_escape(eww_dir)
       .. " ping >/dev/null 2>&1"
