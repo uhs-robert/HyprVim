@@ -76,7 +76,7 @@ check_deps() {
   local deps=("$EDITOR_CMD" "wtype")
 
   if ! $KEYSTROKE_MODE || $COPY_SELECTED; then
-    deps+=("wl-paste")
+    deps+=("wl-paste" "wl-copy")
   fi
 
   for cmd in "${deps[@]}"; do
@@ -159,6 +159,17 @@ parse_args() {
       shift
       ;;
 
+    --ext)
+      if [[ $# -ge 2 && $2 != --* ]]; then
+        EXT="$2"
+        ASK_EXT=true
+        shift 2
+      else
+        echo "Error: --ext requires a value."
+        exit 1
+      fi
+      ;;
+
     --rm-tmp)
       REMOVE_TMP=true
       shift
@@ -207,8 +218,8 @@ detect_terminal
 detect_prompt
 check_deps
 
-# Ask for file extension if requested
-if $ASK_EXT; then
+# Ask for file extension if requested (skip prompt when --ext was given directly)
+if $ASK_EXT && [[ -z "${EXT:-}" ]]; then
   case "$PROMPT_CMD" in
   rofi)
     EXT=$(rofi -dmenu -p "File extension:" -lines 1)
@@ -237,44 +248,28 @@ fi
 create_tmpfile
 
 if $COPY_SELECTED; then
-  # Save current clipboard state
   LAST_CLIPBOARD=$(wl-paste --no-newline 2>/dev/null || true)
 
-  # Try primary selection first (instant, no side effects)
+  # Try primary selection first (keyboard selections populate this without side effects)
   SELECTED_TEXT=$(wl-paste -p --no-newline 2>/dev/null || true)
 
-  # If no primary selection, try copying with retries using hyprctl
   if [[ -z "$SELECTED_TEXT" ]]; then
-    # Try Ctrl+C with multiple attempts and verification
-    for attempt in 1 2 3; do
-      # Send Ctrl+C directly to active window via Hyprland dispatcher
-      hyprctl dispatch 'hl.dsp.send_shortcut({mods= "CTRL", key = "C"})'
-
-      # Progressive delay: 0.1s, 0.2s, 0.3s
-      sleep 0.$attempt
-
-      # Check if clipboard changed
-      NEW_CLIPBOARD=$(wl-paste --no-newline 2>/dev/null || true)
-
-      # If clipboard changed and is not empty, we got something
-      if [[ -n "$NEW_CLIPBOARD" ]] && [[ "$NEW_CLIPBOARD" != "$LAST_CLIPBOARD" ]]; then
-        SELECTED_TEXT="$NEW_CLIPBOARD"
-        break
-      fi
-    done
+    # Clear clipboard so we can detect a fresh copy unambiguously
+    wl-copy --clear 2>/dev/null || true
+    wtype -M ctrl c -m ctrl
+    sleep 0.3
+    SELECTED_TEXT=$(wl-paste --no-newline 2>/dev/null || true)
   fi
 
-  # Write selected text to temp file if we have any
   if [[ -n "$SELECTED_TEXT" ]]; then
-    echo "$SELECTED_TEXT" >"$TMPFILE"
+    printf '%s' "$SELECTED_TEXT" >"$TMPFILE"
   fi
 
-  # Restore the original clipboard
+  # Restore original clipboard
   if [[ -n "$LAST_CLIPBOARD" ]]; then
-    echo -n "$LAST_CLIPBOARD" | wl-copy -n
+    printf '%s' "$LAST_CLIPBOARD" | wl-copy
   else
-    # If clipboard was empty, clear it to restore original state
-    wl-copy -c 2>/dev/null || true
+    wl-copy --clear 2>/dev/null || true
   fi
 fi
 
@@ -306,11 +301,10 @@ if [[ "$MTIME_AFTER" -gt "$MTIME_BEFORE" ]]; then
       # Paste mode - save clipboard, paste, then restore
       CLIPBOARD_BEFORE_PASTE=$(wl-paste --no-newline 2>/dev/null || true)
 
-      # Copy edited text to clipboard and paste via Hyprland dispatcher
+      # Copy edited text to clipboard, wait for focus to settle, then paste
       wl-copy -n <"$TMPFILE"
-      hyprctl dispatch 'hl.dsp.send_shortcut({mods= "CTRL", key = "V"})'
-
-      # Wait for paste to complete
+      sleep 0.2
+      wtype -M ctrl v -m ctrl
       sleep 0.1
 
       # Restore the clipboard to what it was before pasting
