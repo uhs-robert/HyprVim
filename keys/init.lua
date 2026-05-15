@@ -24,4 +24,4 @@ if Config.which_key and Config.which_key.enabled then
 end
 
 -- Load all submap definitions.
-require("keys.submaps")
+require("keys.submaps").setup()
