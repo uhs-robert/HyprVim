@@ -248,7 +248,7 @@ if $COPY_SELECTED; then
     # Try Ctrl+C with multiple attempts and verification
     for attempt in 1 2 3; do
       # Send Ctrl+C directly to active window via Hyprland dispatcher
-      hyprctl dispatch sendshortcut CTRL, C, activewindow
+      hyprctl dispatch 'hl.dsp.send_shortcut({mods= "CTRL", key = "C"})'
 
       # Progressive delay: 0.1s, 0.2s, 0.3s
       sleep 0.$attempt
@@ -308,7 +308,7 @@ if [[ "$MTIME_AFTER" -gt "$MTIME_BEFORE" ]]; then
 
       # Copy edited text to clipboard and paste via Hyprland dispatcher
       wl-copy -n <"$TMPFILE"
-      hyprctl dispatch sendshortcut CTRL, V, activewindow
+      hyprctl dispatch 'hl.dsp.send_shortcut({mods= "CTRL", key = "V"})'
 
       # Wait for paste to complete
       sleep 0.1
