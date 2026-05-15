@@ -1,0 +1,306 @@
+#!/usr/bin/env lua
+-- scripts/vim-open-editor.lua
+-- HyprVim Open Editor - Edit text anywhere in Wayland with vim/nvim
+
+local TERM_CLASS = "hyprvim-open-vim"
+
+--- Per-terminal flags for setting the window class and launching a command.
+--- @class TermFlags
+--- @field class string  Flag to set the window class/app-id (e.g. "--class", "--app-id")
+--- @field exec  string  Flag to execute a command inside the terminal (e.g. "-e", "--")
+--- @field pre?  string  Extra word inserted before the class flag (e.g. "start" for wezterm)
+
+-- stylua: ignore
+--- @type table<string, TermFlags>
+local TERM_FLAGS = {
+  kitty      = { class = "--class",   exec = "-e" },
+  ghostty    = { class = "--class",   exec = "-e" },
+  alacritty  = { class = "--class",   exec = "-e" },
+  wezterm    = { class = "--class",   exec = "--",  pre = "start" },
+  foot       = { class = "--app-id",  exec = "-e" },
+  footclient = { class = "--app-id",  exec = "-e" },
+  xterm      = { class = "-class",    exec = "-e" },
+}
+
+--- Runtime configuration populated by CLI argument parsing.
+--- @class Cfg
+--- @field copy_sel boolean Pre-fill the scratch file with the current selection
+--- @field insert_mode boolean Open the editor in INSERT mode at end-of-content
+--- @field in_terminal boolean Active window is a terminal (uses Ctrl+Shift+C to copy)
+--- @field ext string|nil File extension for the scratch file (e.g. "md")
+--- @field terminal string Terminal emulator binary name
+--- @field editor string Editor binary name ("vim" or "nvim")
+--- @field menu string Prompt tool name (rofi, wofi, tofi, ...)
+--- @field tmpdir string Directory for scratch files
+
+--- @type Cfg
+local cfg = {
+  copy_sel = false,
+  insert_mode = false,
+  in_terminal = false,
+  ext = nil,
+  terminal = os.getenv("TERMINAL") or "",
+  editor = os.getenv("EDITOR") or "nvim",
+  menu = "",
+  tmpdir = (os.getenv("XDG_CACHE_HOME") or (os.getenv("HOME") .. "/.cache")) .. "/hyprvim/open-vim",
+}
+
+--- Single-quote a string for safe shell interpolation.
+--- @param s string|number
+--- @return string
+local function sq(s) return "'" .. tostring(s):gsub("'", "'\\''") .. "'" end
+
+--- Run a shell command and return its stdout with trailing whitespace stripped.
+--- Stderr is suppressed.
+--- @param cmd string
+--- @return string
+local function pread(cmd)
+  local p = io.popen(cmd .. " 2>/dev/null")
+  if not p then return "" end
+  local s = p:read("*a"):gsub("%s+$", "")
+  p:close()
+  return s
+end
+
+--- Run a shell command, discarding output.
+--- @param cmd string
+local function run(cmd) os.execute(cmd) end
+
+--- Print an error to stderr and exit with code 1.
+--- @param msg string
+local function die(msg)
+  io.stderr:write("Error: " .. msg .. "\n")
+  os.exit(1)
+end
+
+--- Return true if `name` is an executable available on PATH.
+--- @param name string
+--- @return boolean
+local function cmd_exists(name) return pread("command -v " .. sq(name)) ~= "" end
+
+--- Print `text` followed by a blank line.
+--- @param text string
+local function print_br(text)
+  print(text)
+  print("")
+end
+
+--- Print usage information and exit.
+local function show_help()
+  print_br("hyprvim-open-vim <OPTIONS>")
+  print_br("Editor: " .. cfg.editor .. " (set via $HYPRVIM_EDITOR, defaults to nvim)")
+  print_br("-e, --ext <ext>\n  Set file extension for the scratch file (e.g. --ext md).")
+  print_br("-s, --copy-selected\n  Copy the currently selected text and start editing it.")
+  print_br("-i, --insert-mode\n  Start the editor in INSERT mode at end-of-content.")
+  print_br("-t, --term <terminal>\n  Terminal emulator to use (uses $TERMINAL if not specified).")
+  print_br("-E, --editor <editor>\n  Editor to launch (vim or nvim).")
+  print_br("-m, --menu <tool>\n  Prompt tool for dialogs (rofi, wofi, tofi, fuzzel, dmenu, zenity, kdialog).")
+  print_br("-T, --terminal\n  Hint that the focused window is a terminal (uses Ctrl+Shift+C to copy).")
+  os.exit(0)
+end
+
+--- Parse `arg` into `cfg`. Exits on unknown flags or missing values.
+local function parse_args()
+  local i = 1
+  while i <= #arg do
+    local a = arg[i]
+    if a == "--help" or a == "-h" then
+      show_help()
+    elseif a == "--copy-selected" or a == "-s" then
+      cfg.copy_sel = true
+    elseif a == "--insert-mode" or a == "-i" then
+      cfg.insert_mode = true
+    elseif a == "--terminal" or a == "-T" then
+      cfg.in_terminal = true
+    elseif a == "--ext" or a == "-e" then
+      i = i + 1
+      if not arg[i] or arg[i]:sub(1, 1) == "-" then die(a .. " requires a value") end
+      cfg.ext = arg[i]
+    elseif a == "--term" or a == "-t" then
+      i = i + 1
+      if not arg[i] or arg[i]:sub(1, 1) == "-" then die(a .. " requires a value") end
+      cfg.terminal = arg[i]
+    elseif a == "--editor" or a == "-E" then
+      i = i + 1
+      if not arg[i] or arg[i]:sub(1, 1) == "-" then die(a .. " requires a value") end
+      cfg.editor = arg[i]
+    elseif a == "--menu" or a == "-m" then
+      i = i + 1
+      if not arg[i] or arg[i]:sub(1, 1) == "-" then die(a .. " requires a value") end
+      cfg.menu = arg[i]
+    else
+      io.stderr:write("Unknown argument: " .. a .. "\n")
+      show_help()
+    end
+    i = i + 1
+  end
+end
+
+--- Close any existing hyprvim-open-vim window via hyprctl, then exit.
+--- Using hyprctl avoids the self-match problem that pgrep has when called
+--- through a `sh -c` wrapper whose argv contains the search pattern.
+local function kill_existing()
+  local clients = pread("hyprctl clients -j")
+  if not clients:match('"class"%s*:%s*"' .. TERM_CLASS .. '"') then return end
+  print("An existing instance was found and terminated.")
+  run("hyprctl dispatch closewindow class:" .. TERM_CLASS)
+  os.exit(1)
+end
+
+--- Populate `cfg.menu` by auto-detecting an available prompt tool.
+--- Checks in preference order: rofi, wofi, tofi, fuzzel, dmenu, zenity, kdialog.
+local function detect_menu()
+  if cfg.menu ~= "" then return end
+  local tools = { "rofi", "wofi", "tofi", "fuzzel", "dmenu", "zenity", "kdialog" }
+  for _, t in ipairs(tools) do
+    if cmd_exists(t) then
+      cfg.menu = t
+      return
+    end
+  end
+  die("No prompt tool found. Install one of: " .. table.concat(tools, ", "))
+end
+
+--- Verify that all required external commands are installed: editor, wtype, wl-paste, wl-copy.
+local function check_deps()
+  for _, dep in ipairs({ cfg.editor, "wtype", "wl-paste", "wl-copy" }) do
+    if not cmd_exists(dep) then die("'" .. dep .. "' is required but not installed.") end
+  end
+end
+
+--- Create a timestamped scratch file in `cfg.tmpdir` with restricted permissions.
+--- Appends `cfg.ext` to the filename if set.
+--- @return string  Absolute path to the new file
+local function create_tmpfile()
+  run("mkdir -p " .. sq(cfg.tmpdir))
+  local name = "doc-" .. os.date("%y%m%d%H%M%S")
+  if cfg.ext and cfg.ext ~= "" then name = name .. "." .. cfg.ext end
+  local path = cfg.tmpdir .. "/" .. name
+  local f = io.open(path, "w")
+  if not f then die("Could not create tmpfile: " .. path) end
+  ---@cast f file*
+  f:close()
+  run("chmod og-rwx " .. sq(path))
+  return path
+end
+
+--- Return the Unix mtime of `path`, or 0 on failure.
+--- @param path string
+--- @return integer
+local function get_mtime(path) return tonumber(pread("stat -c %Y " .. sq(path))) or 0 end
+
+--- Write `content` to wl-copy's stdin with optional extra flags (e.g. "-n").
+--- @param content string
+--- @param flags? string  Extra flags passed to wl-copy
+local function wl_write(content, flags)
+  local p = io.popen("wl-copy " .. (flags or ""), "w")
+  if p then
+    p:write(content)
+    p:close()
+  end
+end
+
+--- Pre-fill `tmpfile` with the current selection.
+--- Tries the primary selection first (highlight without clipboard side-effects).
+--- Falls back to sending Ctrl+C (or Ctrl+Shift+C in terminals) and reading the clipboard.
+--- Restores the clipboard to its pre-call state afterwards.
+--- @param tmpfile string
+local function copy_selected(tmpfile)
+  local last_clip = pread("wl-paste --no-newline")
+  -- Primary selection (populated by highlight, no clipboard side effects)
+  local selected = pread("wl-paste -p --no-newline")
+
+  if selected == "" then
+    run("wl-copy --clear")
+    if cfg.in_terminal then
+      run("wtype -M ctrl -M shift c -m ctrl -m shift")
+    else
+      run("wtype -M ctrl c -m ctrl")
+    end
+    run("sleep 0.3")
+    selected = pread("wl-paste --no-newline")
+  end
+
+  if selected ~= "" then
+    local f = io.open(tmpfile, "w")
+    if f then
+      f:write(selected)
+      f:close()
+    end
+  end
+
+  if last_clip ~= "" then
+    wl_write(last_clip)
+  else
+    run("wl-copy --clear")
+  end
+end
+
+--- Build the terminal launch prefix for the configured terminal.
+--- Looks up flag conventions in TERM_FLAGS; falls back to "--class ... -e".
+--- @return string  e.g. "kitty --class hyprvim-open-vim -e"
+local function build_term_cmd()
+  if cfg.terminal == "" then die("No terminal specified. Set $TERMINAL or use --term") end
+  local flags = TERM_FLAGS[cfg.terminal] or { class = "--class", exec = "-e" }
+  local parts = { cfg.terminal }
+  if flags.pre then parts[#parts + 1] = flags.pre end
+  parts[#parts + 1] = flags.class .. " " .. TERM_CLASS
+  parts[#parts + 1] = flags.exec
+  return table.concat(parts, " ")
+end
+
+--- Open `tmpfile` in a floating terminal editor and block until it closes.
+--- In insert mode the editor starts at the end of the file (normal! G + startinsert!).
+--- In normal mode the editor starts at the beginning (default cursor position).
+--- The editor is configured to quit automatically on BufWritePost.
+--- @param tmpfile string
+local function launch_editor(tmpfile)
+  local term = build_term_cmd()
+  local autocmd = "+'autocmd BufWritePost <buffer> quit'"
+  local cmd = term .. " " .. cfg.editor .. " " .. autocmd
+  if cfg.insert_mode then cmd = cmd .. " +'normal! G' +startinsert!" end
+  cmd = cmd .. " " .. sq(tmpfile)
+  run(cmd)
+end
+
+--- Paste the contents of `tmpfile` back to the previously focused window via Ctrl+V.
+--- Saves the current clipboard before pasting and restores it afterwards.
+--- Exits with code 1 if the file is empty.
+--- @param tmpfile string
+local function paste_content(tmpfile)
+  local f = io.open(tmpfile, "r")
+  if not f then return end
+  local text = f:read("*a")
+  f:close()
+
+  if text == "" then os.exit(1) end
+
+  local before = pread("wl-paste --no-newline")
+  run("wl-copy -n < " .. sq(tmpfile))
+  run("sleep 0.2")
+  run("wtype -M ctrl v -m ctrl")
+  run("sleep 0.1")
+  if before ~= "" then wl_write(before, "-n") end
+end
+
+--- Entry point: parse args, validate environment, open editor, paste result.
+local function main()
+  parse_args()
+  kill_existing()
+  detect_menu()
+  check_deps()
+
+  local tmpfile = create_tmpfile()
+
+  if cfg.copy_sel then copy_selected(tmpfile) end
+
+  local mtime_before = get_mtime(tmpfile)
+  launch_editor(tmpfile)
+  local mtime_after = get_mtime(tmpfile)
+
+  if mtime_after > mtime_before then paste_content(tmpfile) end
+
+  os.remove(tmpfile)
+end
+
+main()

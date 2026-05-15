@@ -1,5 +1,5 @@
 -- vim/commands/editor.lua
--- Delegate to scripts/vim-open-editor.sh via a non-blocking exec dispatch.
+-- Delegate to scripts/vim-open-editor via a non-blocking exec dispatch.
 -- All clipboard I/O and process management happens in the script subprocess,
 -- not in the compositor Lua thread.
 
@@ -10,7 +10,7 @@ local Config = require("config") ---@class HyprVimConfigModule
 local Editor = {}
 
 local _dir = debug.getinfo(1, "S").source:sub(2):match("(.*/)") or "./"
-local SCRIPT = _dir .. "../../scripts/vim-open-editor.sh"
+local SCRIPT = _dir .. "../../scripts/vim-open-editor"
 
 ---@class EditorOpenOpts
 ---@field copy_sel    boolean|nil  copy the active selection into the scratch file before opening
@@ -18,16 +18,21 @@ local SCRIPT = _dir .. "../../scripts/vim-open-editor.sh"
 ---@field ext         string|nil   file extension for syntax highlighting (e.g. "md", "py")
 
 ---Open a floating terminal editor on a scratch file.
----Delegates entirely to vim-open-editor.sh; no blocking I/O in the compositor thread.
+---Delegates entirely to vim-open-editor; no blocking I/O in the compositor thread.
 ---@param opts EditorOpenOpts|nil
 function Editor.open(opts)
   opts = opts or {}
   local copy_sel = opts.copy_sel ~= false
   local ext = opts.ext or "md"
-  local args = { SCRIPT, "--term", Config.applications.terminal }
+  -- stylua: ignore
+  local args = { SCRIPT,
+    "--term",   Config.applications.terminal,
+    "--editor", Config.applications.editor,
+    "--menu",   Config.applications.menu,
+    "--ext",    ext,
+  }
   if copy_sel then args[#args + 1] = "--copy-selected" end
   if opts.insert_mode then args[#args + 1] = "--insert-mode" end
-  args[#args + 1] = "--ext " .. ext
   Hypr.exec(table.concat(args, " "))
 end
 
