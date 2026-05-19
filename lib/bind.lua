@@ -98,4 +98,10 @@ function Bind.keys(rows, defaults)
   end
 end
 
+---Pass the key through to the active window unchanged.
+---@return fun()
+function Bind.pass()
+  return function() hl.dispatch(hl.dsp.pass()) end
+end
+
 return Bind

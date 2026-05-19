@@ -62,4 +62,14 @@ function VimCount.handle_zero_visual()
   end
 end
 
+---Wrap `fn` to clear the count accumulator before calling it.
+---@param fn fun()
+---@return fun()
+function VimCount.clear_then_fn(fn)
+  return function()
+    VimCount.clear()
+    fn()
+  end
+end
+
 return VimCount

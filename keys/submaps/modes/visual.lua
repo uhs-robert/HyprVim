@@ -13,9 +13,43 @@ local LEADER = (config.keys or {}).leader or "SUPER"
 local ACT = (config.keys or {}).activate or "ESCAPE"
 
 local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key })) end
-local function normal() hl.dispatch(hl.dsp.submap("NORMAL")) end
-local function visual() hl.dispatch(hl.dsp.submap("VISUAL")) end
-local function reset() hl.dispatch(hl.dsp.submap("reset")) end
+
+local normal = Submap.switch("NORMAL")
+local visual = Submap.switch("VISUAL")
+local reset  = Submap.switch("reset")
+local va     = motion.action_visual
+local vm     = motion.action
+local va_seq = motion.action_seq
+
+-- ── Visual actions ────────────────────────────────────────────────────────────
+-- stylua: ignore start
+local function open_editor(insert)
+  return function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = insert or false }) end
+end
+
+local function change_sel()    reg.handle_delete("CTRL", "x", "INSERT") end
+local function delete_sel()    reg.handle_delete("CTRL", "x", "NORMAL") end
+local function backspace_sel() wk.close() reg.handle_delete("", "BackSpace", "NORMAL") end
+local function delete_bol()    send("SHIFT", "HOME") send("", "Delete") normal() end
+local function yank_sel()      reg.handle_yank("CTRL", "c", "NORMAL") end
+local function yank_bol()      motion.send_sequence({ { "", "END" }, { "SHIFT", "HOME" } }) reg.handle_yank("CTRL", "c", "NORMAL") end
+local function paste_sel()     reg.handle_paste("CTRL", "v", "NORMAL") end
+local function sel_bol()       send("SHIFT", "HOME") end
+local function sel_eol()       send("SHIFT", "END") end
+local function sel_page_down() send("SHIFT", "PAGE_DOWN") end
+local function sel_page_up()   send("SHIFT", "PAGE_UP") end
+local function sel_last_line() send("CTRL SHIFT", "END") end
+
+---Return an action that passes a CTRL+key shortcut through without leaving visual mode.
+---@param key string
+---@return fun()
+local function fmt(key) return function() send("CTRL", key) end end
+
+---Return an action that passes a CTRL+key shortcut and returns to normal mode.
+---@param key string
+---@return fun()
+local function passthrough(key) return function() send("CTRL", key) normal() end end
+-- stylua: ignore end
 
 local footer = {
   { "SPACE",                 wk.toggle },
@@ -29,75 +63,71 @@ local footer = {
 Submap.define({
   name = "VISUAL",
   on_enter = function() count.clear() end,
-  escape = function()
-    send("", "LEFT")
-    send("", "RIGHT")
-    normal()
-  end,
+  escape = function() send("", "LEFT") send("", "RIGHT") normal() end,
   back = function() wk.close() normal() end,
   catchall = "stay",
   binds = function()
     local rows = {
       -- stylua: ignore start
       -- Count
-      { "0", function() count.handle_zero_visual() end },
+      { "0", count.handle_zero_visual },
       -- Mode switches
-      { "g", function() hl.dispatch(hl.dsp.submap("G-VISUAL")) end, "+Goto" },
+      { "g", Submap.switch("G-VISUAL"), "+Goto" },
       -- Editor
-      { LEADER .. " + n", function() count.clear() reset() oe.open({ copy_selected = true }) end,                    "Edit in Vim (Normal)" },
-      { LEADER .. " + i", function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = true }) end, "Edit in Vim (Insert)" },
+      { LEADER .. " + n", open_editor(false), "Edit in Vim (Normal)" },
+      { LEADER .. " + i", open_editor(true),  "Edit in Vim (Insert)" },
       -- Char motions
-      { "h",             function() motion.send_raw({ "SHIFT", "LEFT" },  count.get()) end, "Left",  { repeating = true } },
-      { "j",             function() motion.send_raw({ "SHIFT", "DOWN" },  count.get()) end, "Down",  { repeating = true } },
-      { "k",             function() motion.send_raw({ "SHIFT", "UP" },    count.get()) end, "Up",    { repeating = true } },
-      { "l",             function() motion.send_raw({ "SHIFT", "RIGHT" }, count.get()) end, "Right", { repeating = true } },
-      { "SHIFT + h",     function() motion.send_raw({ "SHIFT", "HOME" },      count.get()) end, "Start of line", { repeating = true } },
-      { "SHIFT + j",     function() motion.send_raw({ "CTRL SHIFT", "DOWN" }, count.get()) end, "J",             { repeating = true } },
-      { "SHIFT + k",     function() motion.send_raw({ "CTRL SHIFT", "UP" },   count.get()) end, "K",             { repeating = true } },
-      { "SHIFT + l",     function() motion.send_raw({ "SHIFT", "END" },        count.get()) end, "End of line",   { repeating = true } },
+      { "h",         va("h"), "Left",          { repeating = true } },
+      { "j",         va("j"), "Down",          { repeating = true } },
+      { "k",         va("k"), "Up",            { repeating = true } },
+      { "l",         va("l"), "Right",         { repeating = true } },
+      { "SHIFT + h", va("H"), "Start of line", { repeating = true } },
+      { "SHIFT + j", va("J"), "J",             { repeating = true } },
+      { "SHIFT + k", va("K"), "K",             { repeating = true } },
+      { "SHIFT + l", va("L"), "End of line",   { repeating = true } },
       -- Word
-      { "b",         function() motion.send_raw({ "CTRL SHIFT", "LEFT" },  count.get()) end, "Prev word",     { repeating = true } },
-      { "e",         function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) end, "Next end word", { repeating = true } },
-      { "w",         function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) end, "Next word",     { repeating = true } },
-      { "SHIFT + b", function() motion.send_raw({ "CTRL SHIFT", "LEFT" },  count.get()) end, nil, { repeating = true } },
-      { "SHIFT + e", function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) end, nil, { repeating = true } },
-      { "SHIFT + w", function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) end, nil, { repeating = true } },
+      { "b",         va("b"), "Prev word",     { repeating = true } },
+      { "e",         va("e"), "Next end word", { repeating = true } },
+      { "w",         va("w"), "Next word",     { repeating = true } },
+      { "SHIFT + b", va("B"), nil,             { repeating = true } },
+      { "SHIFT + e", va("E"), nil,             { repeating = true } },
+      { "SHIFT + w", va("W"), nil,             { repeating = true } },
       -- Paragraph
-      { "SHIFT + BRACKETLEFT",  function() motion.send_sequence({ { "SHIFT", "HOME" }, { "CTRL SHIFT", "UP" } }) end,   "Paragraph start", { repeating = true } },
-      { "SHIFT + BRACKETRIGHT", function() motion.send_sequence({ { "SHIFT", "END" },  { "CTRL SHIFT", "DOWN" } }) end, "Paragraph end",   { repeating = true } },
+      { "SHIFT + BRACKETLEFT",  va_seq({ { "SHIFT", "HOME" }, { "CTRL SHIFT", "UP" } }),   "Paragraph start", { repeating = true } },
+      { "SHIFT + BRACKETRIGHT", va_seq({ { "SHIFT", "END" },  { "CTRL SHIFT", "DOWN" } }), "Paragraph end",   { repeating = true } },
       -- Line / page
-      { "SHIFT + MINUS", function() send("SHIFT", "HOME") end,      "Start of line", { repeating = true } },
-      { "SHIFT + 4",     function() send("SHIFT", "END") end,       "End of line",   { repeating = true } },
-      { "CTRL + e",      function() send("SHIFT", "PAGE_DOWN") end, "Page down",     { repeating = true } },
-      { "CTRL + y",      function() send("SHIFT", "PAGE_UP") end,   "Page up",       { repeating = true } },
-      { "SHIFT + g",     function() send("CTRL SHIFT", "END") end,  "Last line",     { repeating = true } },
+      { "SHIFT + MINUS", sel_bol,       "Start of line", { repeating = true } },
+      { "SHIFT + 4",     sel_eol,       "End of line",   { repeating = true } },
+      { "CTRL + e",      sel_page_down, "Page down",     { repeating = true } },
+      { "CTRL + y",      sel_page_up,   "Page up",       { repeating = true } },
+      { "SHIFT + g",     sel_last_line, "Last line",     { repeating = true } },
       -- Undo
-      { "u",       function() motion.send("u") end,          "Undo", { repeating = true } },
-      { "SHIFT + u", function() motion.send("u") end,        nil,    { repeating = true } },
-      { "CTRL + r",  function() motion.send("CTRL + r") end, "Redo", { repeating = true } },
+      { "u",        vm("u"),        "Undo", { repeating = true } },
+      { "SHIFT + u", vm("u"),       nil,    { repeating = true } },
+      { "CTRL + r",  vm("CTRL + r"), "Redo", { repeating = true } },
       -- Change / delete / yank / paste
-      { "c",         function() reg.handle_delete("CTRL", "x", "INSERT") end, "Change" },
-      { "SHIFT + x", function() wk.close() reg.handle_delete("", "BackSpace", "NORMAL") end, "BackSpace", { repeating = true } },
-      { "x",         function() reg.handle_delete("CTRL", "x", "NORMAL") end, nil,     { repeating = true } },
-      { "d",         function() reg.handle_delete("CTRL", "x", "NORMAL") end, "Delete", { repeating = true } },
-      { "SHIFT + d", function() send("SHIFT", "HOME") send("", "Delete") normal() end, "Delete to line start" },
-      { "y",         function() reg.handle_yank("CTRL", "c", "NORMAL") end,   "Yank" },
-      { "SHIFT + y", function() motion.send_sequence({ { "", "END" }, { "SHIFT", "HOME" } }) reg.handle_yank("CTRL", "c", "NORMAL") end, "Yank to line start" },
-      { "p",         function() reg.handle_paste("CTRL", "v", "NORMAL") end,  "Paste", { repeating = true } },
-      { "SHIFT + p", function() reg.handle_paste("CTRL", "v", "NORMAL") end,  nil,     { repeating = true } },
+      { "c",         change_sel,    "Change"                                  },
+      { "SHIFT + x", backspace_sel, "BackSpace",  { repeating = true }        },
+      { "x",         delete_sel,    nil,          { repeating = true }        },
+      { "d",         delete_sel,    "Delete",     { repeating = true }        },
+      { "SHIFT + d", delete_bol,    "Delete to line start"                    },
+      { "y",         yank_sel,      "Yank"                                    },
+      { "SHIFT + y", yank_bol,      "Yank to line start"                      },
+      { "p",         paste_sel,     "Paste",      { repeating = true }        },
+      { "SHIFT + p", paste_sel,     nil,          { repeating = true }        },
       -- Normal shortcuts passthrough
-      { "CTRL + x", function() send("CTRL", "x") normal() end, nil, { repeating = true } },
-      { "CTRL + p", function() send("CTRL", "v") normal() end, nil, { repeating = true } },
-      { "CTRL + v", function() send("CTRL", "v") normal() end, nil, { repeating = true } },
-      { "CTRL + b", function() send("CTRL", "b") end, nil, { repeating = true } },
-      { "CTRL + i", function() send("CTRL", "i") end, nil, { repeating = true } },
-      { "CTRL + u", function() send("CTRL", "u") end, nil, { repeating = true } },
-      { "CTRL + s", function() send("CTRL", "s") end, nil, { repeating = true } },
+      { "CTRL + x", passthrough("x"), nil, { repeating = true } },
+      { "CTRL + p", passthrough("v"), nil, { repeating = true } },
+      { "CTRL + v", passthrough("v"), nil, { repeating = true } },
+      { "CTRL + b", fmt("b"),         nil, { repeating = true } },
+      { "CTRL + i", fmt("i"),         nil, { repeating = true } },
+      { "CTRL + u", fmt("u"),         nil, { repeating = true } },
+      { "CTRL + s", fmt("s"),         nil, { repeating = true } },
       -- Sub-submaps
-      { "i",         function() hl.dispatch(hl.dsp.submap("V-INSIDE")) end, "+Inner" },
-      { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("V-INSIDE")) end },
-      { "a",         function() hl.dispatch(hl.dsp.submap("V-AROUND")) end, "+Around" },
-      { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("V-AROUND")) end },
+      { "i",         Submap.switch("V-INSIDE"), "+Inner"  },
+      { "SHIFT + i", Submap.switch("V-INSIDE")            },
+      { "a",         Submap.switch("V-AROUND"), "+Around" },
+      { "SHIFT + a", Submap.switch("V-AROUND")            },
       -- stylua: ignore end
     }
     for i = 1, 9 do
@@ -113,7 +143,7 @@ Submap.define({
 -- ---------------------------------------------------------------------------
 
 local function visual_text_object(name, parent_name, word_seq, para_seq)
-  local function parent() hl.dispatch(hl.dsp.submap(parent_name)) end
+  local parent = Submap.switch(parent_name)
   Submap.define({
     name = name,
     escape = "NORMAL",
@@ -121,10 +151,10 @@ local function visual_text_object(name, parent_name, word_seq, para_seq)
     catchall = "stay",
     binds = {
       -- stylua: ignore start
-      { "w",         function() motion.send_sequence(word_seq) parent() end, "Word" },
-      { "SHIFT + w", function() motion.send_sequence(word_seq) parent() end },
+      { "w",         function() motion.send_sequence(word_seq) parent() end, "Word"      },
+      { "SHIFT + w", function() motion.send_sequence(word_seq) parent() end              },
       { "p",         function() motion.send_sequence(para_seq) parent() end, "Paragraph" },
-      { "SHIFT + p", function() motion.send_sequence(para_seq) parent() end },
+      { "SHIFT + p", function() motion.send_sequence(para_seq) parent() end              },
       { "SPACE",     wk.toggle },
       { LEADER .. " + " .. ACT, reset },
       -- stylua: ignore end
