@@ -104,7 +104,7 @@ Config.defaults = {
     delay_ms = 100,
     position = "bottom-right",
     auto_show = {
-      disabled = { "NORMAL", "VISUAL", "V-LINE" },
+      disabled = { "NORMAL", "VISUAL", "V-LINE", "INSERT" },
       enabled  = nil,
     },
   },

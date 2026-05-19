@@ -49,7 +49,7 @@ function Command.dispatch_after()
 end
 
 ---Close or kill every window in the active workspace.
----@param kill boolean  true → kill (SIGKILL), false → graceful close
+---@param kill boolean  true -> kill (SIGKILL), false -> graceful close
 local function close_workspace_windows(kill)
   local ws = hl.get_active_workspace()
   if not ws then return end
@@ -59,7 +59,7 @@ local function close_workspace_windows(kill)
   end
 end
 
----Exact-match dispatch table: command string → handler.
+---Exact-match dispatch table: command string -> handler.
 ---@type table<string, fun()>
 -- stylua: ignore start
 local commands = {

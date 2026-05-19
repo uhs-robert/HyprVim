@@ -122,7 +122,7 @@ function Marks.set(char)
   json_write(marks)
 
   local short = #ttl > 30 and (ttl:sub(1, 30) .. "…") or ttl
-  notify(string.format("Mark '%s' → %s (ws:%d)", char, cls, ws))
+  notify(string.format("Mark '%s' -> %s (ws:%d)", char, cls, ws))
   _ = short
   Marks.dispatch_after()
 end
@@ -168,7 +168,7 @@ function Marks.jump(char)
 
   if win_exists then
     Hypr.focus_window(m.window)
-    notify(string.format("Jumped to '%s' → %s", char, m.class or ""))
+    notify(string.format("Jumped to '%s' -> %s", char, m.class or ""))
   else
     -- Stale mark: remove it.
     marks[char] = nil

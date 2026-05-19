@@ -1,12 +1,17 @@
 -- keys/submaps/modes/insert.lua
 
-local leader = (require("config").keys or {}).leader   or "SUPER"
-local act    = (require("config").keys or {}).activate or "ESCAPE"
+local Submap = require("lib.submap") ---@class HyprVimSubmap
+local config = require("config") ---@class HyprVimConfigModule
 
-local function b(keys, fn) hl.bind(keys, fn) end
-local function submap(n)   hl.dispatch(hl.dsp.submap(n)) end
+local LEADER = (config.keys or {}).leader or "SUPER"
+local ACT = (config.keys or {}).activate or "ESCAPE"
+local HYPRVIM_ACTIVATE = LEADER .. " + " .. ACT
 
-hl.define_submap("INSERT", "reset", function()
-  b(leader .. " + " .. act, function() hl.dispatch(hl.dsp.submap("reset")) end)
-  b("ESCAPE",               function() submap("NORMAL") end)
-end)
+Submap.define({
+  name = "INSERT",
+  escape = "NORMAL",
+  back = false,
+  binds = {
+    { HYPRVIM_ACTIVATE, function() hl.dispatch(hl.dsp.submap("reset")) end },
+  },
+}).setup()

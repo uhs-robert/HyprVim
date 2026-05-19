@@ -1,59 +1,32 @@
 -- keys/submaps/modes/g-motion.lua
 
+local Submap = require("lib.submap") ---@class HyprVimSubmap
+local Bind = require("lib.bind") ---@class HyprVimBindLib
 local vim = require("vim") ---@class Vim
-local count = vim.count
-local motion = vim.motion
 local wk = require("whichkey") ---@class WhichKey
+local config = require("config") ---@class HyprVimConfigModule
+local LEADER = (config.keys or {}).leader or "SUPER"
+local ACT = (config.keys or {}).activate or "ESCAPE"
 
-local leader = (require("config").keys or {}).leader or "SUPER"
-local act = (require("config").keys or {}).activate or "ESCAPE"
+local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key })) end
+local function normal() hl.dispatch(hl.dsp.submap("NORMAL")) end
 
-local function b(keys, fn) hl.bind(keys, fn) end
-local function bd(keys, desc, fn) hl.bind(keys, fn, { description = desc }) end
-local function send(mods, key, window) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key, window = window })) end
-local function submap(n) hl.dispatch(hl.dsp.submap(n)) end
-
-hl.define_submap("G-MOTION", "reset", function()
-  bd("e", "Prev end of word", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL", "LEFT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } })
-    submap("NORMAL")
-  end)
-  bd("SHIFT + t", "Go to prev tab", function()
-    send("CTRL", "PAGE_UP")
-    submap("NORMAL")
-  end)
-  bd("t", "Go to next tab", function()
-    send("CTRL", "PAGE_DOWN")
-    submap("NORMAL")
-  end)
-  bd("g", "Go to doc start", function()
-    submap("NORMAL")
-    send("CTRL", "HOME")
-  end)
-  bd("SHIFT + g", "Go to last line", function()
-    send("CTRL", "END")
-    submap("NORMAL")
-  end)
-  bd("h", "Help", function()
-    count.clear()
-    hl.dispatch(hl.dsp.submap("reset"))
-    local Config = require("config") ---@class HyprVimConfigModule
-    hl.dispatch(hl.dsp.exec_cmd(Config.term_cmd("floating-help") .. " hyprvim-help"))
-    submap("NORMAL")
-  end)
-  bd("m", "Marks list", function()
-    count.clear()
-    vim.marks.list()
-    submap("NORMAL")
-  end)
-
-  b("ESCAPE", function() submap("NORMAL") end)
-  b(leader .. " + " .. act, function() hl.dispatch(hl.dsp.submap("reset")) end)
-  b("BackSpace", function()
-    wk.close()
-    submap("NORMAL")
-  end)
-  b("SPACE", function() wk.toggle() end)
-  b("catchall", function() submap("G-MOTION") end)
-  -- b("SHIFT + catchall",     function() submap("G-MOTION") end)
-end)
+Submap.define({
+  name = "GOTO",
+  escape = "NORMAL",
+  back = function() wk.close() normal() end,
+  catchall = "stay",
+  binds = {
+    -- stylua: ignore start
+    { "e",          function() vim.motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL", "LEFT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } }) normal() end, "Prev end of word" },
+    { "SHIFT + t",  function() send("CTRL", "PAGE_UP")   normal() end, "Prev tab"   },
+    { "t",          function() send("CTRL", "PAGE_DOWN") normal() end, "Next tab"   },
+    { "g",          function() send("CTRL", "HOME")      normal() end, "Doc start"  },
+    { "SHIFT + g",  function() send("CTRL", "END")       normal() end, "Last line"  },
+    { "h",          function() vim.count.clear() hl.dispatch(hl.dsp.submap("reset")) hl.dispatch(hl.dsp.exec_cmd(config.term_cmd("floating-help") .. " hyprvim-help")) end, "Help" },
+    { "m",          function() vim.count.clear() vim.marks.list() normal() end, "Marks list" },
+    { "SPACE",      wk.toggle },
+    { LEADER .. " + " .. ACT, function() hl.dispatch(hl.dsp.submap("reset")) end },
+    -- stylua: ignore end
+  },
+}).setup()

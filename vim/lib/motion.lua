@@ -8,6 +8,16 @@ local Window = require("hypr.window") ---@class HyprVimWindow
 --- @class VimMotion
 local VimMotion = {}
 
+-- Navigation keys that Hyprland's send_shortcut won't accept as raw keysym strings.
+-- These send their GUI equivalent even when the focused window is a terminal.
+---@type table<string, {[1]: string, [2]: string}>
+local TERM_KEYSYMS = {
+  ["0"] = { "",     "HOME"  },
+  ["$"] = { "",     "END"   },
+  ["{"] = { "CTRL", "UP"    },
+  ["}"] = { "CTRL", "DOWN"  },
+}
+
 ---Maps vim motion keys to `{mods, key}` pairs for GUI applications.
 ---@type table<string, {[1]: string, [2]: string}>
 local GUI_MOTIONS = {
@@ -62,8 +72,11 @@ function VimMotion.send(key, opts)
   local n = opts.count or VimCount.get()
 
   if Window.is_terminal() and not opts.force_gui then
+    local ts = TERM_KEYSYMS[key]
+    local tmods = ts and ts[1] or ""
+    local tkey  = ts and ts[2] or key
     for _ = 1, n do
-      hl.dispatch(hl.dsp.send_shortcut({ mods = "", key = key }))
+      hl.dispatch(hl.dsp.send_shortcut({ mods = tmods, key = tkey }))
     end
     return
   end

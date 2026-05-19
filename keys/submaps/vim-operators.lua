@@ -1,598 +1,213 @@
 -- keys/submaps/vim-operators.lua
--- D-MOTION, C-MOTION, Y-MOTION with nested I/A/G sub-submaps
+-- DELETE, CHANGE, YANK operators with nested I/A/G sub-submaps
 
-local vim = require("vim") ---@class vim
+local Submap = require("lib.submap") ---@class HyprVimSubmap
+local vim = require("vim") ---@class Vim
 local motion = vim.motion
 local count = vim.count
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
+local config = require("config") ---@class HyprVimConfigModule
+local LEADER = (config.keys or {}).leader or "SUPER"
+local ACT = (config.keys or {}).activate or "ESCAPE"
 
-local leader = (require("config").keys or {}).leader or "SUPER"
-local act = (require("config").keys or {}).activate or "ESCAPE"
+local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key })) end
+local function normal() hl.dispatch(hl.dsp.submap("NORMAL")) end
+local function insert() hl.dispatch(hl.dsp.submap("INSERT")) end
+local function reset() hl.dispatch(hl.dsp.submap("reset")) end
 
-local function b(keys, fn, opts)
-  hl.bind(keys, fn, opts)
+local footer = {
+  { "SPACE",                 wk.toggle },
+  { LEADER .. " + " .. ACT, reset },
+}
+
+--- Build and register the I/A/G sub-submaps for one operator.
+--- @param op_name  string  parent submap name (e.g. "DELETE")
+--- @param on_word  fun()   action for word text objects
+--- @param on_para  fun()   action for paragraph text objects
+--- @param on_first fun()   action for first-line goto
+--- @param on_last  fun()   action for last-line goto
+local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
+  local function parent() hl.dispatch(hl.dsp.submap(op_name)) end
+
+  local text_obj_rows = function(word_seq, para_seq, action)
+    return {
+      -- stylua: ignore start
+      { "w",         function() motion.send_sequence(word_seq) action() end, "Word" },
+      { "SHIFT + w", function() motion.send_sequence(word_seq) action() end },
+      { "p",         function() motion.send_sequence(para_seq) action() end, "Paragraph" },
+      { "SHIFT + p", function() motion.send_sequence(para_seq) action() end },
+      { "SPACE",                 wk.toggle },
+      { LEADER .. " + " .. ACT, reset },
+      -- stylua: ignore end
+    }
+  end
+
+  Submap.define({
+    name = op_name .. "-INSIDE",
+    escape = "NORMAL",
+    back = op_name,
+    catchall = "stay",
+    binds = text_obj_rows(
+      { { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } },
+      { { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } },
+      on_word
+    ),
+  }).setup()
+
+  Submap.define({
+    name = op_name .. "-AROUND",
+    escape = "NORMAL",
+    back = op_name,
+    catchall = "stay",
+    binds = text_obj_rows(
+      { { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } },
+      { { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } },
+      on_para
+    ),
+  }).setup()
+
+  Submap.define({
+    name = op_name .. "-GOTO",
+    escape = "NORMAL",
+    back = op_name,
+    catchall = "stay",
+    binds = {
+      -- stylua: ignore start
+      { "g",         function() motion.send_raw({ "CTRL SHIFT", "HOME" }, 1) on_first() end, "First line" },
+      { "SHIFT + g", function() motion.send_raw({ "CTRL SHIFT", "END" },  1) on_last()  end, "Last line"  },
+      { "SPACE",                 wk.toggle },
+      { LEADER .. " + " .. ACT, reset },
+      -- stylua: ignore end
+    },
+  }).setup()
 end
-local function bd(keys, desc, fn)
-  hl.bind(keys, fn, { description = desc })
-end
-local function send(mods, key, window)
-  hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key, window = window }))
-end
-local function submap(n)
-  hl.dispatch(hl.dsp.submap(n))
-end
-
-local function exit_footer(return_submap)
-  b("ESCAPE", function()
-    count.clear()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    count.clear()
-    submap(return_submap)
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap(return_submap)
-  end)
-end
 
 -- ---------------------------------------------------------------------------
--- D-MOTION
+-- DELETE
 -- ---------------------------------------------------------------------------
-hl.define_submap("D-MOTION", "reset", function()
-  -- Word motions
-  bd("w", "Next word", function()
-    motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get())
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("SHIFT + w", function()
-    motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get())
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  bd("e", "Next end of word", function()
-    motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get())
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("SHIFT + e", function()
-    motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get())
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  bd("b", "Prev word", function()
-    motion.send_raw({ "CTRL SHIFT", "LEFT" }, count.get())
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("SHIFT + b", function()
-    motion.send_raw({ "CTRL SHIFT", "LEFT" }, count.get())
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
 
-  -- Line
-  bd("d", "Delete line", function()
-    motion.send_sequence({ { "", "HOME" }, { "SHIFT", "End" } })
-    reg.handle_delete("CTRL", "x", "NORMAL")
-    send("", "BackSpace")
-    send("", "DOWN")
-  end)
+local function del(after) return function() reg.handle_delete("CTRL", "x", after) end end
 
-  -- To end/start
-  bd("SHIFT + 4", "End of line", function()
-    count.clear()
-    motion.send_raw({ "SHIFT", "End" }, 1)
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  bd("SHIFT + 6", "Start of line", function()
-    count.clear()
-    motion.send_raw({ "SHIFT", "Home" }, 1)
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  bd("0", "Start of line", function()
-    count.clear()
-    motion.send_raw({ "SHIFT", "Home" }, 1)
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
+Submap.define({
+  name = "DELETE",
+  on_enter = function() count.clear() end,
+  escape = "NORMAL",
+  back = false,
+  catchall = "stay",
+  binds = {
+    -- stylua: ignore start
+    { "w",         function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) del("NORMAL")() end, "Next word" },
+    { "SHIFT + w", function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) del("NORMAL")() end },
+    { "e",         function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) del("NORMAL")() end, "Next end of word" },
+    { "SHIFT + e", function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) del("NORMAL")() end },
+    { "b",         function() motion.send_raw({ "CTRL SHIFT", "LEFT" },  count.get()) del("NORMAL")() end, "Prev word" },
+    { "SHIFT + b", function() motion.send_raw({ "CTRL SHIFT", "LEFT" },  count.get()) del("NORMAL")() end },
+    { "d",         function() motion.send_sequence({ { "", "HOME" }, { "SHIFT", "End" } }) del("NORMAL")() send("", "BackSpace") send("", "DOWN") end, "Delete line" },
+    { "SHIFT + 4", function() count.clear() motion.send_raw({ "SHIFT", "End" },  1) del("NORMAL")() end, "End of line"   },
+    { "SHIFT + 6", function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) del("NORMAL")() end, "Start of line" },
+    { "0",         function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) del("NORMAL")() end, "Start of line" },
+    { "m",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-MARK")) end, "+Delete Mark" },
+    { "i",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-INSIDE")) end, "+Inner" },
+    { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("DELETE-INSIDE")) end },
+    { "a",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-AROUND")) end, "+Around" },
+    { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("DELETE-AROUND")) end },
+    { "g",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-GOTO")) end, "+Go" },
+    { "SPACE",                 wk.toggle },
+    { LEADER .. " + " .. ACT, reset },
+    -- stylua: ignore end
+  },
+}).setup()
 
-  -- Delete mark
-  bd("m", "+Delete Mark", function()
-    count.clear()
-    submap("DELETE-MARK")
-  end)
-
-  -- Sub-submaps
-  bd("i", "+Inner", function()
-    count.clear()
-    submap("D-I")
-  end)
-  b("SHIFT + i", function()
-    submap("D-I")
-  end)
-  bd("a", "+Around", function()
-    count.clear()
-    submap("D-A")
-  end)
-  b("SHIFT + a", function()
-    submap("D-A")
-  end)
-  bd("g", "+Go", function()
-    count.clear()
-    submap("D-G")
-  end)
-
-  exit_footer("D-MOTION")
-end)
-
-hl.define_submap("D-I", "D-MOTION", function()
-  bd("w", "Word", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("SHIFT + w", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  bd("p", "Paragraph", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("SHIFT + p", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  bd("SHIFT + g", "Last line", function()
-    motion.send_raw({ "CTRL SHIFT", "END" }, 1)
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("ESCAPE", function()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    submap("D-MOTION")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("D-I")
-  end)
-end)
-
-hl.define_submap("D-A", "D-MOTION", function()
-  bd("w", "Word", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("SHIFT + w", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  bd("p", "Paragraph", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("SHIFT + p", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("ESCAPE", function()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    submap("D-MOTION")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("D-A")
-  end)
-end)
-
-hl.define_submap("D-G", "D-MOTION", function()
-  bd("g", "First line", function()
-    motion.send_raw({ "CTRL SHIFT", "HOME" }, 1)
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  bd("SHIFT + g", "Last line", function()
-    motion.send_raw({ "CTRL SHIFT", "END" }, 1)
-    reg.handle_delete("CTRL", "x", "NORMAL")
-  end)
-  b("ESCAPE", function()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    submap("D-MOTION")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("D-G")
-  end)
-end)
+make_sub_submaps(
+  "DELETE",
+  function() del("NORMAL")() end,
+  function() del("NORMAL")() end,
+  function() del("NORMAL")() end,
+  function() del("NORMAL")() end
+)
 
 -- ---------------------------------------------------------------------------
--- C-MOTION
+-- CHANGE
 -- ---------------------------------------------------------------------------
-hl.define_submap("C-MOTION", "reset", function()
-  bd("w", "Next word", function()
-    motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get())
-    hl.dispatch(hl.dsp.submap("INSERT"))
-  end)
-  b("SHIFT + w", function()
-    motion.send_sequence({ { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" }, { "", "DELETE" } })
-    submap("INSERT")
-  end)
-  bd("e", "End of next word", function()
-    motion.send_sequence({ { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" }, { "", "DELETE" } })
-    submap("INSERT")
-  end)
-  bd("b", "Prev word", function()
-    motion.send_raw({ "CTRL SHIFT", "LEFT" }, count.get())
-    hl.dispatch(hl.dsp.submap("INSERT"))
-  end)
-  b("SHIFT + b", function()
-    motion.send_sequence({ { "CTRL SHIFT", "LEFT" }, { "", "DELETE" } })
-    submap("INSERT")
-  end)
 
-  -- Line
-  bd("c", "Change line", function()
-    motion.send_sequence({ { "", "HOME" }, { "SHIFT", "End" }, { "", "DELETE" } })
-    submap("INSERT")
-  end)
+Submap.define({
+  name = "CHANGE",
+  on_enter = function() count.clear() end,
+  escape = "NORMAL",
+  back = false,
+  catchall = "stay",
+  binds = {
+    -- stylua: ignore start
+    { "w",         function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) insert() end, "Next word" },
+    { "SHIFT + w", function() motion.send_sequence({ { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" }, { "", "DELETE" } }) insert() end },
+    { "e",         function() motion.send_sequence({ { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" }, { "", "DELETE" } }) insert() end, "End of next word" },
+    { "b",         function() motion.send_raw({ "CTRL SHIFT", "LEFT" }, count.get()) insert() end, "Prev word" },
+    { "SHIFT + b", function() motion.send_sequence({ { "CTRL SHIFT", "LEFT" }, { "", "DELETE" } }) insert() end },
+    { "c",         function() motion.send_sequence({ { "", "HOME" }, { "SHIFT", "End" }, { "", "DELETE" } }) insert() end, "Change line" },
+    { "SHIFT + 4", function() count.clear() motion.send_sequence({ { "SHIFT", "End" },  { "", "DELETE" } }) insert() end, "End of line"   },
+    { "SHIFT + 6", function() count.clear() motion.send_sequence({ { "SHIFT", "Home" }, { "", "DELETE" } }) insert() end, "Start of line" },
+    { "0",         function() count.clear() motion.send_sequence({ { "SHIFT", "Home" }, { "", "DELETE" } }) insert() end, "Start of line" },
+    { "SHIFT + g", function() count.clear() motion.send_raw({ "CTRL SHIFT", "END" }, 1) reg.handle_delete("CTRL", "x", "INSERT") end, "Last line" },
+    { "i",         function() count.clear() hl.dispatch(hl.dsp.submap("CHANGE-INSIDE")) end, "+Inner" },
+    { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("CHANGE-INSIDE")) end },
+    { "a",         function() count.clear() hl.dispatch(hl.dsp.submap("CHANGE-AROUND")) end, "+Around" },
+    { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("CHANGE-AROUND")) end },
+    { "g",         function() count.clear() hl.dispatch(hl.dsp.submap("CHANGE-GOTO")) end, "+Go" },
+    { "SPACE",                 wk.toggle },
+    { LEADER .. " + " .. ACT, reset },
+    -- stylua: ignore end
+  },
+}).setup()
 
-  -- To end/start
-  bd("SHIFT + 4", "End of line", function()
-    count.clear()
-    motion.send_sequence({ { "SHIFT", "End" }, { "", "DELETE" } })
-    submap("INSERT")
-  end)
-  bd("SHIFT + 6", "Start of line", function()
-    count.clear()
-    motion.send_sequence({ { "SHIFT", "Home" }, { "", "DELETE" } })
-    submap("INSERT")
-  end)
-  bd("0", "Start of line", function()
-    count.clear()
-    motion.send_sequence({ { "SHIFT", "Home" }, { "", "DELETE" } })
-    submap("INSERT")
-  end)
-  bd("SHIFT + g", "Last line", function()
-    count.clear()
-    motion.send_raw({ "CTRL SHIFT", "END" }, 1)
-    reg.handle_delete("CTRL", "x", "INSERT")
-  end)
-
-  -- Sub-submaps
-  bd("i", "+Inner", function()
-    count.clear()
-    submap("C-I")
-  end)
-  b("SHIFT + i", function()
-    submap("C-I")
-  end)
-  bd("a", "+Around", function()
-    count.clear()
-    submap("C-A")
-  end)
-  b("SHIFT + a", function()
-    submap("C-A")
-  end)
-  bd("g", "+Go", function()
-    count.clear()
-    submap("C-G")
-  end)
-
-  b("ESCAPE", function()
-    count.clear()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    count.clear()
-    submap("NORMAL")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("C-MOTION")
-  end)
-end)
-
-hl.define_submap("C-I", "C-MOTION", function()
-  bd("w", "Word", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" }, { "", "BackSpace" } })
-    submap("INSERT")
-  end)
-  b("SHIFT + w", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" }, { "", "BackSpace" } })
-    submap("INSERT")
-  end)
-  bd("p", "Paragraph", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_delete("CTRL", "x", "INSERT")
-  end)
-  b("SHIFT + p", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_delete("CTRL", "x", "INSERT")
-  end)
-  b("ESCAPE", function()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    submap("C-MOTION")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("C-I")
-  end)
-end)
-
-hl.define_submap("C-A", "C-MOTION", function()
-  bd("w", "Word", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" }, { "", "BackSpace" } })
-    submap("INSERT")
-  end)
-  b("SHIFT + w", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" }, { "", "BackSpace" } })
-    submap("INSERT")
-  end)
-  bd("p", "Paragraph", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_delete("CTRL", "x", "INSERT")
-  end)
-  b("SHIFT + p", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_delete("CTRL", "x", "INSERT")
-  end)
-  b("ESCAPE", function()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    submap("C-MOTION")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("C-A")
-  end)
-end)
-
-hl.define_submap("C-G", "C-MOTION", function()
-  bd("g", "First line", function()
-    motion.send_raw({ "CTRL SHIFT", "HOME" }, 1)
-    reg.handle_delete("CTRL", "x", "INSERT")
-  end)
-  bd("SHIFT + g", "Last line", function()
-    motion.send_raw({ "CTRL SHIFT", "END" }, 1)
-    reg.handle_delete("CTRL", "x", "INSERT")
-  end)
-  b("ESCAPE", function()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    submap("C-MOTION")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("C-G")
-  end)
-end)
+make_sub_submaps(
+  "CHANGE",
+  function() motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" }, { "", "BackSpace" } }) insert() end,
+  function() motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } }) reg.handle_delete("CTRL", "x", "INSERT") end,
+  function() motion.send_raw({ "CTRL SHIFT", "HOME" }, 1) reg.handle_delete("CTRL", "x", "INSERT") end,
+  function() motion.send_raw({ "CTRL SHIFT", "END" }, 1) reg.handle_delete("CTRL", "x", "INSERT") end
+)
 
 -- ---------------------------------------------------------------------------
--- Y-MOTION
+-- YANK
 -- ---------------------------------------------------------------------------
-hl.define_submap("Y-MOTION", "reset", function()
-  bd("w", "Next word", function()
-    motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get())
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  bd("e", "Next end of word", function()
-    motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get())
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  bd("b", "Prev word", function()
-    motion.send_raw({ "CTRL SHIFT", "LEFT" }, count.get())
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("SHIFT + w", function()
-    motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get())
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("SHIFT + e", function()
-    motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get())
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("SHIFT + b", function()
-    motion.send_raw({ "CTRL SHIFT", "LEFT" }, count.get())
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
 
-  -- Line
-  bd("y", "Yank line", function()
-    motion.send_sequence({ { "", "HOME" }, { "SHIFT", "End" } })
-    reg.handle_yank("CTRL", "c", "NORMAL")
-    send("", "DOWN")
-  end)
+local function yank(after) return function() reg.handle_yank("CTRL", "c", after) end end
 
-  -- To end/start
-  bd("SHIFT + 4", "End of line", function()
-    count.clear()
-    motion.send_raw({ "SHIFT", "End" }, 1)
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  bd("0", "Start of line", function()
-    count.clear()
-    motion.send_raw({ "SHIFT", "Home" }, 1)
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  bd("SHIFT + 6", "End of line", function()
-    count.clear()
-    motion.send_raw({ "SHIFT", "Home" }, 1)
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  bd("SHIFT + g", "Last line", function()
-    motion.send_raw({ "CTRL SHIFT", "END" }, 1)
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
+Submap.define({
+  name = "YANK",
+  on_enter = function() count.clear() end,
+  escape = "NORMAL",
+  back = false,
+  catchall = "stay",
+  binds = {
+    -- stylua: ignore start
+    { "w",         function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) yank("NORMAL")() end, "Next word" },
+    { "e",         function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) yank("NORMAL")() end, "Next end of word" },
+    { "b",         function() motion.send_raw({ "CTRL SHIFT", "LEFT" },  count.get()) yank("NORMAL")() end, "Prev word" },
+    { "SHIFT + w", function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) yank("NORMAL")() end },
+    { "SHIFT + e", function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) yank("NORMAL")() end },
+    { "SHIFT + b", function() motion.send_raw({ "CTRL SHIFT", "LEFT" },  count.get()) yank("NORMAL")() end },
+    { "y",         function() motion.send_sequence({ { "", "HOME" }, { "SHIFT", "End" } }) yank("NORMAL")() send("", "DOWN") end, "Yank line" },
+    { "SHIFT + 4", function() count.clear() motion.send_raw({ "SHIFT", "End" },  1) yank("NORMAL")() end, "End of line"   },
+    { "0",         function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) yank("NORMAL")() end, "Start of line" },
+    { "SHIFT + 6", function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) yank("NORMAL")() end, "Start of line" },
+    { "SHIFT + g", function() motion.send_raw({ "CTRL SHIFT", "END" }, 1) yank("NORMAL")() end, "Last line" },
+    { "i",         function() count.clear() hl.dispatch(hl.dsp.submap("YANK-INSIDE")) end, "+Inner" },
+    { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("YANK-INSIDE")) end },
+    { "a",         function() count.clear() hl.dispatch(hl.dsp.submap("YANK-AROUND")) end, "+Around" },
+    { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("YANK-AROUND")) end },
+    { "g",         function() count.clear() hl.dispatch(hl.dsp.submap("YANK-GOTO")) end, "+Go" },
+    { "SPACE",                 wk.toggle },
+    { LEADER .. " + " .. ACT, reset },
+    -- stylua: ignore end
+  },
+}).setup()
 
-  -- Sub-submaps
-  bd("i", "+Inner", function()
-    count.clear()
-    submap("Y-I")
-  end)
-  b("SHIFT + i", function()
-    submap("Y-I")
-  end)
-  bd("a", "+Around", function()
-    count.clear()
-    submap("Y-A")
-  end)
-  b("SHIFT + a", function()
-    submap("Y-A")
-  end)
-  bd("g", "+Go", function()
-    count.clear()
-    submap("Y-G")
-  end)
-
-  b("ESCAPE", function()
-    count.clear()
-    submap("NORMAL")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("Y-MOTION")
-  end)
-end)
-
-hl.define_submap("Y-I", "Y-MOTION", function()
-  bd("w", "Word", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("SHIFT + w", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  bd("p", "Paragraph", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("SHIFT + p", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("ESCAPE", function()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    submap("Y-MOTION")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("Y-I")
-  end)
-end)
-
-hl.define_submap("Y-A", "Y-MOTION", function()
-  bd("w", "Word", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("SHIFT + w", function()
-    motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  bd("p", "Paragraph", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("SHIFT + p", function()
-    motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("ESCAPE", function()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    submap("Y-MOTION")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("Y-A")
-  end)
-end)
-
-hl.define_submap("Y-G", "Y-MOTION", function()
-  bd("g", "First line", function()
-    motion.send_raw({ "CTRL SHIFT", "HOME" }, 1)
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  bd("SHIFT + g", "Last line", function()
-    motion.send_raw({ "CTRL SHIFT", "END" }, 1)
-    reg.handle_yank("CTRL", "c", "NORMAL")
-  end)
-  b("ESCAPE", function()
-    submap("NORMAL")
-  end)
-  b("BackSpace", function()
-    submap("Y-MOTION")
-  end)
-  b(leader .. " + " .. act, function()
-    hl.dispatch(hl.dsp.submap("reset"))
-  end)
-  b("SPACE", function()
-    wk.toggle()
-  end)
-  b("catchall", function()
-    submap("Y-G")
-  end)
-end)
+make_sub_submaps(
+  "YANK",
+  function() motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } }) yank("NORMAL")() end,
+  function() motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } }) yank("NORMAL")() end,
+  function() motion.send_raw({ "CTRL SHIFT", "HOME" }, 1) yank("NORMAL")() end,
+  function() motion.send_raw({ "CTRL SHIFT", "END" }, 1) yank("NORMAL")() end
+)

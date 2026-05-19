@@ -20,6 +20,13 @@
 
 <p align=center><i>Think of it as a lightweight, system-wide Vim mode for all of your applications.</i></p>
 
+> [!WARNING]
+> Requires both [14600](https://github.com/hyprwm/Hyprland/pull/14600) and [14578](https://github.com/hyprwm/Hyprland/pull/14578) to be merged.
+>
+> These are blocking issues to HyprVim's core functionality.
+
+---
+
 > [!IMPORTANT]
 > With release 0.55 of Hyprland, Lua became the new standard for configuration and is now compatible with HyprVim!
 >

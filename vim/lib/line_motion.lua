@@ -25,14 +25,13 @@ end
 
 local function clear_first_motion() os.remove(flag_path()) end
 
----Select the current line (End → Shift+Home) and enter V-LINE mode.
+---Select the current line (End -> Shift+Home) and enter V-LINE mode.
 ---Sets the first-motion flag so the next `j`/`k` anchors correctly.
-function VLineMotion.enter()
+function VLineMotion.setup()
   os.execute("mkdir -p " .. state_dir())
   local f = io.open(flag_path(), "w")
   if f then f:close() end
   Hypr.send_all({ { "", "End" }, { "SHIFT", "Home" } })
-  Hypr.switch_mode("V-LINE")
 end
 
 ---Clear the first-motion flag. Called on V-LINE exit to avoid stale state.

@@ -5,7 +5,7 @@
 -- Special registers:
 --   "  unnamed (syncs with system clipboard)
 --   0  yank register (last yank, not overwritten by deletes)
---   1-9 numbered delete history (newest→1, cycles on each delete)
+--   1-9 numbered delete history (newest->1, cycles on each delete)
 --   _  black hole (delete without affecting clipboard)
 --   /  search register (read-only, mirrors find-state.json)
 
@@ -99,7 +99,7 @@ function Registers.load(name)
   clipboard_write(reg_read(name))
 end
 
--- Cycle numbered registers 1→9 (oldest drops off, newest→1).
+-- Cycle numbered registers 1->9 (oldest drops off, newest->1).
 local function cycle_numbered()
   for i = 8, 1, -1 do
     local src = reg_path(tostring(i))

@@ -1,52 +1,51 @@
 -- keys/submaps/vim-replace-char.lua
 -- R-CHAR submap: delete char under cursor, pass the key, return to NORMAL
 
-local leader = (require("config").keys or {}).leader or "SUPER"
-local act    = (require("config").keys or {}).activate or "ESCAPE"
-
-local function b(keys, fn) hl.bind(keys, fn) end
-local function submap(n)   hl.dispatch(hl.dsp.submap(n)) end
+local Submap = require("lib.submap") ---@class HyprVimSubmap
+local config = require("config") ---@class HyprVimConfigModule
+local LEADER = (config.keys or {}).leader or "SUPER"
+local ACT = (config.keys or {}).activate or "ESCAPE"
 
 local function replace()
   hl.dispatch(hl.dsp.send_shortcut({ mods = "", key = "DELETE" }))
   hl.dispatch(hl.dsp.pass())
-  submap("NORMAL")
+  hl.dispatch(hl.dsp.submap("NORMAL"))
 end
 
-hl.define_submap("R-CHAR", "reset", function()
-  -- Cancel
-  b("ESCAPE",               function() submap("NORMAL") end)
-  b(leader .. " + " .. act, function() hl.dispatch(hl.dsp.submap("reset")) end)
+Submap.define({
+  name = "R-CHAR",
+  escape = "NORMAL",
+  back = false,
+  catchall = "stay",
+  binds = function()
+    local rows = {
+      { LEADER .. " + " .. ACT, function() hl.dispatch(hl.dsp.submap("reset")) end },
+    }
 
-  -- Letters a-z (lower and upper)
-  local letters = "abcdefghijklmnopqrstuvwxyz"
-  for i = 1, #letters do
-    local c = letters:sub(i, i):upper()
-    b(c,           replace)
-    b("SHIFT + " .. c, replace)
-  end
+    local letters = "abcdefghijklmnopqrstuvwxyz"
+    for i = 1, #letters do
+      local c = letters:sub(i, i):upper()
+      table.insert(rows, { c,             replace })
+      table.insert(rows, { "SHIFT + " .. c, replace })
+    end
 
-  -- Digits 0-9 and shifted symbols
-  for i = 0, 9 do
-    b(tostring(i),         replace)
-    b("SHIFT + " .. tostring(i), replace)
-  end
+    for i = 0, 9 do
+      table.insert(rows, { tostring(i),           replace })
+      table.insert(rows, { "SHIFT + " .. tostring(i), replace })
+    end
 
-  -- Punctuation
-  local punct = {
-    "MINUS", "EQUAL", "BRACKETLEFT", "BRACKETRIGHT",
-    "BACKSLASH", "SEMICOLON", "APOSTROPHE", "COMMA",
-    "PERIOD", "SLASH", "GRAVE",
-  }
-  for _, k in ipairs(punct) do
-    b(k,           replace)
-    b("SHIFT + " .. k, replace)
-  end
+    for _, k in ipairs({
+      "MINUS", "EQUAL", "BRACKETLEFT", "BRACKETRIGHT",
+      "BACKSLASH", "SEMICOLON", "APOSTROPHE", "COMMA",
+      "PERIOD", "SLASH", "GRAVE",
+    }) do
+      table.insert(rows, { k,             replace })
+      table.insert(rows, { "SHIFT + " .. k, replace })
+    end
 
-  -- Whitespace
-  b("SPACE", replace)
-  b("TAB",   replace)
+    table.insert(rows, { "SPACE", replace })
+    table.insert(rows, { "TAB",   replace })
 
-  -- Catchall: stay in R-CHAR
-  b("catchall", function() submap("R-CHAR") end)
-end)
+    return rows
+  end,
+}).setup()
