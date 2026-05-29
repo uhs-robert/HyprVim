@@ -25,7 +25,7 @@ $fg: #F7EDE1;
 $primary: #7FA3C9;
 $secondary: #D6CE7C;
 $accent: #FFA0A0;
-$info: #87CEEB;
+$info: #B0C8DE;
 
 # Base font size (all other sizes scale from this)
 $base_font_size = 12px
