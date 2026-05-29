@@ -4,83 +4,73 @@
 local VimCount = require("vim.lib.count") ---@class VimCount
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
+local Prompt = require("lib.prompt")
 
 --- @class ReplaceModule
 local Replace = {}
 
----Replace the Wayland clipboard with `text`.
----@param text string
-local function clipboard_write(text)
-  local p = io.popen("wl-copy", "w")
-  if p then
-    p:write(text)
-    p:close()
-  end
-end
+---Shell-escape `s` for use in a single-quoted argument.
+---@param s string
+---@return string
+local function sq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
 
----Show a prompt labelled `label` and return the entered string, or nil if cancelled.
----@param label string
----@return string|nil
-local function prompt(label)
-  local tool = Config.applications.menu
-  local cmd
-  if tool == "rofi" then
-    cmd = string.format('rofi -dmenu -p %q -theme-str "window{width:600px;}" -class hyprvim-replace 2>/dev/null', label)
-  else
-    cmd = string.format("%s -p %q 2>/dev/null", tool, label)
-  end
+---Shell snippet that selects `n` characters to the right via wtype.
+---@param n integer
+---@return string
+local function select_n(n) return string.rep("wtype -M shift -P right -p right -m shift; ", n) end
 
-  local p = io.popen(cmd)
-  if not p then return nil end
-  local s = p:read("*a"):gsub("%s+$", "")
-  p:close()
-  return s ~= "" and s or nil
+---Build the shell script that selects `n` chars then inserts `text`.
+---Uses wtype by default; falls back to clipboard paste only when input_method="paste" and n>1.
+---@param text string  replacement text
+---@param n    integer number of chars to select
+---@return string
+local function replace_script(text, n)
+  local select = select_n(n)
+  if (Config.applications or {}).input_method == "paste" and n > 1 then
+    local tmp = os.tmpname()
+    local f = io.open(tmp, "w")
+    if f then
+      f:write(text)
+      f:close()
+    end
+    return string.format(
+      "sleep 0.1; %swl-copy -n < %s; sleep 0.2; wtype -M ctrl -k v -m ctrl; sleep 0.3; rm %s",
+      select,
+      tmp,
+      tmp
+    )
+  end
+  return "sleep 0.1; " .. select .. "wtype -- " .. sq(text)
 end
 
 ---`r`: prompt for a single character and overwrite the next [count] characters with it.
 function Replace.character()
   local n = VimCount.get()
-
   Hypr.exit_vim()
   hl.timer(function()
-    local char = prompt("Replace char: ")
-    Hypr.normal()
-    if not char or char == "" then return end
-    char = char:sub(1, 1)
-    clipboard_write(char)
-    hl.timer(function()
-      -- Select n characters forward.
-      for _ = 1, n do
-        Hypr.send("SHIFT", "RIGHT")
+    Prompt.async("Replace char: ", { wm_class = "hyprvim-replace" }, function(char)
+      if not char then
+        Hypr.normal()
+        return
       end
-      hl.timer(function()
-        Hypr.send("CTRL", "v")
-        hl.timer(function() Hypr.normal() end, { timeout = 50, type = "oneshot" })
-      end, { timeout = 50, type = "oneshot" })
-    end, { timeout = 100, type = "oneshot" })
+      char = char:sub(1, 1)
+      Hypr.cmd_then_dispatch(replace_script(string.rep(char, n), n), 'hl.dsp.submap("NORMAL")')()
+    end)
   end, { timeout = 100, type = "oneshot" })
 end
 
 ---`R`: prompt for a replacement string and overwrite the next `#string` characters with it.
 function Replace.string()
   VimCount.get() -- clear
-
   Hypr.exit_vim()
   hl.timer(function()
-    local str = prompt("Replace with: ")
-    Hypr.normal()
-    if not str or str == "" then return end
-    local n = #str
-    clipboard_write(str)
-    hl.timer(function()
-      for _ = 1, n do
-        Hypr.send("SHIFT", "RIGHT")
+    Prompt.async("Replace with: ", { wm_class = "hyprvim-replace" }, function(str)
+      if not str then
+        Hypr.normal()
+        return
       end
-      hl.timer(function()
-        Hypr.send("CTRL", "v")
-        hl.timer(function() Hypr.normal() end, { timeout = 50, type = "oneshot" })
-      end, { timeout = 50, type = "oneshot" })
-    end, { timeout = 100, type = "oneshot" })
+      Hypr.cmd_then_dispatch(replace_script(str, #str), 'hl.dsp.submap("NORMAL")')()
+    end)
   end, { timeout = 100, type = "oneshot" })
 end
 

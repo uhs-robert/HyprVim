@@ -27,11 +27,12 @@ local XCC = os.getenv("XDG_CONFIG_HOME") or ((os.getenv("HOME") or "") .. "/.con
 --- @field pre?  string  Extra word inserted before class flag (e.g. "start" for wezterm)
 
 --- @class HyprVimApplications
---- @field menu?       "rofi"|"wofi"|"tofi"|"fuzzel"|"dmenu"|"zenity"|"kdialog"  Prompt tool for find/replace/command input
---- @field terminal?   "kitty"|"ghostty"|"alacritty"|"wezterm"|"foot"|"footclient"|"xterm"|string  Terminal used for the help viewer and open-editor feature; built-in flag mappings exist for the listed values, add an entry to `term_flags` for others
---- @field term_flags? table<string,HyprVimTermFlags>  Per-terminal flag overrides; e.g. `{ wezterm = { class = "--class", exec = "--", pre = "start" } }`. nil tries to autoresolve flags from the built-in terminal list.
---- @field lock?       string  Screen lock command executed by `:lock` and the L key in NORMAL mode (e.g. "hyprlock")
---- @field editor?     "vim"|"nvim"  Editor launched by the open-editor feature
+--- @field menu?         "rofi"|"wofi"|"tofi"|"fuzzel"|"dmenu"|"zenity"|"kdialog"  Prompt tool for find/replace/command input
+--- @field terminal?     "kitty"|"ghostty"|"alacritty"|"wezterm"|"foot"|"footclient"|"xterm"|string  Terminal used for the help viewer and open-editor feature; built-in flag mappings exist for the listed values, add an entry to `term_flags` for others
+--- @field term_flags?   table<string,HyprVimTermFlags>  Per-terminal flag overrides; e.g. `{ wezterm = { class = "--class", exec = "--", pre = "start" } }`. nil tries to autoresolve flags from the built-in terminal list.
+--- @field lock?         string  Screen lock command executed by `:lock` and the L key in NORMAL mode (e.g. "hyprlock")
+--- @field editor?       "vim"|"nvim"  Editor launched by the open-editor feature
+--- @field input_method? "wtype"|"paste"  How text is inserted during replace operations: "wtype" (default, recommended) types via virtual keyboard; "paste" is an escape hatch for setups where wtype is unavailable, falls back to wtype for n=1
 
 --- @class HyprVimNotifications
 --- @field all?      boolean  true: enable all notifications, overriding the individual flags below
@@ -89,11 +90,12 @@ Config.defaults = {
     exit     = "SHIFT + ESCAPE",
   },
   applications = {
-    menu       = "rofi",
-    terminal   = "kitty",
-    term_flags = nil,
-    lock       = "hyprlock",
-    editor     = "nvim",
+    menu         = "rofi",
+    terminal     = "kitty",
+    term_flags   = nil,
+    lock         = "hyprlock",
+    editor       = "nvim",
+    input_method = "wtype",
   },
   notifications = {
     all      = false,

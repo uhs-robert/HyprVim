@@ -231,6 +231,7 @@ require("hyprvim").setup({
     terminal = "kitty --class floating-help -e",
     lock = "hyprlock",
     vim_editor = "nvim",                          -- `vim` or `nvim`
+    input_method = "wtype",                       -- "wtype" (default) or "paste" (escape hatch if wtype unavailable; n=1 always uses wtype)
   },
   notifications = {
     all = false,                -- Enable to bypass settings below and just enable all
