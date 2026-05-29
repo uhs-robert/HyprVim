@@ -15,6 +15,7 @@ local TERM_FLAGS = {
 
 local XDG = os.getenv("XDG_RUNTIME_DIR") or "/tmp"
 local XCH = os.getenv("XDG_CACHE_HOME") or ((os.getenv("HOME") or "/tmp") .. "/.cache")
+local XCC = os.getenv("XDG_CONFIG_HOME") or ((os.getenv("HOME") or "") .. "/.config")
 
 --- @class HyprVimKeys
 --- @field leader?   "SUPER"|"ALT"|"CTRL"|"SHIFT"|"META"|"HYPER"  Hyprland modifier key used as the vim leader
@@ -55,7 +56,6 @@ local XCH = os.getenv("XDG_CACHE_HOME") or ((os.getenv("HOME") or "/tmp") .. "/.
 --- @class HyprVimConfig
 --- @field keys? HyprVimKeys
 --- @field applications? HyprVimApplications
---- @field theme? string        Path to a theme.conf sourced by Hyprland for whichkey colours; relative to the hyprvim directory
 --- @field notifications? HyprVimNotifications
 --- @field updates? HyprVimUpdates
 --- @field enable_debug? boolean  true: write verbose diagnostic logs to the systemd journal (`journalctl -t hyprvim`)
@@ -64,9 +64,10 @@ local XCH = os.getenv("XDG_CACHE_HOME") or ((os.getenv("HOME") or "/tmp") .. "/.
 --- @field defaults? HyprVimConfig  Internal: holds the default values before user overrides are merged
 
 --- @class HyprVimInstance : HyprVimConfig
---- @field xdg string        Resolved `$XDG_RUNTIME_DIR`
---- @field state_dir string  Resolved runtime state directory (`$XDG_RUNTIME_DIR/hyprvim`)
---- @field cache_dir string  Resolved cache directory (`$XDG_CACHE_HOME/hyprvim`)
+--- @field xdg string         Resolved `$XDG_RUNTIME_DIR`
+--- @field state_dir string   Resolved runtime state directory (`$XDG_RUNTIME_DIR/hyprvim`)
+--- @field cache_dir string   Resolved cache directory (`$XDG_CACHE_HOME/hyprvim`)
+--- @field config_dir string  Resolved user config directory (`$XDG_CONFIG_HOME/hyprvim`)
 --- @field which_key HyprVimWhichKey
 --- @field setup fun(overrides?: HyprVimConfig|table): HyprVimInstance
 --- @field term_cmd fun(class: string): string  Returns the full terminal launch prefix for the given window class
@@ -80,6 +81,7 @@ local Config = {}
 Config.xdg = XDG
 Config.state_dir = XDG .. "/hyprvim"
 Config.cache_dir = XCH .. "/hyprvim"
+Config.config_dir = XCC .. "/hyprvim"
 
 -- stylua: ignore
 Config.defaults = {
@@ -95,7 +97,6 @@ Config.defaults = {
     lock       = "hyprlock",
     editor     = "nvim",
   },
-  theme = "./theme.conf",
   notifications = {
     all      = false,
     marks    = false,

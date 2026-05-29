@@ -6,11 +6,12 @@ local root = dir .. "../"
 package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
 
 local Utils = require("lib.utils")
+local Config = require("config")
 
 local Theme = {}
 
 local DEFAULT_THEME = [[
-# hyprvim/theme.conf
+# ~/.config/hyprvim/theme.conf
 #
 # Controls the colors and font size of the which-key HUD (eww widget).
 # Changes are applied automatically on the next `hyprctl reload`.
@@ -80,9 +81,11 @@ end
 
 --- Reads theme.conf and writes _vars.scss.
 function Theme.apply()
-  local theme_file = root .. "theme.conf"
+  local cfg_dir = Config.config_dir
+  os.execute("mkdir -p " .. cfg_dir)
+  local theme_file = cfg_dir .. "/theme.conf"
   local vars_file = root .. "eww/whichkey/_vars.scss"
-  local user_scss = root .. "whichkey.scss"
+  local user_scss = cfg_dir .. "/whichkey.scss"
 
   create_if_missing(user_scss, DEFAULT_USER_SCSS)
   create_if_missing(theme_file, DEFAULT_THEME)

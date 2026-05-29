@@ -232,7 +232,6 @@ require("hyprvim").setup({
     lock = "hyprlock",
     vim_editor = "nvim",                          -- `vim` or `nvim`
   },
-  theme = "./theme.conf",
   notifications = {
     all = false,                -- Enable to bypass settings below and just enable all
     marks = true,
@@ -243,7 +242,7 @@ require("hyprvim").setup({
   enable_debug = false,
   which_key = {
     enabled = true,             -- This requires eww
-    delay_ms = 200,
+    delay_ms = 0,               -- 0 = instant, else delayed a bit (200 gives you some breathing room)
     position = "bottom-right",
     auto_show = {
       disabled = {
