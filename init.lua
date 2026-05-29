@@ -26,8 +26,33 @@ for k in pairs(package.loaded) do
   end
 end
 
+--- @class HyprVimAPI
+--- @field setup     fun(overrides?: HyprVimConfig): HyprVimAPI
+--- @field config    HyprVimInstance
+--- @field whichkey  WhichKey
+--- @field marks     any
+--- @field registers any
+--- @field command   any
+--- @field editor    any
+local API = {}
+
+--- @param cfg HyprVimInstance
+--- @param Vim Vim
+--- @return HyprVimAPI
+local function public_api(cfg, Vim)
+  API.config = cfg
+  API.whichkey = require("whichkey")
+  API.marks = Vim.marks
+  API.registers = Vim.registers
+  API.command = Vim.command
+  API.editor = Vim.editor
+
+  return API
+end
+
 --- @param overrides HyprVimConfig?
-local function setup(overrides)
+--- @return HyprVimAPI
+API.setup = function(overrides)
   local cfg = require("config").setup(overrides)
   require("lib.updater").check_async()
 
@@ -35,13 +60,14 @@ local function setup(overrides)
   os.execute("mkdir -p " .. cfg.state_dir .. "/marks")
 
   require("hypr.rules").setup()
-  require("vim").setup(cfg)
+  local Vim = require("vim") ---@class Vim
+  Vim.setup(cfg)
 
   if cfg.which_key and cfg.which_key.enabled then require("whichkey").start(cfg) end
 
   require("keys")
+
+  return public_api(cfg, Vim)
 end
 
-return {
-  setup = setup,
-}
+return API
