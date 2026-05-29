@@ -5,6 +5,7 @@
 
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
+local Prompt = require("lib.prompt") ---@class Prompt
 
 --- @class Find
 local Find = {}
@@ -66,50 +67,36 @@ local function state_set(key, value)
   state_write(t)
 end
 
----Show a prompt dialog and return the entered text, or nil on cancel/empty.
----@param label    string
----@param wm_class string|nil  window class for the prompt window (default `"hyprvim-find"`)
----@return string|nil
-local function prompt(label, wm_class)
-  wm_class = wm_class or "hyprvim-find"
-  local tool = Config.applications.menu
-  local cmd
-  if tool == "rofi" then
-    cmd = string.format(
-      'rofi -dmenu -p %q -theme-str "window{width:600px;height:80px;}" -class %q 2>/dev/null',
-      label,
-      wm_class
-    )
-  else
-    cmd = string.format("%s -p %q 2>/dev/null", tool, label)
-  end
-
-  local p = io.popen(cmd)
-  if not p then return nil end
-  local result = p:read("*a"):gsub("%s+$", "")
-  p:close()
-  return (result ~= "") and result or nil
-end
-
 ---Write `text` to the Wayland clipboard; uses `text/plain` MIME for single characters
 ---to avoid triggering autocomplete in applications that inspect MIME types.
 ---@param text string
 local function clipboard_write(text)
   local flag = (#text == 1) and "--type text/plain" or ""
-  local p = io.popen("wl-copy " .. flag, "w")
-  if p then
-    p:write(text)
-    p:close()
+  local tmp = os.tmpname()
+  local f = io.open(tmp, "w")
+  if f then
+    f:write(text)
+    f:close()
   end
+  hl.dispatch(hl.dsp.exec_cmd("wl-copy " .. flag .. " < " .. tmp .. " ; rm " .. tmp))
 end
 
----@return string  current Wayland clipboard contents, or `""` on failure
-local function clipboard_read()
-  local p = io.popen("wl-paste --no-newline 2>/dev/null")
-  if not p then return "" end
-  local s = p:read("*a") or ""
-  p:close()
-  return s
+---Read the Wayland clipboard without blocking the compositor.
+---`callback` receives the clipboard contents (or `""` on failure/empty).
+---@param callback fun(s: string)
+local function clipboard_read_async(callback)
+  local tmp = os.tmpname()
+  _G._hv_clip_cb = function()
+    local f = io.open(tmp, "r")
+    local s = f and f:read("*a") or ""
+    if f then
+      f:close()
+      os.remove(tmp)
+    end
+    _G._hv_clip_cb = nil
+    callback(s)
+  end
+  Hypr.cmd_then_dispatch("wl-paste --no-newline 2>/dev/null > " .. tmp, "_hv_clip_cb()")()
 end
 
 ---Open the app's find bar (Ctrl+F), paste `term`, and commit the search.
@@ -150,20 +137,21 @@ end
 ---@param is_till   boolean
 local function prompt_and_find(term_type, direction, is_till)
   local label = (term_type == "char_term") and "Find: " or "Search: "
-
-  -- Exit vim so the user can type in the prompt without interference.
   Hypr.exit_vim()
-
   hl.timer(function()
-    local term = prompt(label, "hyprvim-find")
-    if not term or term == "" then
+    Prompt.async(label, { wm_class = "hyprvim-find", theme = "window{width:600px;height:80px;}" }, function(term)
+      if not term then
+        Hypr.normal()
+        return
+      end
+      term = term:gsub("[\r\n]", ""):gsub("%s+$", "")
+      if term == "" then
+        Hypr.normal()
+        return
+      end
       Hypr.normal()
-      return
-    end
-    -- Strip newlines/trailing whitespace.
-    term = term:gsub("[\r\n]", ""):gsub("%s+$", "")
-    Hypr.normal()
-    hl.timer(function() do_find(term, direction, term_type, is_till) end, { timeout = 50, type = "oneshot" })
+      hl.timer(function() do_find(term, direction, term_type, is_till) end, { timeout = 50, type = "oneshot" })
+    end)
   end, { timeout = 100, type = "oneshot" })
 end
 
@@ -201,15 +189,16 @@ local function word_under_cursor(direction)
     hl.timer(function()
       Hypr.send("CTRL", "c")
       hl.timer(function()
-        local term = clipboard_read():gsub("[\r\n]", ""):gsub("%s+$", "")
-        -- First word only.
-        term = term:match("^%S+") or term
-        Hypr.send("", "RIGHT") -- deselect
-        if term == "" then
-          Hypr.normal()
-          return
-        end
-        do_find(term, direction, "find_term", false)
+        clipboard_read_async(function(s)
+          local term = s:gsub("[\r\n]", ""):gsub("%s+$", "")
+          term = term:match("^%S+") or term
+          Hypr.send("", "RIGHT") -- deselect
+          if term == "" then
+            Hypr.normal()
+            return
+          end
+          do_find(term, direction, "find_term", false)
+        end)
       end, { timeout = 200, type = "oneshot" })
     end, { timeout = 150, type = "oneshot" })
   end, { timeout = 100, type = "oneshot" })
