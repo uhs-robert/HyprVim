@@ -17,6 +17,7 @@ local SCRIPT = _dir .. "../../scripts/vim-open-editor"
 ---@field copy_sel    boolean|nil  copy the active selection into the scratch file before opening
 ---@field insert_mode boolean|nil  start the editor in INSERT mode
 ---@field ext         string|nil   file extension for syntax highlighting (e.g. "md", "py")
+---@field after_submap string|nil  if set, dispatch to this submap once the editor exits
 
 ---Open a floating terminal editor on a scratch file.
 ---Delegates entirely to vim-open-editor; no blocking I/O in the compositor thread.
@@ -35,7 +36,12 @@ function Editor.open(opts)
   if Window.is_terminal() then args[#args + 1] = "--terminal" end
   if copy_sel then args[#args + 1] = "--copy-selected" end
   if opts.insert_mode then args[#args + 1] = "--insert-mode" end
-  Hypr.exec(table.concat(args, " "))
+  local cmd = table.concat(args, " ")
+  if opts.after_submap then
+    Hypr.cmd_then_dispatch(cmd, string.format('hl.dsp.submap("%s")', opts.after_submap))()
+  else
+    Hypr.exec(cmd)
+  end
 end
 
 return Editor

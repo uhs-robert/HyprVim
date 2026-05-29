@@ -44,8 +44,8 @@ Submap.define({
     local rows = {
       -- stylua: ignore start
       -- Editor
-      { LEADER .. " + n", function() count.clear() reset() oe.open({ copy_selected = true }) end,                    "Edit in Vim (Normal)" },
-      { LEADER .. " + i", function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = true }) end, "Edit in Vim (Insert)" },
+      { LEADER .. " + n", function() count.clear() reset() oe.open({ copy_selected = true, after_submap = "NORMAL" }) end,                    "Edit in Vim (Normal)" },
+      { LEADER .. " + i", function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
       -- Motions
       { "j",                    function() lm.down(count.get()) end,           "Down",           { repeating = true } },
       { "k",                    function() lm.up(count.get()) end,             "Up",             { repeating = true } },
@@ -101,8 +101,8 @@ Submap.define({
     -- stylua: ignore start
     { "g",         function() lm.goto_start() vline() end, "First line" },
     { "SHIFT + g", function() lm.goto_end()   vline() end, "Last line"  },
-    { "n",         function() count.clear() reset() oe.open({ copy_selected = true }) end,                    "Edit in Vim (Normal)" },
-    { "i",         function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = true }) end, "Edit in Vim (Insert)" },
+    { "n",         function() count.clear() reset() oe.open({ copy_selected = true, after_submap = "NORMAL" }) end,                    "Edit in Vim (Normal)" },
+    { "i",         function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
     { "SPACE",                 wk.toggle },
     { LEADER .. " + " .. ACT, reset },
     -- stylua: ignore end

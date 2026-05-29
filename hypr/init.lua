@@ -90,4 +90,13 @@ function Hyprland.reload() hl.dispatch(hl.dsp.exec_cmd("hyprctl reload")) end
 --- @param cmd string
 function Hyprland.exec(cmd) hl.dispatch(hl.dsp.exec_cmd(cmd)) end
 
+--- Run cmd, then dispatch a Lua expr via hyprctl once it exits.
+--- Acts as shell --block: awaits the shell command before dispatching.
+--- @param cmd string            Shell command to run
+--- @param dispatch_expr string  hl.dsp.* Lua expression, e.g. 'hl.dsp.submap("Cursor")'
+--- @return fun()
+function Hyprland.cmd_then_dispatch(cmd, dispatch_expr)
+  return function() hl.dispatch(hl.dsp.exec_cmd(cmd .. " ; hyprctl dispatch '" .. dispatch_expr .. "'")) end
+end
+
 return Hyprland

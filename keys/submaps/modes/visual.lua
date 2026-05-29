@@ -24,7 +24,7 @@ local va_seq = motion.action_seq
 -- ── Visual actions ────────────────────────────────────────────────────────────
 -- stylua: ignore start
 local function open_editor(insert)
-  return function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = insert or false }) end
+  return function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = insert or false, after_submap = "NORMAL" }) end
 end
 
 local function change_sel()    reg.handle_delete("CTRL", "x", "INSERT") end

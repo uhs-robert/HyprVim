@@ -20,10 +20,10 @@ Submap.define({
     { "e",         function() vim.motion.send_sequence({ { "CTRL", "LEFT" }, { "", "LEFT" } }) visual() end, "Prev end of word" },
     { "g",         function() send("CTRL SHIFT", "HOME") visual() end, "First line" },
     { "SHIFT + g", function() send("CTRL SHIFT", "END")  visual() end, "Last line"  },
-    { "n",         function() vim.count.clear() hl.dispatch(hl.dsp.submap("reset")) vim.editor.open({ copy_selected = true }) end,                     "Edit in Vim (Normal)" },
-    { "i",         function() vim.count.clear() hl.dispatch(hl.dsp.submap("reset")) vim.editor.open({ copy_selected = true, insert_mode = true }) end, "Edit in Vim (Insert)" },
+    { "n",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, after_submap = "NORMAL" }) end,                     "Edit in Vim (Normal)" },
+    { "i",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
     { "SPACE",     wk.toggle },
-    { LEADER .. " + " .. ACT, function() hl.dispatch(hl.dsp.submap("reset")) end },
+    { LEADER .. " + " .. ACT, function() Submap.reset() end },
     -- stylua: ignore end
   },
 }).setup()

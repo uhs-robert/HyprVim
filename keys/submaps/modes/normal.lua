@@ -19,7 +19,7 @@ local vm_keys = vim.motion.action_seq
 local function open_vim_editor(opts)
   return function()
     Submap.reset()
-    vim.editor.open({ copy_selected = true, insert_mode = (opts and opts.insert) or false })
+    vim.editor.open({ copy_selected = true, insert_mode = (opts and opts.insert) or false, after_submap = "NORMAL" })
   end
 end
 
