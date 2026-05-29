@@ -10,7 +10,7 @@ local Utils = require("lib.utils")
 local Theme = {}
 
 local DEFAULT_THEME = [[
-# hypr/.config/hypr/hyprvim/theme.conf
+# hyprvim/theme.conf
 #
 # Controls the colors and font size of the which-key HUD (eww widget).
 # Changes are applied automatically on the next `hyprctl reload`.
@@ -79,11 +79,10 @@ local function create_if_missing(path, content)
 end
 
 --- Reads theme.conf and writes _vars.scss.
---- @param home string value of $HOME
-function Theme.apply(home)
-  local theme_file = home .. "/.config/hypr/hyprvim/theme.conf"
-  local vars_file = home .. "/.config/hypr/hyprvim/eww/whichkey/_vars.scss"
-  local user_scss = home .. "/.config/hypr/hyprvim/whichkey.scss"
+function Theme.apply()
+  local theme_file = root .. "theme.conf"
+  local vars_file = root .. "eww/whichkey/_vars.scss"
+  local user_scss = root .. "whichkey.scss"
 
   create_if_missing(user_scss, DEFAULT_USER_SCSS)
   create_if_missing(theme_file, DEFAULT_THEME)

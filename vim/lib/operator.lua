@@ -1,4 +1,4 @@
--- home/hypr/.config/hypr/hyprvim/vim/lib/operator.lua
+-- vim/lib/operator.lua
 -- VimOperator + motion combinations: d{motion}, c{motion}, y{motion}.
 -- Also handles text objects: iw/aw/ip/ap.
 

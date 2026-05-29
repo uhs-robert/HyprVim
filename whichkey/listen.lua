@@ -1,4 +1,4 @@
--- home/hypr/.config/hypr/hyprvim/whichkey/listen.lua
+-- whichkey/listen.lua
 -- Registers hl event handlers for the which-key HUD.
 
 local dir = debug.getinfo(1, "S").source:sub(2):match("(.*/)") or "./"
@@ -100,10 +100,9 @@ end
 
 --- Starts the eww daemon in the background (or pings it if already running),
 --- then applies the current theme.
---- @param home string
 --- @param eww_dir string
-local function init_eww(home, eww_dir)
-  Theme.apply(home)
+local function init_eww(eww_dir)
+  Theme.apply()
 -- stylua: ignore
   os.execute(
     "("
@@ -279,12 +278,11 @@ end
 --- @param Config table  top-level HyprVim config table
 function Listen.init(Config)
   local config = parse_config(Config)
-  local home = os.getenv("HOME") or ""
   local eww_dir = Render.eww_dir
   local state_dir = Render.state_dir
   local render = dir .. "render.lua"
 
-  init_eww(home, eww_dir)
+  init_eww(eww_dir)
 
   local spawn_render = make_spawner(eww_dir, state_dir, render, config.position)
 

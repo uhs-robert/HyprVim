@@ -102,17 +102,33 @@ If you'd like an extra config added, raise a feature request or put one together
 
 ### Quick Install
 
-#### 1. Clone this repository into your Hyprland config directory
+#### 1. Install HyprVim to `~/.local/share` and create a shim in your Hyprland plugins directory
 
 ```bash
-cd ~/.config/hypr
-git clone https://github.com/uhs-robert/hyprvim.git
+git clone https://github.com/uhs-robert/hyprvim \
+  ~/.local/share/hyprland/lua/plugins/hyprvim
+
+mkdir -p ~/.config/hypr/lua/plugins
+
+cat > ~/.config/hypr/lua/plugins/hyprvim/init.lua <<'EOF'
+-- Hyprvim bootstrap
+local path = os.getenv('HOME')
+  .. '/.local/share/hyprland/lua/plugins/hyprvim/init.lua'
+
+local chunk, err = loadfile(path)
+
+if not chunk then
+  error(err)
+end
+
+return chunk()
+EOF
 ```
 
-#### 2. Add the following line to your `~/.config/hypr/hyprland.lua`
+#### 2. Load HyprVim in your `~/.config/hypr/hyprland.lua`
 
 ```bash
-require("hyprvim").setup()
+require("lua/plugins/hyprvim").setup()
 ```
 
 > [!TIP]
@@ -134,7 +150,7 @@ hyprctl reload
 To update your installation with the latest features and fixes:
 
 ```bash
-cd ~/.config/hypr/hyprvim
+cd ~/.local/share/hyprland/lua/plugins/hyprvim
 git pull
 hyprctl reload
 ```
@@ -247,22 +263,9 @@ require("hyprvim").setup({
 
 Removing HyprVim from your system is a three step process:
 
-1. Remove the source line from your `~/.config/hypr/hyprland.conf`:
-
 ```bash
-# Remove this line:
-source = ~/.config/hypr/hyprvim/init.conf
-```
-
-1. Delete the HyprVim directory:
-
-```bash
-rm -rf ~/.config/hypr/hyprvim
-```
-
-1. Reload your Hyprland configuration:
-
-```bash
+rm -rf ~/.config/hypr/plugins/lua/hyprvim
+rm -rf ~/.local/share/hyprland/lua/plugins/hyprvim
 hyprctl reload
 ```
 

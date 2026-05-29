@@ -1,5 +1,5 @@
 #!/bin/bash
-# hypr/.config/hypr/hyprvim/scripts/vim-help.sh
+# scripts/vim-help.sh
 ################################################################################
 # vim-help.sh - Display HyprVim keybindings help
 ################################################################################

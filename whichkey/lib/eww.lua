@@ -8,12 +8,10 @@ package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
 local Utils = require("lib.utils") ---@class HyprVimUtils
 local sh_escape = Utils.sh_escape
 
-local home = os.getenv("HOME") or ""
-
 --- @class Eww
 local Eww = {}
 
-Eww.dir = os.getenv("EWW_DIR") or (home .. "/.config/hypr/hyprvim/eww/whichkey")
+Eww.dir = os.getenv("EWW_DIR") or (root .. "eww/whichkey")
 
 Eww.POSITIONS = { "bottom-right", "bottom-center", "top-center", "bottom-left", "top-right", "top-left", "center" }
 

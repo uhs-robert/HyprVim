@@ -1,4 +1,4 @@
--- home/hypr/.config/hypr/hyprvim/vim/features/registers.lua
+-- vim/features/registers.lua
 -- Vim-like register system.
 --
 -- Named registers: a-z
