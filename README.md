@@ -209,7 +209,7 @@ HyprVim includes pragmatic pass-through bindings in **NORMAL** mode for better G
 This enables dialog navigation and clipboard operations without constantly switching to INSERT mode.
 
 > [!WARNING]
-> These may trigger unwanted actions in text editors. Use `i` to enter INSERT mode when editing text, or create override bindings by sourcing a custom config after HyprVim.
+> These may trigger unwanted actions in text editors. Use `i` to enter INSERT mode when editing text, or override bindings via the [`keymaps` option](#️-configuration).
 
 ## ⚙️ Configuration
 
@@ -253,6 +253,12 @@ require("hyprvim").setup({
       enabled = nil, -- nil enables all except those in disabled. You could make disabled = nil and then it would work the opposite.
     },
   },
+  -- keymaps = {
+  --   NORMAL = {
+  --     { "w", function() my_fn() end, { desc = "My word" } }, -- override a built-in bind
+  --     { "SUPER + x", function() end },                       -- add a new bind
+  --   },
+  -- },
 })
 ```
 
@@ -314,6 +320,33 @@ On that note, check out [all the extras too](/extras)! This is just the tip of t
 
 ## 📏 Extending HyprVim
 
-You can extend HyprVim by adding new submaps or referencing the submaps in your own keybinds after sourcing HyprVim as well as using HyprVim scripts in your own keybinds. Some examples of this are included in the [Hyprland basics](./extras/hyprland-basics).
+### Overriding or Adding Keybinds
+
+Pass a `keymaps` table to `setup()` to override or extend the binds in any built-in submap.
+
+Entries where a key matches a built-in bind will replace them; new keys are appended.
+
+```lua
+require("hyprvim").setup({
+  keymaps = {
+    NORMAL = {
+      { "w", function() my_custom_word() end, { desc = "custom word" } },  -- override built-in w
+      { "SUPER + X", function() my_extra_action() end },                   -- add a new bind
+      { "SUPER + M", hl.dsp.submap("my-submap"), { desc = "my submap" } }, -- or add a submap dispatch shortcut to one of your own
+    },
+    VISUAL = {
+      { "y", function() my_custom_yank() end, { desc = "custom yank" } },
+    },
+  },
+})
+```
+
+Because `keymaps` are evaluated at `setup()` call time, inside your own Hyprland config, any functions that you have defined there are in scope.
+
+Built-in submap names: `"NORMAL"`, `"VISUAL"`, `"V-LINE"`, `"INSERT"`, `"G-MOTION"`, `"G-VISUAL"`.
+
+### Other Extensions
+
+You can also reference HyprVim submaps in your own keybinds after sourcing HyprVim and use HyprVim scripts in your own keybinds. Some examples are included in [Hyprland basics](./extras/hyprland-basics).
 
 If you make an enhancement that you think would benefit the community then please submit a pull request and I'll be happy to review it.

@@ -1,6 +1,4 @@
 --- Submap lifecycle manager for HyprVim.
---- Mirrors lib/key/submap.lua; state is tracked via hl.on so that raw
---- hl.dispatch calls (e.g. from normal-mode binds) also update current/previous.
 local Bind = require("lib.bind") ---@class HyprVimBindLib
 
 --- @class HyprVimSubmap
@@ -42,36 +40,63 @@ local Submap = {
 --- @return SubmapContext
 local function context(extra)
   local ctx = { current = Submap.current, previous = Submap.previous, submaps = Submap }
-  for k, v in pairs(extra or {}) do ctx[k] = v end
+  for k, v in pairs(extra or {}) do
+    ctx[k] = v
+  end
   return ctx
 end
 
---- Track every submap transition through the compositor event so that state stays
---- correct even when code calls hl.dispatch(hl.dsp.submap(...)) directly.
-hl.on("keybinds.submap", function(name)
-  local prev_spec = Submap.registry[Submap.current]
-  if prev_spec and prev_spec.on_exit then
-    prev_spec.on_exit(context({ to = name }))
-  end
-
-  Submap.previous = Submap.current
-  Submap.current = name
-
-  local next_spec = Submap.registry[name]
-  if next_spec and next_spec.on_enter then
-    next_spec.on_enter(context({ from = Submap.previous }))
-  end
-end)
-
---- Activate a named submap (or "reset").
---- @param name string
-function Submap.enter(name)
-  hl.dispatch(hl.dsp.submap(name))
+--- Fire the on_exit hook for a spec if present.
+--- @param spec SubmapSpec|nil
+--- @param from string
+--- @param to   string
+local function fire_exit(spec, from, to)
+  if spec and spec.on_exit then spec.on_exit(context({ from = from, to = to })) end
 end
 
---- Return to the global (reset) submap.
+--- Activate a named submap, firing exit/enter hooks.
+--- @param name string
+function Submap.enter(name)
+  local next_spec = Submap.registry[name]
+  if not next_spec then return end
+
+  local prev_name = Submap.current
+  fire_exit(Submap.registry[prev_name], prev_name, name)
+
+  Submap.previous = prev_name
+  Submap.current = name
+
+  hl.dispatch(hl.dsp.submap(name))
+
+  if next_spec.on_enter then next_spec.on_enter(context({ from = prev_name, to = name, spec = next_spec })) end
+end
+
+--- Return to the global (reset) submap, firing the current submap's exit hook.
 function Submap.reset()
+  local prev_name = Submap.current
+  fire_exit(Submap.registry[prev_name], prev_name, "reset")
+
+  Submap.previous = prev_name
+  Submap.current = "reset"
+
   hl.dispatch(hl.dsp.submap("reset"))
+end
+
+--- Exit the submap according to its spec.escape policy.
+--- @param spec SubmapSpec
+function Submap.exit(spec)
+  local escape = spec.escape
+  if escape == nil then escape = "reset" end
+
+  if escape == false then return end
+  if escape == "reset" then return Submap.reset() end
+  if escape == "previous" then
+    if Submap.previous and Submap.previous ~= "reset" then return Submap.enter(Submap.previous) end
+    return Submap.reset()
+  end
+  if type(escape) == "string" then return Submap.enter(escape) end
+  if type(escape) == "function" then return escape(context({ spec = spec })) end
+  return Submap.reset()
 end
 
 --- Return a function that switches to a named submap.
@@ -89,14 +114,7 @@ function Submap.back()
     Submap.previous = nil
     return
   end
-  Submap.reset()
-end
-
---- Resolve escape policy, defaulting to "reset".
---- @param spec SubmapSpec
-local function normalize_escape(spec)
-  if spec.escape == nil then return "reset" end
-  return spec.escape
+  return Submap.reset()
 end
 
 --- Resolve catchall policy, defaulting to false.
@@ -114,6 +132,46 @@ local function resolve_binds(binds)
   return binds
 end
 
+--- Merge user keymap overrides for a named submap on top of built-in binds.
+--- User entries with a matching key replace the built-in entry; new keys are appended.
+--- @param name         string
+--- @param builtin      table[]|nil
+--- @return table[]
+local function merge_user_keymaps(name, builtin)
+  local cfg = require("config") --[[@as HyprVimConfig]]
+  local user = cfg.keymaps and cfg.keymaps[name]
+  if not user or #user == 0 then return builtin or {} end
+
+  local overridden = {}
+  for _, row in ipairs(user) do
+    local keys = type(row[1]) == "table" and row[1] or { row[1] }
+    for _, k in ipairs(keys) do
+      overridden[k] = true
+    end
+  end
+
+  local result = {}
+  for _, row in ipairs(builtin or {}) do
+    local keys = type(row[1]) == "table" and row[1] or { row[1] }
+    local skip = false
+    for _, k in ipairs(keys) do
+      if overridden[k] then
+        skip = true
+        break
+      end
+    end
+    if not skip then result[#result + 1] = row end
+  end
+
+  for _, row in ipairs(user) do
+    -- shift opts from [3] to [4] so Bind.keys treats it correctly
+    result[#result + 1] = type(row[3]) == "table"
+      and { row[1], row[2], nil, row[3] }
+      or row
+  end
+  return result
+end
+
 --- Invoke an action: calls if function, dispatches if HL dispatcher.
 --- @param action HL.Dispatcher|function
 local function run(action)
@@ -121,22 +179,54 @@ local function run(action)
   return hl.dispatch(action)
 end
 
---- Wrap rows so every action calls exit_fn after firing (oneshot mode).
+--- Wrap rows with opts.oneshot = true so their action calls exit_fn after firing.
+--- Marks wrapped rows opts.keep = true to prevent double-wrap.
+--- @param rows    table[]
+--- @param exit_fn fun()
+--- @return table[]
+local function apply_individual_oneshots(rows, exit_fn)
+  local result = {}
+  for _, row in ipairs(rows) do
+    local opts = row[4]
+    if type(opts) == "table" and opts.oneshot then
+      result[#result + 1] = {
+        row[1],
+        function()
+          run(row[2])
+          exit_fn()
+        end,
+        row[3],
+        { keep = true },
+      }
+    else
+      result[#result + 1] = row
+    end
+  end
+  return result
+end
+
+--- Wrap all rows so every action calls exit_fn after firing (oneshot mode).
+--- Skips rows already marked opts.keep = true.
 --- @param rows    table[]
 --- @param exit_fn fun()
 --- @return table[]
 local function wrap_oneshot(rows, exit_fn)
   local wrapped = {}
   for _, row in ipairs(rows) do
-    table.insert(wrapped, {
-      row[1],
-      function()
-        run(row[2])
-        exit_fn()
-      end,
-      row[3],
-      row[4],
-    })
+    local opts = row[4]
+    if type(opts) == "table" and opts.keep then
+      wrapped[#wrapped + 1] = row
+    else
+      wrapped[#wrapped + 1] = {
+        row[1],
+        function()
+          run(row[2])
+          exit_fn()
+        end,
+        row[3],
+        opts,
+      }
+    end
   end
   return wrapped
 end
@@ -167,15 +257,7 @@ function Submap.define(spec)
 
   function M.enter() Submap.enter(spec.name) end
 
-  function M.exit()
-    local escape = normalize_escape(spec)
-    if escape == false then return end
-    if escape == "reset" then return Submap.reset() end
-    if escape == "previous" then return Submap.back() end
-    if type(escape) == "string" then return Submap.enter(escape) end
-    if type(escape) == "function" then return escape(context({ spec = spec })) end
-    Submap.reset()
-  end
+  function M.exit() Submap.exit(spec) end
 
   function M.back()
     local back = spec.back
@@ -192,12 +274,13 @@ function Submap.define(spec)
 
     hl.define_submap(spec.name, function()
       local catchall = normalize_catchall(spec)
-      local raw_binds = resolve_binds(spec.binds)
-      local binds = catchall == "reset" and wrap_oneshot(raw_binds or {}, M.exit) or raw_binds
+      local raw_binds =
+        apply_individual_oneshots(merge_user_keymaps(spec.name, resolve_binds(spec.binds)) or {}, M.exit)
+      local binds = catchall == "reset" and wrap_oneshot(raw_binds, M.exit) or raw_binds
 
-      Bind.keys(binds or {})
+      Bind.keys(binds)
 
-      if normalize_escape(spec) ~= false then
+      if spec.escape ~= false then
         Bind.key("ESCAPE", M.exit, "Exit " .. spec.name)
         if spec.back ~= false then
           local back_opts = catchall == "reset" and { release = true } or nil
