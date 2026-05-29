@@ -14,7 +14,6 @@ local TERM_FLAGS = {
 }
 
 local XDG = os.getenv("XDG_RUNTIME_DIR") or "/tmp"
-local XCH = os.getenv("XDG_CACHE_HOME") or ((os.getenv("HOME") or "/tmp") .. "/.cache")
 local XCC = os.getenv("XDG_CONFIG_HOME") or ((os.getenv("HOME") or "") .. "/.config")
 
 --- @class HyprVimKeys
@@ -66,7 +65,6 @@ local XCC = os.getenv("XDG_CONFIG_HOME") or ((os.getenv("HOME") or "") .. "/.con
 --- @class HyprVimInstance : HyprVimConfig
 --- @field xdg string         Resolved `$XDG_RUNTIME_DIR`
 --- @field state_dir string   Resolved runtime state directory (`$XDG_RUNTIME_DIR/hyprvim`)
---- @field cache_dir string   Resolved cache directory (`$XDG_CACHE_HOME/hyprvim`)
 --- @field config_dir string  Resolved user config directory (`$XDG_CONFIG_HOME/hyprvim`)
 --- @field which_key HyprVimWhichKey
 --- @field setup fun(overrides?: HyprVimConfig|table): HyprVimInstance
@@ -80,7 +78,6 @@ local Config = {}
 
 Config.xdg = XDG
 Config.state_dir = XDG .. "/hyprvim"
-Config.cache_dir = XCH .. "/hyprvim"
 Config.config_dir = XCC .. "/hyprvim"
 
 -- stylua: ignore

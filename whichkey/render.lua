@@ -22,7 +22,7 @@ local Config = require("config") ---@class HyprVimConfigModule
 --- @class Render
 local Render = {}
 
-Render.state_dir = Config.state_dir or ((os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/hyprvim")
+Render.state_dir = Config.state_dir
 Render.eww_dir = Eww.dir
 Render.position = (Config.which_key and Config.which_key.position) or "bottom-right"
 
