@@ -28,16 +28,16 @@ end
 
 --- @param overrides HyprVimConfig?
 local function setup(overrides)
-  local Config = require("config").setup(overrides)
+  local cfg = require("config").setup(overrides)
   require("lib.updater").check_async()
 
-  os.execute("mkdir -p " .. Config.state_dir .. "/registers")
-  os.execute("mkdir -p " .. Config.state_dir .. "/marks")
+  os.execute("mkdir -p " .. cfg.state_dir .. "/registers")
+  os.execute("mkdir -p " .. cfg.state_dir .. "/marks")
 
   require("hypr.rules").setup()
-  require("vim").setup(Config)
+  require("vim").setup(cfg)
 
-  if Config.which_key and Config.which_key.enabled then require("whichkey").start(Config) end
+  if cfg.which_key and cfg.which_key.enabled then require("whichkey").start(cfg) end
 
   require("keys")
 end
