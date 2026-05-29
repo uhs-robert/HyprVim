@@ -3,6 +3,7 @@
 
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
+local Updater = require("lib.updater")
 
 --- @class Command
 local Command = {}
@@ -90,6 +91,7 @@ local commands = {
   tabn       = function() Hypr.workspace_rel(1) end,
   tabp       = function() Hypr.workspace_rel(-1) end,
   reload     = function() os.execute("hyprctl reload &") end,
+  update     = function() Updater.update() end,
   lock       = function() Hypr.exec(Config.applications.lock) end,
   exit       = function()
     if os.execute("command -v hyprshutdown >/dev/null 2>&1") then

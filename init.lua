@@ -29,6 +29,7 @@ end
 --- @param overrides HyprVimConfig?
 local function setup(overrides)
   local Config = require("config").setup(overrides)
+  require("lib.updater").check_async()
 
   os.execute("mkdir -p " .. Config.state_dir .. "/registers")
   os.execute("mkdir -p " .. Config.state_dir .. "/marks")

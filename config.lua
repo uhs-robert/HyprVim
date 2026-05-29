@@ -49,11 +49,15 @@ local XCH = os.getenv("XDG_CACHE_HOME") or ((os.getenv("HOME") or "/tmp") .. "/.
 --- @field position? "bottom-right"|"bottom-left"|"bottom-center"|"top-right"|"top-left"|"top-center"  Panel anchor position
 --- @field auto_show? HyprVimAutoShow
 
+--- @class HyprVimUpdates
+--- @field channel? "stable"|"nightly"|"off"|string  "stable" = latest GitHub release (default), "nightly" = git HEAD, "off" = disabled, any other string = pinned release tag or commit SHA
+
 --- @class HyprVimConfig
 --- @field keys? HyprVimKeys
 --- @field applications? HyprVimApplications
 --- @field theme? string        Path to a theme.conf sourced by Hyprland for whichkey colours; relative to the hyprvim directory
 --- @field notifications? HyprVimNotifications
+--- @field updates? HyprVimUpdates
 --- @field enable_debug? boolean  true: write verbose diagnostic logs to the systemd journal (`journalctl -t hyprvim`)
 --- @field max_count? integer     Maximum count digit accumulator; counts above this are silently clamped (default 1000)
 --- @field which_key? HyprVimWhichKey
@@ -107,6 +111,9 @@ Config.defaults = {
       disabled = { "NORMAL", "VISUAL", "V-LINE", "INSERT" },
       enabled  = nil,
     },
+  },
+  updates = {
+    channel = "stable",
   },
   enable_debug = false,
   max_count    = 1000,
