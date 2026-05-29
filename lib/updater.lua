@@ -9,6 +9,7 @@ local sh = Utils.sh_escape
 local root = dir .. "../"
 local REPO = "uhs-robert/hyprvim"
 
+--- @class Updater
 local Updater = {}
 
 --- Send an actionable notification. If the user clicks the action label, run `on_accept`.

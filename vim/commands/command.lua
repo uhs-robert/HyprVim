@@ -3,26 +3,11 @@
 
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
-local Updater = require("lib.updater")
+local Updater = require("lib.updater") ---@class Updater
+local Prompt = require("lib.prompt") ---@class Prompt
 
 --- @class Command
 local Command = {}
-
----@return string|nil  user-entered command, or nil if cancelled
-local function prompt_command()
-  local tool = Config.applications.menu
-  local cmd
-  if tool == "rofi" then
-    cmd = "rofi -dmenu -p \":\" -theme-str 'window{width:600px;}' -class hyprvim-command 2>/dev/null"
-  else
-    cmd = string.format('%s -p ":" 2>/dev/null', tool)
-  end
-  local p = io.popen(cmd)
-  if not p then return nil end
-  local s = p:read("*a"):gsub("%s+$", "")
-  p:close()
-  return s ~= "" and s or nil
-end
 
 ---@return string
 local function after_path() return require("config").state_dir .. "/command-after" end
@@ -149,16 +134,17 @@ end
 function Command.prompt()
   Hypr.exit_vim()
   hl.timer(function()
-    local cmd = prompt_command()
-    Hypr.normal()
-    if not cmd or cmd == "" then
-      Command.dispatch_after()
-      return
-    end
-    hl.timer(function()
-      execute(cmd)
-      Command.dispatch_after()
-    end, { timeout = 50, type = "oneshot" })
+    Prompt.async(":", { wm_class = "hyprvim-command" }, function(cmd)
+      Hypr.normal()
+      if not cmd then
+        Command.dispatch_after()
+        return
+      end
+      hl.timer(function()
+        execute(cmd)
+        Command.dispatch_after()
+      end, { timeout = 50, type = "oneshot" })
+    end)
   end, { timeout = 100, type = "oneshot" })
 end
 
