@@ -8,7 +8,7 @@ local function setup()
   hl.layer_rule({
     name = "hyprvim-whichkey",
     match = { namespace = "hyprvim-whichkey" },
-    animation = "slide",
+    no_anim = true,
   })
 
   -- floating-help: help viewer opened by `gh`
