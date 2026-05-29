@@ -17,8 +17,8 @@ end
 
 --- @param name string submap name
 function Hyprland.switch_mode(name) hl.dispatch(hl.dsp.submap(name)) end
-
 --- Return to NORMAL mode.
+
 function Hyprland.normal() hl.dispatch(hl.dsp.submap("NORMAL")) end
 
 --- Exit vim mode entirely (back to plain Hyprland binds).
@@ -26,9 +26,7 @@ function Hyprland.exit_vim() hl.dispatch(hl.dsp.submap("reset")) end
 
 --- Focus a specific window by its hex address.
 ---@param addr string  hex window address (e.g. "0x1234abcd")
-function Hyprland.focus_window(addr)
-  hl.dispatch(hl.dsp.exec_cmd("hyprctl dispatch focuswindow address:" .. addr))
-end
+function Hyprland.focus_window(addr) hl.dispatch(hl.dsp.exec_cmd("hyprctl dispatch focuswindow address:" .. addr)) end
 
 --- Close the active window gracefully.
 function Hyprland.close_window() hl.dispatch(hl.dsp.window.close()) end

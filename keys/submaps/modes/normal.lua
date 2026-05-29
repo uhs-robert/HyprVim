@@ -18,8 +18,7 @@ local vm_keys = vim.motion.action_seq
 ---@return fun()
 local function open_vim_editor(opts)
   return function()
-    vim.count.clear()
-    hl.dispatch(hl.dsp.submap("reset"))
+    Submap.reset()
     vim.editor.open({ copy_selected = true, insert_mode = (opts and opts.insert) or false })
   end
 end
@@ -42,19 +41,19 @@ local find = {
 }
 
 -- ── Marks ─────────────────────────────────────────────────────────────────────
-local function set_mark()  vim.marks.set_after("NORMAL") hl.dispatch(hl.dsp.submap("SET-MARK")) end
-local function jump_mark() vim.marks.set_after("NORMAL") hl.dispatch(hl.dsp.submap("MARKS")) end
-local function goto_mark() vim.marks.set_after("reset")  hl.dispatch(hl.dsp.submap("MARKS")) end
+local function set_mark()  vim.marks.set_after("NORMAL") Submap.enter("SET-MARK") end
+local function jump_mark() vim.marks.set_after("NORMAL") Submap.enter("MARKS") end
+local function goto_mark() vim.marks.set_after("reset")  Submap.enter("MARKS") end
 
 -- ── Insert mode ───────────────────────────────────────────────────────────────
-local function insert_at_cursor() vim.count.clear() hl.dispatch(hl.dsp.submap("INSERT")) end
-local function insert_after()     vim.count.clear() hl.dispatch(hl.dsp.submap("INSERT")) send("", "RIGHT") end
-local function insert_eol()       vim.count.clear() hl.dispatch(hl.dsp.submap("INSERT")) send("", "END") end
-local function insert_bol()       vim.count.clear() hl.dispatch(hl.dsp.submap("INSERT")) send("", "HOME") end
-local function open_below()       vim.count.clear() send("", "END") send("", "Return") hl.dispatch(hl.dsp.submap("INSERT")) end
-local function open_above()       vim.count.clear() send("", "HOME") send("", "Return") send("", "Up") hl.dispatch(hl.dsp.submap("INSERT")) end
-local function open_below_se()    vim.count.clear() send("", "END") send("SHIFT", "Return") hl.dispatch(hl.dsp.submap("INSERT")) end
-local function open_above_se()    vim.count.clear() send("", "HOME") send("SHIFT", "Return") send("", "Up") hl.dispatch(hl.dsp.submap("INSERT")) end
+local function insert_at_cursor() Submap.enter("INSERT") end
+local function insert_after()     Submap.enter("INSERT") send("", "RIGHT") end
+local function insert_eol()       Submap.enter("INSERT") send("", "END") end
+local function insert_bol()       Submap.enter("INSERT") send("", "HOME") end
+local function open_below()       send("", "END") send("", "Return") Submap.enter("INSERT") end
+local function open_above()       send("", "HOME") send("", "Return") send("", "Up") Submap.enter("INSERT") end
+local function open_below_se()    send("", "END") send("SHIFT", "Return") Submap.enter("INSERT") end
+local function open_above_se()    send("", "HOME") send("SHIFT", "Return") send("", "Up") Submap.enter("INSERT") end
 
 -- ── Change / delete / paste / indent ─────────────────────────────────────────
 local function change_eol()    vim.count.clear() vim.motion.send_raw({ "SHIFT", "End" }, 1) vim.registers.handle_delete("CTRL", "x", "INSERT") end
@@ -72,13 +71,16 @@ local function last_line()      vim.count.clear() send("CTRL", "END") end
 local function backspace_move() wk.close() vim.motion.send("h") end
 local function escape_gui()     vim.count.clear() send("", "ESCAPE") end
 local function escape_normal()  vim.count.clear() wk.close() vim.find.deactivate() Hypr.send("", "Escape", "active") end
-local function exit_vim()       vim.count.clear() hl.dispatch(hl.dsp.submap("reset")) end
 -- stylua: ignore end
 
 Submap.define({
   name = "NORMAL",
   escape = false,
   catchall = "stay",
+  on_exit = function(ctx)
+    local keep = { GOTO = true, CHANGE = true, YANK = true, DELETE = true }
+    if not keep[ctx.to] then vim.count.clear() end
+  end,
   binds = function()
     -- stylua: ignore start
     Bind.key("h",          vm("h"),                          "Left")
@@ -208,7 +210,7 @@ Submap.define({
       { "ESCAPE", escape_normal, "Escape", { non_consuming = true } },
 
       -- Global exit from vim mode
-      { LEADER .. " + " .. EXIT, exit_vim, nil, { release = true } },
+      { LEADER .. " + " .. EXIT, Submap.reset, nil, { release = true } },
     }
     -- stylua: ignore end
   end,
