@@ -8,6 +8,7 @@ package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
 local Render = require("whichkey.render") ---@class Render
 local Utils = require("lib.utils") ---@class HyprVimUtils
 local Theme = require("whichkey.theme")
+local Submap = require("lib.submap") ---@class HyprVimSubmap
 local sh_escape = Utils.sh_escape
 local read_file = Utils.read_file
 
@@ -76,21 +77,25 @@ local function should_auto_show(sm, config)
 end
 
 --- Returns the millisecond delay before showing the HUD for sm.
---- next_delay (from the one-shot flag file) overrides everything; otherwise all submaps use
---- delay_ms, except operator-pending modes that chain from another operator mode (0 ms).
+--- next_delay (from the one-shot flag file) overrides everything; otherwise submap_delay_ms
+--- (per-submap spec override) takes priority over the global delay_ms, except
+--- operator-pending modes that chain from another operator mode always use 0 ms.
 --- @param sm string
 --- @param prev_sm string
 --- @param next_delay string  raw file contents, "" if absent
 --- @param delay_ms integer
+--- @param submap_delay_ms integer|nil  per-submap override from SubmapSpec.delay_ms
 --- @return integer
-local function compute_delay(sm, prev_sm, next_delay, delay_ms)
+local function compute_delay(sm, prev_sm, next_delay, delay_ms, submap_delay_ms)
   if next_delay ~= "" then
     return tonumber(next_delay) or 0
-  elseif requires_delay(sm) then
-    -- Operator-pending chains: no extra delay when coming from another operator mode.
-    return (prev_sm ~= "" and requires_delay(prev_sm)) and 0 or delay_ms
   end
-  return delay_ms
+  local effective_ms = submap_delay_ms or delay_ms
+  if requires_delay(sm) then
+    -- Operator-pending chains: no extra delay when coming from another operator mode.
+    return (prev_sm ~= "" and requires_delay(prev_sm)) and 0 or effective_ms
+  end
+  return effective_ms
 end
 
 --- Starts the eww daemon in the background (or pings it if already running),
@@ -250,7 +255,8 @@ local function make_submap_handler(config, state_dir, spawn_render)
     local skip_applies = resolve_skip(skip_next, skip_target, sm, state_dir)
     if skip_applies or not should_auto_show(sm, config) then return end
 
-    local dms = compute_delay(sm, prev_sm, next_delay, config.delay_ms)
+    local spec = Submap.registry[sm]
+    local dms = compute_delay(sm, prev_sm, next_delay, config.delay_ms, spec and spec.delay_ms)
 
     pending_timer = hl.timer(function()
       pending_timer = nil
