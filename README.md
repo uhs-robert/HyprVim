@@ -145,26 +145,26 @@ hyprctl reload
 
 ## 🔄 Staying Updated
 
-### Getting the Latest Changes
+HyprVim checks for updates on every Hyprland reload and notifies you via your desktop notification daemon. Clicking the notification applies the update and reloads automatically.
 
-To update your installation with the latest features and fixes:
+You can also run `:update` at any time from NORMAL mode to apply manually.
 
-```bash
-cd ~/.local/share/hyprland/lua/plugins/hyprvim
-git pull
-hyprctl reload
+The default channel is `"stable"` (latest GitHub release). Configure it in your `setup()` call:
+
+```lua
+updates = {
+  channel = "stable",   -- latest release (default)
+  -- channel = "nightly",  -- git HEAD
+  -- channel = "v1.2.3",   -- pinned release tag
+  -- channel = "abc1234",  -- pinned commit SHA
+  -- channel = "off",      -- disable update checks
+},
 ```
 
-### Release Notifications
-
-Stay informed about new releases:
-
-1. **Watch the repository** - Click `Watch` → `Custom` → Check `Releases` on this page
-2. **Check the releases page** - View all releases at <https://github.com/uhs-robert/hyprvim/releases>
-3. **RSS Feed** - Subscribe to releases: <https://github.com/uhs-robert/hyprvim/releases.atom>
-
 > [!NOTE]
-> Each release includes a detailed changelog with new features, improvements, and bug fixes.
+> Update notifications require `notify-send` (libnotify) and a compatible notification daemon (dunst, mako, or swaync).
+>
+> Without one of those, a passive Hyprland notification is shown instead and you must use `:update` to apply.
 
 ## 🚀 Usage
 
@@ -198,7 +198,7 @@ Multi-clipboard management with named registers (`"a` - `"z`) and special regist
 
 ### Commands
 
-Press `:` in **NORMAL** mode to execute Vim-style commands. Common commands: `:w` (save), `:q` (quit), `:wq` (save & quit), `:split` (split window), `:float` (toggle floating), `:ws <num>` (switch workspace), `:reload` (reload Hyprland config).
+Press `:` in **NORMAL** mode to execute Vim-style commands. Common commands: `:w` (save), `:q` (quit), `:wq` (save & quit), `:split` (split window), `:float` (toggle floating), `:ws <num>` (switch workspace), `:reload` (reload Hyprland config), `:update` (apply HyprVim update).
 
 > **📖 Learn more:** [Command Mode wiki](https://github.com/uhs-robert/hyprvim/wiki/Modes#-command-mode)
 
@@ -236,6 +236,9 @@ require("hyprvim").setup({
   notifications = {
     all = false,                -- Enable to bypass settings below and just enable all
     marks = true,
+  },
+  updates = {
+    channel = "stable",         -- "stable" (latest release), "nightly" (git HEAD), "off", or a tag/commit SHA to pin
   },
   enable_debug = false,
   which_key = {
