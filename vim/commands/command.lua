@@ -97,14 +97,8 @@ local aliases = {
 }
 for alias, canonical in pairs(aliases) do commands[alias] = commands[canonical] end
 
--- All completions exposed to the terminal prompt (tab completion).
-local COMPLETIONS = {
-  "w", "wq", "q", "q!", "qa", "qa!", "only",
-  "split", "vsplit", "float", "fullscreen", "pin", "center", "pseudo",
-  "tabn", "tabp", "ws", "move", "opacity",
-  "reload", "lock", "update", "exit", "logout", "e", "term", "help",
-  "sp", "vsp", "vs", "f", "fs", "c", "tn", "tp", "r", "edit", "t",
-}
+local COMPLETIONS = {}
+for k in pairs(commands) do COMPLETIONS[#COMPLETIONS + 1] = k end
 
 ---Pattern-match table for parameterised commands (`:ws N`, `:move N`, `:opacity V`, `s/`).
 ---Each entry is `{ pattern, handler }` where handler receives the first capture (or `""` when there is none).
@@ -124,7 +118,11 @@ local patterns = {
         if current and current ~= "reset" then require("hypr").switch_mode(current) end
       end
       Hypr.cmd_then_dispatch(
-        Config.term_cmd("hyprvim-shell") .. " bash -c " .. sq(shell_cmd .. "; echo; read -rsn1 -p '[done] press any key...'"),
+        Config.term_cmd("hyprvim-shell") .. " bash -c " .. sq(
+          "_hv_tmp=$(mktemp); " .. shell_cmd .. " 2>&1 | tee \"$_hv_tmp\";"
+          .. " [ -s \"$_hv_tmp\" ] && { echo; read -rsn1 -p '[done] press any key...'; };"
+          .. " rm -f \"$_hv_tmp\""
+        ),
         "_hv_shell_done()"
       )()
       return true
