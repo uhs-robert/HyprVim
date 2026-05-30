@@ -27,8 +27,7 @@ local XCC = os.getenv("XDG_CONFIG_HOME") or ((os.getenv("HOME") or "") .. "/.con
 --- @field pre?  string  Extra word inserted before class flag (e.g. "start" for wezterm)
 
 --- @class HyprVimApplications
---- @field menu?         "rofi"|"wofi"|"tofi"|"fuzzel"|"dmenu"|"zenity"|"kdialog"  Prompt tool for find/replace/command input
---- @field terminal?     "kitty"|"ghostty"|"alacritty"|"wezterm"|"foot"|"footclient"|"xterm"|string  Terminal used for the help viewer and open-editor feature; built-in flag mappings exist for the listed values, add an entry to `term_flags` for others
+--- @field terminal?     "kitty"|"ghostty"|"alacritty"|"wezterm"|"foot"|"footclient"|"xterm"|string  Terminal used for prompts, the help viewer, and open-editor feature; built-in flag mappings exist for the listed values, add an entry to `term_flags` for others
 --- @field term_flags?   table<string,HyprVimTermFlags>  Per-terminal flag overrides; e.g. `{ wezterm = { class = "--class", exec = "--", pre = "start" } }`. nil tries to autoresolve flags from the built-in terminal list.
 --- @field lock?         string  Screen lock command executed by `:lock` and the L key in NORMAL mode (e.g. "hyprlock")
 --- @field editor?       "vim"|"nvim"  Editor launched by the open-editor feature
@@ -65,9 +64,10 @@ local XCC = os.getenv("XDG_CONFIG_HOME") or ((os.getenv("HOME") or "") .. "/.con
 --- @field defaults? HyprVimConfig  Internal: holds the default values before user overrides are merged
 
 --- @class HyprVimInstance : HyprVimConfig
---- @field xdg string         Resolved `$XDG_RUNTIME_DIR`
---- @field state_dir string   Resolved runtime state directory (`$XDG_RUNTIME_DIR/hyprvim`)
---- @field config_dir string  Resolved user config directory (`$XDG_CONFIG_HOME/hyprvim`)
+--- @field xdg string          Resolved `$XDG_RUNTIME_DIR`
+--- @field state_dir string    Resolved runtime state directory (`$XDG_RUNTIME_DIR/hyprvim`)
+--- @field config_dir string   Resolved user config directory (`$XDG_CONFIG_HOME/hyprvim`)
+--- @field install_dir string  Resolved HyprVim installation directory (repo root)
 --- @field which_key HyprVimWhichKey
 --- @field setup fun(overrides?: HyprVimConfig|table): HyprVimInstance
 --- @field term_cmd fun(class: string): string  Returns the full terminal launch prefix for the given window class
@@ -81,6 +81,7 @@ local Config = {}
 Config.xdg = XDG
 Config.state_dir = XDG .. "/hyprvim"
 Config.config_dir = XCC .. "/hyprvim"
+Config.install_dir = (debug.getinfo(1, "S").source:match("^@(.+)/config%.lua$") or ".")
 
 -- stylua: ignore
 Config.defaults = {
@@ -90,7 +91,6 @@ Config.defaults = {
     exit     = "SHIFT + ESCAPE",
   },
   applications = {
-    menu         = "rofi",
     terminal     = "kitty",
     term_flags   = nil,
     lock         = "hyprlock",

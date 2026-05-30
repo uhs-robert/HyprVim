@@ -4,8 +4,9 @@ local Submap = require("lib.submap") ---@class HyprVimSubmap
 local vim = require("vim") ---@class Vim
 local wk = require("whichkey") ---@class WhichKey
 local config = require("config") ---@class HyprVimConfigModule
-local LEADER = (config.keys or {}).leader or "SUPER"
-local ACT = (config.keys or {}).activate or "ESCAPE"
+local LEADER = config.keys.leader or "SUPER"
+local ACT = config.keys.activate or "ESCAPE"
+local EXIT = config.keys.exit or "ESCAPE"
 
 local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key })) end
 local function visual() hl.dispatch(hl.dsp.submap("VISUAL")) end
@@ -13,7 +14,10 @@ local function visual() hl.dispatch(hl.dsp.submap("VISUAL")) end
 Submap.define({
   name = "G-VISUAL",
   escape = "VISUAL",
-  back = function() wk.close() visual() end,
+  back = function()
+    wk.close()
+    visual()
+  end,
   catchall = "stay",
   binds = {
     -- stylua: ignore start
@@ -23,7 +27,8 @@ Submap.define({
     { "n",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, after_submap = "NORMAL" }) end,                     "Edit in Vim (Normal)" },
     { "i",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
     { "SPACE",     wk.toggle },
-    { LEADER .. " + " .. ACT, function() Submap.reset() end },
+    { LEADER .. " + " .. ACT, Submap.reset },
+    { LEADER .. " + " .. EXIT, Submap.reset },
     -- stylua: ignore end
   },
 }).setup()

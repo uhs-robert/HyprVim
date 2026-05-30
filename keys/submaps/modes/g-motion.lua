@@ -5,16 +5,20 @@ local Bind = require("lib.bind") ---@class HyprVimBindLib
 local vim = require("vim") ---@class Vim
 local wk = require("whichkey") ---@class WhichKey
 local config = require("config") ---@class HyprVimConfigModule
-local LEADER = (config.keys or {}).leader or "SUPER"
-local ACT = (config.keys or {}).activate or "ESCAPE"
+local LEADER = config.keys.leader or "SUPER"
+local ACT = config.keys.activate or "ESCAPE"
+local EXIT = config.keys.exit or "ESCAPE"
 
 local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key })) end
-local function normal() hl.dispatch(hl.dsp.submap("NORMAL")) end
+local function normal() Submap.enter("NORMAL") end
 
 Submap.define({
   name = "GOTO",
   escape = "NORMAL",
-  back = function() wk.close() normal() end,
+  back = function()
+    wk.close()
+    normal()
+  end,
   catchall = "stay",
   binds = {
     -- stylua: ignore start
@@ -23,10 +27,10 @@ Submap.define({
     { "t",          function() send("CTRL", "PAGE_DOWN") normal() end, "Next tab"   },
     { "g",          function() send("CTRL", "HOME")      normal() end, "Doc start"  },
     { "SHIFT + g",  function() send("CTRL", "END")       normal() end, "Last line"  },
-    { "h",          function() vim.count.clear() hl.dispatch(hl.dsp.submap("reset")) hl.dispatch(hl.dsp.exec_cmd(config.term_cmd("floating-help") .. " hyprvim-help")) end, "Help" },
     { "m",          function() vim.count.clear() vim.marks.list() normal() end, "Marks list" },
     { "SPACE",      wk.toggle },
-    { LEADER .. " + " .. ACT, function() hl.dispatch(hl.dsp.submap("reset")) end },
+    { LEADER .. " + " .. ACT, Submap.reset },
+    { LEADER .. " + " .. EXIT, Submap.reset },
     -- stylua: ignore end
   },
 }).setup()

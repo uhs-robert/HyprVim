@@ -1,9 +1,19 @@
 -- hypr/rules.lua
 -- Window rules for HyprVim floating windows.
 
-local Config = require("config") ---@class HyprVimConfigModule
-
 local function setup()
+  -- prompt bar: full-width bottom bar for replace/command/find input
+  for _, class in ipairs({ "hyprvim-command", "hyprvim-replace", "hyprvim-find", "hyprvim-prompt" }) do
+    hl.window_rule({
+      name = class,
+      match = { class = "^" .. class .. "$" },
+      float = true,
+      size = "(monitor_w) 40",
+      move = "0 (monitor_h - 40)",
+      animation = "slide bottom",
+    })
+  end
+
   -- whichkey: submap display layer
   hl.layer_rule({
     name = "hyprvim-whichkey",
@@ -11,22 +21,23 @@ local function setup()
     no_anim = true,
   })
 
-  -- floating-help: help viewer opened by `gh`
   hl.window_rule({
-    name = "hyprvim-floating-help",
-    match = { class = "^floating-help$" },
+    name = "hyprvim-help",
+    match = { class = "^hyprvim-help$" },
+    size = "(monitor_w) (monitor_h * 0.6)",
     float = true,
-    center = true,
-    size = "(monitor_w*0.8) (monitor_h*0.8)",
+    move = "0 (monitor_h * 0.4)",
+    animation = "slide bottom",
   })
 
-  -- hyprvim-find: find/search prompt (narrow bar at top)
+  -- hyprvim-shell: shell exec output viewer, slides up from bottom
   hl.window_rule({
-    name = "hyprvim-find",
-    match = { class = "^hyprvim-find$" },
+    name = "hyprvim-shell",
+    match = { class = "^hyprvim-shell$" },
     float = true,
-    size = "600 80",
-    move = "onscreen 50% 5%",
+    size = "(monitor_w) (monitor_h * 0.6)",
+    move = "0 (monitor_h * 0.4)",
+    animation = "slide bottom",
   })
 
   -- hyprvim-open-vim: open-editor scratch buffer

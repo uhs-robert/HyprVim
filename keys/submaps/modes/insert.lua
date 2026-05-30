@@ -3,15 +3,16 @@
 local Submap = require("lib.submap") ---@class HyprVimSubmap
 local config = require("config") ---@class HyprVimConfigModule
 
-local LEADER = (config.keys or {}).leader or "SUPER"
-local ACT = (config.keys or {}).activate or "ESCAPE"
-local HYPRVIM_ACTIVATE = LEADER .. " + " .. ACT
+local LEADER = config.keys.leader or "SUPER"
+local ACT = config.keys.activate or "ESCAPE"
+local EXIT = config.keys.exit or "ESCAPE"
 
 Submap.define({
   name = "INSERT",
   escape = "NORMAL",
   back = false,
   binds = {
-    { HYPRVIM_ACTIVATE, function() hl.dispatch(hl.dsp.submap("reset")) end },
+    { LEADER .. " + " .. ACT, Submap.reset },
+    { LEADER .. " + " .. EXIT, Submap.reset },
   },
 }).setup()

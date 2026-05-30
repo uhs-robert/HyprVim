@@ -88,17 +88,16 @@ If you'd like an extra config added, raise a feature request or put one together
 
 ### Prerequisites
 
-| Name                                           | Description                                                               |
-| ---------------------------------------------- | ------------------------------------------------------------------------- |
-| [Hyprland](https://github.com/hyprwm/Hyprland) | Wayland compositor                                                        |
-| Bash                                           | For shell scripts                                                         |
-| `wl-clipboard`                                 | Wayland clipboard utilities (`wl-copy`, `wl-paste`)                       |
-| `wtype`                                        | Wayland keyboard input emulation (used by open-editor copy/paste)         |
-| `jq`                                           | JSON processor for parsing hyprctl output                                 |
-| A terminal emulator                            | For the `gh` help viewer                                                  |
-| A prompt tool                                  | One of: `rofi`, `wofi`, `tofi`, `fuzzel`, `dmenu`, `zenity`, or `kdialog` |
-| `eww` _(optional)_                             | Widget system for the which-key HUD                                       |
-| `socat` _(optional)_                           | Required by the which-key daemon to listen on Hyprland's event socket     |
+| Name                                           | Description                                                           |
+| ---------------------------------------------- | --------------------------------------------------------------------- |
+| [Hyprland](https://github.com/hyprwm/Hyprland) | Wayland compositor                                                    |
+| Bash                                           | For shell scripts                                                     |
+| `wl-clipboard`                                 | Wayland clipboard utilities (`wl-copy`, `wl-paste`)                   |
+| `wtype`                                        | Wayland keyboard input emulation (used by open-editor copy/paste)     |
+| `jq`                                           | JSON processor for parsing hyprctl output                             |
+| A terminal emulator                            | For the `command-mode`, `replace-mode`, `find-mode`, and `help`       |
+| `eww` _(optional)_                             | Widget system for the which-key HUD                                   |
+| `socat` _(optional)_                           | Required by the which-key daemon to listen on Hyprland's event socket |
 
 ### Quick Install
 
@@ -227,7 +226,6 @@ require("hyprvim").setup({
     activate = "ESCAPE",
   },
   applications = {
-    menu = "rofi",
     terminal = "kitty --class floating-help -e",
     lock = "hyprlock",
     vim_editor = "nvim",                          -- `vim` or `nvim`

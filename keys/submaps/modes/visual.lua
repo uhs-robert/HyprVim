@@ -9,16 +9,17 @@ local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
 local oe = vim.editor
 local config = require("config") ---@class HyprVimConfigModule
-local LEADER = (config.keys or {}).leader or "SUPER"
-local ACT = (config.keys or {}).activate or "ESCAPE"
+local LEADER = config.keys.leader or "SUPER"
+local ACT = config.keys.activate or "ESCAPE"
+local EXIT = config.keys.exit or "ESCAPE"
 
 local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key })) end
 
 local normal = Submap.switch("NORMAL")
 local visual = Submap.switch("VISUAL")
-local reset  = Submap.switch("reset")
-local va     = motion.action_visual
-local vm     = motion.action
+local reset = Submap.switch("reset")
+local va = motion.action_visual
+local vm = motion.action
 local va_seq = motion.action_seq
 
 -- ── Visual actions ────────────────────────────────────────────────────────────
@@ -52,7 +53,7 @@ local function passthrough(key) return function() send("CTRL", key) normal() end
 -- stylua: ignore end
 
 local footer = {
-  { "SPACE",                 wk.toggle },
+  { "SPACE", wk.toggle },
   { LEADER .. " + " .. ACT, reset },
 }
 
@@ -63,8 +64,15 @@ local footer = {
 Submap.define({
   name = "VISUAL",
   on_enter = function() count.clear() end,
-  escape = function() send("", "LEFT") send("", "RIGHT") normal() end,
-  back = function() wk.close() normal() end,
+  escape = function()
+    send("", "LEFT")
+    send("", "RIGHT")
+    normal()
+  end,
+  back = function()
+    wk.close()
+    normal()
+  end,
   catchall = "stay",
   binds = function()
     local rows = {
@@ -133,7 +141,9 @@ Submap.define({
     for i = 1, 9 do
       table.insert(rows, { tostring(i), function() count.append(tostring(i)) end })
     end
-    for _, row in ipairs(footer) do table.insert(rows, row) end
+    for _, row in ipairs(footer) do
+      table.insert(rows, row)
+    end
     return rows
   end,
 }).setup()
@@ -147,7 +157,10 @@ local function visual_text_object(name, parent_name, word_seq, para_seq)
   Submap.define({
     name = name,
     escape = "NORMAL",
-    back = function() wk.close() parent() end,
+    back = function()
+      wk.close()
+      parent()
+    end,
     catchall = "stay",
     binds = {
       -- stylua: ignore start
@@ -157,6 +170,7 @@ local function visual_text_object(name, parent_name, word_seq, para_seq)
       { "SHIFT + p", function() motion.send_sequence(para_seq) parent() end              },
       { "SPACE",     wk.toggle },
       { LEADER .. " + " .. ACT, reset },
+      { LEADER .. " + " .. EXIT, reset },
       -- stylua: ignore end
     },
   }).setup()

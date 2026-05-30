@@ -8,17 +8,18 @@ local count = vim.count
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
 local config = require("config") ---@class HyprVimConfigModule
-local LEADER = (config.keys or {}).leader or "SUPER"
-local ACT = (config.keys or {}).activate or "ESCAPE"
+local LEADER = config.keys.leader or "SUPER"
+local ACT = config.keys.activate or "ESCAPE"
+local EXIT = config.keys.exit or "ESCAPE"
 
 local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key })) end
-local function normal() hl.dispatch(hl.dsp.submap("NORMAL")) end
-local function insert() hl.dispatch(hl.dsp.submap("INSERT")) end
-local function reset() hl.dispatch(hl.dsp.submap("reset")) end
+local function normal() Submap.enter("NORMAL") end
+local function insert() Submap.enter("INSERT") end
 
 local footer = {
-  { "SPACE",                 wk.toggle },
-  { LEADER .. " + " .. ACT, reset },
+  { "SPACE", wk.toggle },
+  { LEADER .. " + " .. ACT, Submap.reset },
+  { LEADER .. " + " .. EXIT, Submap.reset },
 }
 
 --- Build and register the I/A/G sub-submaps for one operator.
@@ -38,7 +39,8 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
       { "p",         function() motion.send_sequence(para_seq) action() end, "Paragraph" },
       { "SHIFT + p", function() motion.send_sequence(para_seq) action() end },
       { "SPACE",                 wk.toggle },
-      { LEADER .. " + " .. ACT, reset },
+      { LEADER .. " + " .. ACT, Submap.reset },
+      { LEADER .. " + " .. EXIT, Submap.reset },
       -- stylua: ignore end
     }
   end
@@ -77,7 +79,8 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
       { "g",         function() motion.send_raw({ "CTRL SHIFT", "HOME" }, 1) on_first() end, "First line" },
       { "SHIFT + g", function() motion.send_raw({ "CTRL SHIFT", "END" },  1) on_last()  end, "Last line"  },
       { "SPACE",                 wk.toggle },
-      { LEADER .. " + " .. ACT, reset },
+      { LEADER .. " + " .. ACT, Submap.reset },
+      { LEADER .. " + " .. EXIT, Submap.reset },
       -- stylua: ignore end
     },
   }).setup()
@@ -87,7 +90,9 @@ end
 -- DELETE
 -- ---------------------------------------------------------------------------
 
-local function del(after) return function() reg.handle_delete("CTRL", "x", after) end end
+local function del(after)
+  return function() reg.handle_delete("CTRL", "x", after) end
+end
 
 Submap.define({
   name = "DELETE",
@@ -114,7 +119,8 @@ Submap.define({
     { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("DELETE-AROUND")) end },
     { "g",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-GOTO")) end, "+Go" },
     { "SPACE",                 wk.toggle },
-    { LEADER .. " + " .. ACT, reset },
+    { LEADER .. " + " .. ACT, Submap.reset },
+    { LEADER .. " + " .. EXIT, Submap.reset },
     -- stylua: ignore end
   },
 }).setup()
@@ -155,24 +161,33 @@ Submap.define({
     { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("CHANGE-AROUND")) end },
     { "g",         function() count.clear() hl.dispatch(hl.dsp.submap("CHANGE-GOTO")) end, "+Go" },
     { "SPACE",                 wk.toggle },
-    { LEADER .. " + " .. ACT, reset },
+    { LEADER .. " + " .. ACT, Submap.reset },
+    { LEADER .. " + " .. EXIT, Submap.reset },
     -- stylua: ignore end
   },
 }).setup()
 
-make_sub_submaps(
-  "CHANGE",
-  function() motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" }, { "", "BackSpace" } }) insert() end,
-  function() motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } }) reg.handle_delete("CTRL", "x", "INSERT") end,
-  function() motion.send_raw({ "CTRL SHIFT", "HOME" }, 1) reg.handle_delete("CTRL", "x", "INSERT") end,
-  function() motion.send_raw({ "CTRL SHIFT", "END" }, 1) reg.handle_delete("CTRL", "x", "INSERT") end
-)
+make_sub_submaps("CHANGE", function()
+  motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" }, { "", "BackSpace" } })
+  insert()
+end, function()
+  motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
+  reg.handle_delete("CTRL", "x", "INSERT")
+end, function()
+  motion.send_raw({ "CTRL SHIFT", "HOME" }, 1)
+  reg.handle_delete("CTRL", "x", "INSERT")
+end, function()
+  motion.send_raw({ "CTRL SHIFT", "END" }, 1)
+  reg.handle_delete("CTRL", "x", "INSERT")
+end)
 
 -- ---------------------------------------------------------------------------
 -- YANK
 -- ---------------------------------------------------------------------------
 
-local function yank(after) return function() reg.handle_yank("CTRL", "c", after) end end
+local function yank(after)
+  return function() reg.handle_yank("CTRL", "c", after) end
+end
 
 Submap.define({
   name = "YANK",
@@ -199,15 +214,22 @@ Submap.define({
     { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("YANK-AROUND")) end },
     { "g",         function() count.clear() hl.dispatch(hl.dsp.submap("YANK-GOTO")) end, "+Go" },
     { "SPACE",                 wk.toggle },
-    { LEADER .. " + " .. ACT, reset },
+    { LEADER .. " + " .. ACT, Submap.reset },
+    { LEADER .. " + " .. EXIT, Submap.reset },
     -- stylua: ignore end
   },
 }).setup()
 
-make_sub_submaps(
-  "YANK",
-  function() motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } }) yank("NORMAL")() end,
-  function() motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } }) yank("NORMAL")() end,
-  function() motion.send_raw({ "CTRL SHIFT", "HOME" }, 1) yank("NORMAL")() end,
-  function() motion.send_raw({ "CTRL SHIFT", "END" }, 1) yank("NORMAL")() end
-)
+make_sub_submaps("YANK", function()
+  motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
+  yank("NORMAL")()
+end, function()
+  motion.send_sequence({ { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } })
+  yank("NORMAL")()
+end, function()
+  motion.send_raw({ "CTRL SHIFT", "HOME" }, 1)
+  yank("NORMAL")()
+end, function()
+  motion.send_raw({ "CTRL SHIFT", "END" }, 1)
+  yank("NORMAL")()
+end)

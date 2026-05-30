@@ -1,8 +1,8 @@
--- lib/prompt.lua
--- Non-blocking prompt helper.  Runs a dmenu-style prompt via exec_cmd so the
--- compositor thread is never blocked waiting for user input.  The result is
--- written to a state file by the shell, then read back inside a global callback
--- that is dispatched by hyprctl once the prompt exits.
+-- lib/prompt/init.lua
+-- Non-blocking prompt helper.  Spawns the configured terminal as a full-width
+-- bottom bar so the compositor thread is never blocked waiting for user input.
+-- The result is written to a state file by the shell, then read back inside a
+-- global callback that is dispatched by hyprctl once the terminal exits.
 
 local Config = require("config") ---@class HyprVimConfigModule
 local Hypr = require("hypr") ---@class HyprVimHyprland
@@ -10,25 +10,53 @@ local Hypr = require("hypr") ---@class HyprVimHyprland
 --- @class Prompt
 local Prompt = {}
 
----Build the shell command string for the configured menu tool.
----@param label   string      prompt label shown to the user
----@param opts    {wm_class?: string, theme?: string}
+---Shell-escape `s` for use in a single-quoted argument.
+---@param s string
 ---@return string
-local function build_cmd(label, opts)
-  local tool = Config.applications.menu
+local function sq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
+
+---Build the terminal command that displays a prompt and writes input to state_file.
+---@param label      string    prompt label shown to the user
+---@param opts       {wm_class?: string, completions?: string[]}
+---@param state_file string    path where the result should land
+---@return string
+local function build_cmd(label, opts, state_file)
   local wm_class = opts.wm_class or "hyprvim-prompt"
-  local theme = opts.theme or "window{width:600px;}"
-  if tool == "rofi" then
-    return string.format("rofi -dmenu -p %q -theme-str %q -class %q 2>/dev/null", label, theme, wm_class)
-  else
-    return string.format("%s -p %q 2>/dev/null", tool, label)
+  local script = os.tmpname()
+  local f = io.open(script, "w")
+  if f then
+    local comp_block = ""
+    if opts.completions and #opts.completions > 0 then
+      local wl = sq(table.concat(opts.completions, " "))
+      comp_block = "_hv_complete() {\n"
+        .. "    local words=" .. wl .. "\n"
+        .. "    local matches\n"
+        .. "    mapfile -t matches < <(compgen -W \"$words\" -- \"$READLINE_LINE\")\n"
+        .. "    if [ \"${#matches[@]}\" -eq 1 ]; then\n"
+        .. "        READLINE_LINE=\"${matches[0]}\"\n"
+        .. "        READLINE_POINT=\"${#matches[0]}\"\n"
+        .. "    elif [ \"${#matches[@]}\" -gt 1 ]; then\n"
+        .. "        printf '\\n'\n"
+        .. "        printf '  %s\\n' \"${matches[@]}\"\n"
+        .. "    fi\n"
+        .. "}\n"
+        .. "bind -x '\"\\t\": _hv_complete'\n"
+    end
+    f:write(
+      "trap 'rm -f " .. sq(script) .. "' EXIT\n"
+      .. comp_block
+      .. "read -e -r -p " .. sq(label) .. " __hv_in\n"
+      .. "printf '%s' \"$__hv_in\" > " .. sq(state_file) .. "\n"
+    )
+    f:close()
   end
+  return Config.term_cmd(wm_class) .. " bash " .. sq(script)
 end
 
----Show a dmenu-style prompt without blocking the compositor.
+---Show a prompt without blocking the compositor.
 ---`callback` is called once with the entered string, or nil if cancelled.
 ---@param label    string
----@param opts     {wm_class?: string, theme?: string}
+---@param opts     {wm_class?: string, completions?: string[]}
 ---@param callback fun(result: string|nil)
 function Prompt.async(label, opts, callback)
   local state_file = Config.state_dir .. "/prompt-result"
@@ -44,8 +72,7 @@ function Prompt.async(label, opts, callback)
     callback(result ~= "" and result or nil)
   end
 
-  local cmd = build_cmd(label, opts) .. " > " .. state_file
-  Hypr.cmd_then_dispatch(cmd, "_hv_prompt_cb()")()
+  Hypr.cmd_then_dispatch(build_cmd(label, opts, state_file), "_hv_prompt_cb()")()
 end
 
 return Prompt

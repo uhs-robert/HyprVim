@@ -6,10 +6,14 @@ local vim = require("vim") ---@class Vim
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
 local config = require("config") ---@class HyprVimConfigModule
-local LEADER = (config.keys or {}).leader or "SUPER"
-local ACT = (config.keys or {}).activate or "ESCAPE"
+local LEADER = config.keys.leader or "SUPER"
+local ACT = config.keys.activate or "ESCAPE"
+local EXIT = config.keys.exit or "ESCAPE"
 
-local function set(name) reg.set_pending(name) hl.dispatch(hl.dsp.submap("NORMAL")) end
+local function set(name)
+  reg.set_pending(name)
+  Submap.enter("NORMAL")
+end
 
 Submap.define({
   name = "REGISTERS",
@@ -24,7 +28,8 @@ Submap.define({
       { "SHIFT + MINUS",      function() set("_") end, "Black hole register"        },
       { "SLASH",              function() set("/") end, "Search register"            },
       { "SHIFT + SLASH",      wk.toggle },
-      { LEADER .. " + " .. ACT, function() hl.dispatch(hl.dsp.submap("reset")) end },
+      { LEADER .. " + " .. ACT, Submap.reset },
+      { LEADER .. " + " .. EXIT, Submap.reset },
       -- stylua: ignore end
     }
 

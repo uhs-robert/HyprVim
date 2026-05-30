@@ -139,7 +139,7 @@ local function prompt_and_find(term_type, direction, is_till)
   local label = (term_type == "char_term") and "Find: " or "Search: "
   Hypr.exit_vim()
   hl.timer(function()
-    Prompt.async(label, { wm_class = "hyprvim-find", theme = "window{width:600px;height:80px;}" }, function(term)
+    Prompt.async(label, { wm_class = "hyprvim-find" }, function(term)
       if not term then
         Hypr.normal()
         return

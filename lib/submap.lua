@@ -31,7 +31,6 @@ local Submap = {
 
 --- @class SubmapHandle
 --- @field enter fun()
---- @field exit  fun()
 --- @field back  fun()
 --- @field setup fun()
 
@@ -72,7 +71,12 @@ function Submap.enter(name)
 end
 
 --- Return to the global (reset) submap, firing the current submap's exit hook.
-function Submap.reset()
+---@param opts? { is_temporary?: boolean }  if is_temporary, only dispatch to Hyprland without updating state
+function Submap.reset(opts)
+  if opts and opts.is_temporary then
+    hl.dispatch(hl.dsp.submap("reset"))
+    return
+  end
   local prev_name = Submap.current
   fire_exit(Submap.registry[prev_name], prev_name, "reset")
 
@@ -165,9 +169,7 @@ local function merge_user_keymaps(name, builtin)
 
   for _, row in ipairs(user) do
     -- shift opts from [3] to [4] so Bind.keys treats it correctly
-    result[#result + 1] = type(row[3]) == "table"
-      and { row[1], row[2], nil, row[3] }
-      or row
+    result[#result + 1] = type(row[3]) == "table" and { row[1], row[2], nil, row[3] } or row
   end
   return result
 end

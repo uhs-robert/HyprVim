@@ -12,8 +12,8 @@ local act = (Config.keys or {}).activate or "ESCAPE"
 -- Global Activation: Enters NORMAL mode.
 hl.bind(leader .. " + " .. act, function()
   require("vim").count.clear()
-  hl.dispatch(hl.dsp.submap("NORMAL"))
-end, { locked = true })
+  require("lib.submap").enter("NORMAL")
+end)
 
 -- Global WhichKey Toggles
 if Config.which_key and Config.which_key.enabled then
