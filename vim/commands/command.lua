@@ -23,14 +23,19 @@ local function close_workspace_windows(kill)
   end
 end
 
+---Switch back to the active submap after an async operation suspends vim mode.
+local function restore_submap()
+  local current = require("lib.submap").current
+  if current and current ~= "reset" then require("hypr").switch_mode(current) end
+end
+
 ---Show a formatted command reference in a floating terminal.
 ---@return true
 local function show_help()
   local help_file = Config.install_dir .. "/docs/command-help.md"
   _G._hv_help_done = function()
     _G._hv_help_done = nil
-    local current = require("lib.submap").current
-    if current and current ~= "reset" then require("hypr").switch_mode(current) end
+    restore_submap()
   end
   Hypr.cmd_then_dispatch(
     Config.term_cmd("hyprvim-help") .. " bash -c " .. sq(Config.applications.editor .. " -RM " .. help_file),
@@ -81,7 +86,7 @@ local commands = {
     end
   end,
   shutdown   = function() hl.dispatch(hl.dsp.exec_cmd("systemctl poweroff")) end,
-  picker     = function() hl.dispatch(hl.dsp.exec_cmd("pidof hyprpicker || hyprpicker | wl-copy")) end,
+  picker     = function() hl.dispatch(hl.dsp.exec_cmd("pidof hyprpicker || (hyprpicker | wl-copy)")) end,
   e          = function() Hypr.exec(Config.applications.terminal .. " " .. Config.applications.editor) end,
   term       = function() Hypr.exec(Config.applications.terminal) end,
   help       = show_help,
@@ -114,8 +119,7 @@ local patterns = {
   { "^!(.+)$",            function(shell_cmd)
       _G._hv_shell_done = function()
         _G._hv_shell_done = nil
-        local current = require("lib.submap").current
-        if current and current ~= "reset" then require("hypr").switch_mode(current) end
+        restore_submap()
       end
       Hypr.cmd_then_dispatch(
         Config.term_cmd("hyprvim-shell") .. " bash -c " .. sq(
