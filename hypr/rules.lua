@@ -21,6 +21,7 @@ local function setup()
     no_anim = true,
   })
 
+  -- hyprvim-help: help display for command mode
   hl.window_rule({
     name = "hyprvim-help",
     match = { class = "^hyprvim-help$" },
