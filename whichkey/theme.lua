@@ -91,7 +91,7 @@ function Theme.apply()
   create_if_missing(theme_file, DEFAULT_THEME)
 
   local lines = {}
-  table.insert(lines, "// Auto-generated from theme.conf — do not edit directly")
+  table.insert(lines, "// Auto-generated from theme.conf, do not edit directly")
   table.insert(lines, "// To customize, edit theme.conf and run: hyprctl reload")
   table.insert(lines, "")
 

@@ -35,56 +35,56 @@ cp extras/tridactyl/tridactylrc ~/.config/tridactyl/tridactylrc
 
 ### Navigation
 
-- `h`/`j`/`k`/`l` — scroll left/down/up/right
-- `H`/`L` — back/forward in history
-- `J`/`K` — next/previous tab
-- `gg`/`G` — scroll to top/bottom
-- `<C-u>`/`<C-d>` — scroll half page up/down
-- `<C-f>`/`<C-b>` — scroll full page up/down
+- `h`/`j`/`k`/`l` - scroll left/down/up/right
+- `H`/`L` - back/forward in history
+- `J`/`K` - next/previous tab
+- `gg`/`G` - scroll to top/bottom
+- `<C-u>`/`<C-d>` - scroll half page up/down
+- `<C-f>`/`<C-b>` - scroll full page up/down
 
 ### Tabs & Windows
 
-- `t` — open new tab (with URL)
-- `T` — switch to existing tab
-- `dd` — close current tab
-- `D` — close tab and go to previous
-- `u` — undo closed tab
-- `<<`/`>>` — move tab left/right
-- `w` — open in new window
+- `t` - open new tab (with URL)
+- `T` - switch to existing tab
+- `dd` - close current tab
+- `D` - close tab and go to previous
+- `u` - undo closed tab
+- `<<`/`>>` - move tab left/right
+- `w` - open in new window
 
 ### Hints (link following)
 
-- `f` — hint links (current tab)
-- `F` — hint links (background tab)
-- `;y` — hint and yank URL
-- `;i` — hint inputs/text fields
-- `;m`/`;M` — reverse image search (Google Lens)
+- `f` - hint links (current tab)
+- `F` - hint links (background tab)
+- `;y` - hint and yank URL
+- `;i` - hint inputs/text fields
+- `;m`/`;M` - reverse image search (Google Lens)
 
 ### Search
 
-- `,<space>` (`,` then `,`) — open search
-- `o` / `O` — open URL or search (current / new tab)
+- `,<space>` (`,` then `,`) - open search
+- `o` / `O` - open URL or search (current / new tab)
 - Prefixed search engines: `google`, `github`, `youtube`, `reddit`, `mdn`, `npm`, `duck`, `brave`, `arch`, and many more (see `tridactylrc`)
 
 ### Bookmarks
 
-- `a` — bookmark current URL
-- `b` / `B` — open bookmarks (current / new tab)
+- `a` - bookmark current URL
+- `b` / `B` - open bookmarks (current / new tab)
 
 ### Yank
 
-- `yy` — yank URL
-- `yt` — yank page title
-- `ym` — yank as Markdown link
-- `ys` — yank shortened URL
+- `yy` - yank URL
+- `yt` - yank page title
+- `ym` - yank as Markdown link
+- `ys` - yank shortened URL
 
 ### Zoom
 
-- `zi`/`zo` — zoom in/out (incremental)
-- `zz` — reset zoom
+- `zi`/`zo` - zoom in/out (incremental)
+- `zz` - reset zoom
 
 ### Leader (`,`)
 
-- `,r` — re-source config
-- `,,` — open search
-- `,<` — tabopen search
+- `,r` - re-source config
+- `,,` - open search
+- `,<` - tabopen search

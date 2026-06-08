@@ -99,7 +99,7 @@ function Items.resolve(submap)
   write_file(tmp, items)
   local count = tonumber(pread("jq -c 'length' " .. sh_escape(tmp) .. " 2>/dev/null")) or 0
   if count == 0 then
-    -- Retry once — hyprctl binds may lag submap transitions
+    -- Retry once hyprctl binds may lag submap transitions
     os.execute("sleep 0.02")
     items = fetch()
     write_file(tmp, items)

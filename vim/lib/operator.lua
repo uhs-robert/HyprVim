@@ -51,13 +51,13 @@ function VimOperator.execute_text_object(obj, action_fn, return_mode)
   Hypr.switch_mode(return_mode)
 end
 
----`y` — copy selection to clipboard via Ctrl+C.
+---`y` copy selection to clipboard via Ctrl+C.
 function VimOperator.yank_action() Hypr.send("CTRL", "c") end
 
----`d` — cut selection via Ctrl+X.
+---`d` cut selection via Ctrl+X.
 function VimOperator.delete_action() Hypr.send("CTRL", "x") end
 
----`c` — cut selection then enter INSERT mode.
+---`c` cut selection then enter INSERT mode.
 function VimOperator.change_action()
   Hypr.send("CTRL", "x")
   Hypr.switch_mode("INSERT")

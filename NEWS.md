@@ -1,12 +1,12 @@
 # HyprVim Release Notes
 
-## [v2.0.0](https://github.com/uhs-robert/hyprvim/releases/tag/v2.0.0) — 2026-05-18
+## [v2.0.0](https://github.com/uhs-robert/hyprvim/releases/tag/v2.0.0) - 2026-05-18
 
 ### New Features
 
 Switched to new Hyprland lua format. This is a breaking change, surprise surprise, and now your config needs to be updated to Lua too!
 
-## [v1.2.3](https://github.com/uhs-robert/hyprvim/releases/tag/v1.2.3) — 2026-02-18
+## [v1.2.3](https://github.com/uhs-robert/hyprvim/releases/tag/v1.2.3) - 2026-02-18
 
 ### New Features
 
@@ -21,7 +21,7 @@ Switched to new Hyprland lua format. This is a breaking change, surprise surpris
 
 ---
 
-## [v1.2.2](https://github.com/uhs-robert/hyprvim/releases/tag/v1.2.2) — 2026-02-18
+## [v1.2.2](https://github.com/uhs-robert/hyprvim/releases/tag/v1.2.2) - 2026-02-18
 
 ### New Features
 
@@ -40,7 +40,7 @@ Switched to new Hyprland lua format. This is a breaking change, surprise surpris
 
 ---
 
-## [v1.2.1](https://github.com/uhs-robert/hyprvim/releases/tag/v1.2.1) — 2026-02-18
+## [v1.2.1](https://github.com/uhs-robert/hyprvim/releases/tag/v1.2.1) - 2026-02-18
 
 ### New Features
 
@@ -57,7 +57,7 @@ Switched to new Hyprland lua format. This is a breaking change, surprise surpris
 
 ---
 
-## [v1.2.0](https://github.com/uhs-robert/hyprvim/releases/tag/v1.2.0) — 2026-02-13
+## [v1.2.0](https://github.com/uhs-robert/hyprvim/releases/tag/v1.2.0) - 2026-02-13
 
 ### New Features
 

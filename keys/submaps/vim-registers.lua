@@ -1,5 +1,5 @@
 -- keys/submaps/vim-registers.lua
--- REGISTERS submap — activated by " in NORMAL mode
+-- REGISTERS submap activated by " in NORMAL mode
 
 local Submap = require("lib.submap") ---@class HyprVimSubmap
 local vim = require("vim") ---@class Vim

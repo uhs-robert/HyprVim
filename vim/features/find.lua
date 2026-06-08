@@ -204,7 +204,7 @@ local function word_under_cursor(direction)
   end, { timeout = 100, type = "oneshot" })
 end
 
--- Public API — all map directly to vim motions:
+-- Public API all map directly to vim motions:
 --   f/F  char forward/backward       t/T  till forward/backward
 --   /    search forward              ?    search backward
 --   */#  word under cursor           n/N  repeat/reverse search
