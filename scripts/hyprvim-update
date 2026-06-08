@@ -1,0 +1,68 @@
+#!/bin/sh
+# scripts/hyprvim-update
+# Check for or apply HyprVim updates.
+#
+# Usage: hyprvim-update <op> <channel> <repo> [ref]
+#   op:      check | apply
+#   channel: nightly | stable | pinned
+#   repo:    path to the HyprVim install directory
+#   ref:     git ref to pin to (channel=pinned only)
+
+REPO_API="uhs-robert/hyprvim"
+
+op="$1"
+channel="$2"
+repo="$3"
+ref="$4"
+
+# Show an actionable desktop notification; run cmd if accepted.
+# Falls back to a passive hyprctl notify when notify-send is unavailable.
+notify_action() {
+  title="$1" body="$2" label="$3" cmd="$4"
+  if command -v notify-send >/dev/null 2>&1; then
+    ACTION=$(notify-send -A "ok=$label" -u normal -t 0 "$title" "$body")
+    [ "$ACTION" = "ok" ] && sh -c "$cmd"
+  else
+    hyprctl notify 1 10000 'rgb(7FA3C9)' "$title - $body"
+  fi
+}
+
+case "$op/$channel" in
+check/nightly)
+  git -C "$repo" fetch -q 2>/dev/null
+  LOCAL=$(git -C "$repo" rev-parse HEAD 2>/dev/null)
+  REMOTE=$(git -C "$repo" rev-parse '@{u}' 2>/dev/null)
+  [ -n "$REMOTE" ] && [ "$LOCAL" != "$REMOTE" ] &&
+    notify_action "HyprVim" "Nightly update available." "Update now" \
+      "git -C '$repo' pull && hyprctl reload"
+  ;;
+check/stable)
+  LATEST=$(curl -sf "https://api.github.com/repos/$REPO_API/releases/latest" |
+    grep '"tag_name"' | cut -d'"' -f4)
+  [ -n "$LATEST" ] || exit 0
+  git -C "$repo" merge-base --is-ancestor "$LATEST" HEAD 2>/dev/null && exit 0
+  notify_action "HyprVim" "Release $LATEST available." "Update now" \
+    "git -C '$repo' fetch --tags -q && git -C '$repo' checkout '$LATEST' && hyprctl reload"
+  ;;
+check/pinned)
+  PINNED=$(git -C "$repo" rev-parse "$ref" 2>/dev/null)
+  HEAD=$(git -C "$repo" rev-parse HEAD 2>/dev/null)
+  [ -n "$PINNED" ] && [ "$HEAD" != "$PINNED" ] &&
+    notify_action "HyprVim" "Not at pinned ref $ref." "Restore" \
+      "git -C '$repo' checkout '$ref' && hyprctl reload"
+  ;;
+apply/nightly)
+  git -C "$repo" pull && hyprctl reload
+  ;;
+apply/stable)
+  LATEST=$(curl -sf "https://api.github.com/repos/$REPO_API/releases/latest" |
+    grep '"tag_name"' | cut -d'"' -f4)
+  [ -n "$LATEST" ] &&
+    git -C "$repo" fetch --tags -q &&
+    git -C "$repo" checkout "$LATEST" &&
+    hyprctl reload
+  ;;
+apply/pinned)
+  git -C "$repo" checkout "$ref" && hyprctl reload
+  ;;
+esac
