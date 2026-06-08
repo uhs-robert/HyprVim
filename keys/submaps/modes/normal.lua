@@ -6,13 +6,14 @@ local vim = require("vim") ---@class Vim
 local wk = require("whichkey") ---@class WhichKey
 local config = require("config") ---@class HyprVimConfigModule
 local Hypr = require("hypr") ---@class HyprVimHyprland
+
 local LEADER = config.keys.leader or "SUPER"
 local EXIT = config.keys.exit or "ESCAPE"
 
 local send = Hypr.send
 local cc = vim.count.clear_then_fn
 local vm = vim.motion.action
-local vm_keys = vim.motion.action_seq
+local vm_seq = vim.motion.action_seq
 
 ---@param opts { insert?: boolean }|nil
 ---@return fun()
@@ -23,24 +24,8 @@ local function open_vim_editor(opts)
   end
 end
 
--- ── Find ──────────────────────────────────────────────────────────────────────
--- stylua: ignore start
-local find = {
-  char_forward    = cc(vim.find.char_forward),
-  char_backward   = cc(vim.find.char_backward),
-  till_forward    = cc(vim.find.char_till_forward),
-  till_backward   = cc(vim.find.char_till_backward),
-  search_forward  = cc(vim.find.search_forward),
-  search_backward = cc(vim.find.search_backward),
-  forward_word    = cc(vim.find.forward_word),
-  backward_word   = cc(vim.find.backward_word),
-  next_search     = cc(vim.find.next_search),
-  prev_search     = cc(vim.find.prev_search),
-  next_char       = cc(vim.find.next_char),
-  prev_char       = cc(vim.find.prev_char),
-}
-
 -- ── Marks ─────────────────────────────────────────────────────────────────────
+-- stylua: ignore start
 local function set_mark()  vim.marks.set_after("NORMAL") Submap.enter("SET-MARK") end
 local function jump_mark() vim.marks.set_after("NORMAL") Submap.enter("MARKS") end
 local function goto_mark() vim.marks.set_after("reset")  Submap.enter("MARKS") end
@@ -89,8 +74,8 @@ Submap.define({
     Bind.key("l",          vm("l"),                          "Right")
     Bind.key("SHIFT + h",  vm("0", { clear_count = true }),  "Start of line")
     Bind.key("SHIFT + l",  vm("$", { clear_count = true }),  "End of line")
-    Bind.key("SHIFT + j",  vm_keys({ { "CTRL", "DOWN" }, { "", "HOME" } }), "Down to next line start", { repeating = true })
-    Bind.key("SHIFT + k",  vm_keys({ { "CTRL", "UP" },   { "", "HOME" } }), "Up to prev line start",   { repeating = true })
+    Bind.key("SHIFT + j",  vm_seq({ { "CTRL", "DOWN" }, { "", "HOME" } }), "Down to next line start", { repeating = true })
+    Bind.key("SHIFT + k",  vm_seq({ { "CTRL", "UP" },   { "", "HOME" } }), "Up to prev line start",   { repeating = true })
     Bind.key("CTRL + h",   vm("CTRL + h"), "Ctrl left",  { repeating = true })
     Bind.key("CTRL + j",   vm("CTRL + j"), "Ctrl down",  { repeating = true })
     Bind.key("CTRL + k",   vm("CTRL + k"), "Ctrl up",    { repeating = true })
@@ -135,18 +120,18 @@ Submap.define({
       { "GRAVE",      goto_mark, "+Marks then exit" },
 
       -- Find
-      { "f",             find.char_forward,    "Find char forward"        },
-      { "SHIFT + f",     find.char_backward,   "Find char backward"       },
-      { "t",             find.till_forward,    "Find till forward"        },
-      { "SHIFT + t",     find.till_backward,   "Find till backward"       },
-      { "n",             find.next_search,     "Next match"               },
-      { "SHIFT + n",     find.prev_search,     "Prev match"               },
-      { "SLASH",         find.search_forward,  "Search forward"           },
-      { "SHIFT + SLASH", find.search_backward, "Search backward"          },
-      { "SHIFT + 8",     find.forward_word,    "Search word forward (*)"  },
-      { "SHIFT + 3",     find.backward_word,   "Search word backward (#)" },
-      { "SEMICOLON",     find.next_char,       "Repeat find (;)"          },
-      { "COMMA",         find.prev_char,       "Reverse find (,)"         },
+      { "f",             cc(vim.find.char_forward),    "Find char forward"        },
+      { "SHIFT + f",     cc(vim.find.char_backward),   "Find char backward"       },
+      { "t",             cc(vim.find.char_till_forward),    "Find till forward"        },
+      { "SHIFT + t",     cc(vim.find.char_till_backward),   "Find till backward"       },
+      { "n",             cc(vim.find.next_search),     "Next match"               },
+      { "SHIFT + n",     cc(vim.find.prev_search),     "Prev match"               },
+      { "SLASH",         cc(vim.find.search_forward),  "Search forward"           },
+      { "SHIFT + SLASH", cc(vim.find.search_backward), "Search backward"          },
+      { "SHIFT + 8",     cc(vim.find.forward_word),    "Search word forward (*)"  },
+      { "SHIFT + 3",     cc(vim.find.backward_word),   "Search word backward (#)" },
+      { "SEMICOLON",     cc(vim.find.next_char),       "Repeat find (;)"          },
+      { "COMMA",         cc(vim.find.prev_char),       "Reverse find (,)"         },
 
       -- Commands
       { "R",                 vim.replace.character,  "Replace Char"     },
