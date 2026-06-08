@@ -50,6 +50,10 @@ function WhichKey.toggle()
   os.execute("(lua " .. sh_escape(dir .. "render.lua") .. " " .. sh_escape(target) .. " " .. sh_escape(screen) .. ") &")
 end
 
+--- Cancel any pending HUD timer. Call from keybind actions that immediately exit
+--- an operator-pending submap so the HUD does not flash after the action completes.
+function WhichKey.cancel_pending() require("whichkey.listen").cancel_pending() end
+
 --- Register Hyprland event handlers for the which-key HUD.
 --- Called by hyprvim's setup() when which_key.enabled is true.
 --- @param Config table  merged hyprvim config from config.lua

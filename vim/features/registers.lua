@@ -102,6 +102,7 @@ function Registers.handle_yank(mods, key, return_mode)
   return_mode = return_mode or "NORMAL"
   local reg = Registers.get_pending()
   Registers.clear_pending()
+  require("whichkey").cancel_pending()
 
   Hypr.send(mods, key)
 
@@ -122,6 +123,7 @@ function Registers.handle_delete(mods, key, return_mode)
   return_mode = return_mode or "NORMAL"
   local reg = Registers.get_pending()
   Registers.clear_pending()
+  require("whichkey").cancel_pending()
 
   if reg == "_" then
     -- Black hole: capture clipboard before delete, delete, restore clipboard.

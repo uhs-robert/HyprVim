@@ -11,16 +11,30 @@ local Theme = require("whichkey.theme")
 local Submap = require("lib.submap") ---@class HyprVimSubmap
 local sh_escape = Utils.sh_escape
 local read_file = Utils.read_file
+local file_exists = Utils.file_exists
 
 --- @class Listen
 local Listen = {}
 
+--- Direct reference to the active pending HUD timer, set by make_submap_handler.
+--- Allows Listen.cancel_pending() to kill it immediately without waiting for the callback.
+local _pending_timer_ref = nil
+
+--- Cancel the pending HUD timer immediately. Call from keybind actions that exit an
+--- operator-pending submap so the HUD does not flash after the action completes.
+function Listen.cancel_pending()
+  if _pending_timer_ref then
+    _pending_timer_ref:set_enabled(false)
+    _pending_timer_ref = nil
+  end
+end
+
 -- stylua: ignore
 local DELAY_SMs = {
-  ["D-MOTION"] = 1, ["D-I"] = 1, ["D-A"] = 1, ["D-G"] = 1,
-  ["C-MOTION"] = 1, ["C-I"] = 1, ["C-A"] = 1, ["C-G"] = 1,
-  ["Y-MOTION"] = 1, ["Y-I"] = 1, ["Y-A"] = 1, ["Y-G"] = 1,
-  ["G-MOTION"] = 1, ["G-VISUAL"] = 1, ["R-CHAR"] = 1,
+  ["DELETE"] = 1, ["DELETE-INSIDE"] = 1, ["DELETE-AROUND"] = 1, ["DELETE-GOTO"] = 1,
+  ["CHANGE"] = 1, ["CHANGE-INSIDE"] = 1, ["CHANGE-AROUND"] = 1, ["CHANGE-GOTO"] = 1,
+  ["YANK"]   = 1, ["YANK-INSIDE"]   = 1, ["YANK-AROUND"]   = 1, ["YANK-GOTO"]   = 1,
+  ["GOTO"] = 1, ["G-VISUAL"] = 1, ["R-CHAR"] = 1,
 }
 
 --- Returns true if sm is a persistent mode that should not auto-show the HUD.
@@ -38,7 +52,7 @@ local function requires_delay(sm) return DELAY_SMs[sm] ~= nil end
 
 --- Extracts and normalises which-key config from the top-level Config table.
 --- @param Config table
---- @return { delay_ms: integer, position: string, deny_set: table, allow_set: table, has_allow: boolean }
+--- @return { delay_ms: integer, vim_delay_ms: integer, position: string, deny_set: table, allow_set: table, has_allow: boolean }
 local function parse_config(Config)
   local wk = Config.which_key or {}
   local auto = wk.auto_show or {}
@@ -57,7 +71,8 @@ local function parse_config(Config)
     has_allow = true
   end
   return {
-    delay_ms = wk.delay_ms or 100,
+    delay_ms = wk.delay_ms or 0,
+    vim_delay_ms = wk.vim_delay_ms or 300,
     position = wk.position or "bottom-right",
     deny_set = deny_set,
     allow_set = allow_set,
@@ -76,26 +91,27 @@ local function should_auto_show(sm, config)
   return not is_sticky(sm)
 end
 
---- Returns the millisecond delay before showing the HUD for sm.
---- next_delay (from the one-shot flag file) overrides everything; otherwise submap_delay_ms
---- (per-submap spec override) takes priority over the global delay_ms, except
---- operator-pending modes that chain from another operator mode always use 0 ms.
---- @param sm string
---- @param prev_sm string
---- @param next_delay string  raw file contents, "" if absent
---- @param delay_ms integer
---- @param submap_delay_ms integer|nil  per-submap override from SubmapSpec.delay_ms
+--- @class DelayContext
+--- @field sm string
+--- @field prev_sm string
+--- @field next_delay string   raw one-shot file contents, "" if absent
+--- @field delay_ms integer
+--- @field vim_delay_ms integer
+--- @field submap_delay_ms integer|nil  per-submap override from SubmapSpec.delay_ms
+--- @field hud_visible boolean
+
+--- Returns the millisecond delay before showing the HUD.
+--- next_delay overrides everything; submap_delay_ms beats vim_delay_ms/delay_ms;
+--- HUD-visible chain collapses to 0 when both submaps are operator-pending.
+--- @param ctx DelayContext
 --- @return integer
-local function compute_delay(sm, prev_sm, next_delay, delay_ms, submap_delay_ms)
-  if next_delay ~= "" then
-    return tonumber(next_delay) or 0
+local function compute_delay(ctx)
+  if ctx.next_delay ~= "" then return tonumber(ctx.next_delay) or 0 end
+  if requires_delay(ctx.sm) then
+    if requires_delay(ctx.prev_sm) and ctx.hud_visible then return 0 end
+    return ctx.submap_delay_ms or ctx.vim_delay_ms
   end
-  local effective_ms = submap_delay_ms or delay_ms
-  if requires_delay(sm) then
-    -- Operator-pending chains: no extra delay when coming from another operator mode.
-    return (prev_sm ~= "" and requires_delay(prev_sm)) and 0 or effective_ms
-  end
-  return effective_ms
+  return ctx.submap_delay_ms or ctx.delay_ms
 end
 
 --- Starts the eww daemon in the background (or pings it if already running),
@@ -162,31 +178,20 @@ end
 --- @param position string
 --- @return fun(sm: string)
 local function make_spawner(eww_dir, state_dir, render, position)
+  local script = dir .. "../scripts/whichkey-spawn"
   return function(sm)
     local mon = hl.get_active_monitor()
     local screen = (mon and mon.name) or ""
     local csm = state_dir .. "/current-submap"
     os.execute(
-      "(eww -c "
-        .. sh_escape(eww_dir)
-        .. " ping >/dev/null 2>&1"
-        .. " || eww -c "
-        .. sh_escape(eww_dir)
-        .. " daemon >/dev/null 2>&1; "
-        .. "cur=$(cat "
-        .. sh_escape(csm)
-        .. " 2>/dev/null || echo ''); [ \"$cur\" = "
-        .. sh_escape(sm)
-        .. " ]"
-        .. " && HYPRVIM_WHICH_KEY_POSITION="
-        .. sh_escape(position)
-        .. " lua "
-        .. sh_escape(render)
-        .. " "
-        .. sh_escape(sm)
-        .. " "
-        .. sh_escape(screen)
-        .. ") &"
+      sh_escape(script)
+        .. " " .. sh_escape(eww_dir)
+        .. " " .. sh_escape(csm)
+        .. " " .. sh_escape(sm)
+        .. " " .. sh_escape(position)
+        .. " " .. sh_escape(render)
+        .. " " .. sh_escape(screen)
+        .. " &"
     )
   end
 end
@@ -208,68 +213,86 @@ end
 --- @return fun(sm: string)
 local function make_submap_handler(config, state_dir, spawn_render)
   state_dir = state_dir or ""
-  local last_sm = ""
-  local prev_sm = ""
-  local pending_timer = nil
-  local stale_check_timer = nil
+  local last_sm, prev_sm = "", ""
+  local pending_timer, pending_target, stale_check_timer = nil, nil, nil
 
-  return function(sm)
-    sm = sm or ""
-    if sm == last_sm then return end
-
-    prev_sm = last_sm
-    last_sm = sm
-
-    if pending_timer then
-      pending_timer:set_enabled(false)
-      pending_timer = nil
-    end
-
-    if stale_check_timer then
-      stale_check_timer:set_enabled(false)
-      stale_check_timer = nil
-    end
-
-    Render.close()
-
-    -- Maintain current-submap state file for stale-render detection.
+  local function write_current_submap(sm)
     if sm ~= "" then
       local f = io.open(state_dir .. "/current-submap", "w")
-      if f then
-        f:write(sm .. "\n")
-        f:close()
-      end
+      if f then f:write(sm .. "\n"); f:close() end
     else
       os.execute("rm -f " .. sh_escape(state_dir .. "/current-submap"))
     end
+  end
 
-    local skip_next, skip_target, next_delay = read_oneshot_flags(state_dir)
-
-    if sm == "" then
-      clear_skip_files(state_dir)
-      return
+  local function cancel_timer()
+    if pending_timer then
+      pending_timer:set_enabled(false)
+      pending_timer = nil
+      _pending_timer_ref = nil
     end
-    if sm == "NORMAL" then clear_skip_files(state_dir) end
+  end
 
-    local skip_applies = resolve_skip(skip_next, skip_target, sm, state_dir)
-    if skip_applies or not should_auto_show(sm, config) then return end
+  local function teardown(sm)
+    cancel_timer()
+    if stale_check_timer then stale_check_timer:set_enabled(false); stale_check_timer = nil end
+    Render.close()
+    write_current_submap(sm)
+  end
 
-    local spec = Submap.registry[sm]
-    local dms = compute_delay(sm, prev_sm, next_delay, config.delay_ms, spec and spec.delay_ms)
-
+  local function schedule_hud(sm, dms)
+    pending_target = sm
     pending_timer = hl.timer(function()
       pending_timer = nil
-      if last_sm ~= sm then return end
-      spawn_render(sm)
+      _pending_timer_ref = nil
+      local t = pending_target
+      if last_sm ~= t then return end
+      spawn_render(t)
       -- Stale-render guard: if the submap changed while the subprocess was rendering,
       -- the close() that fired during the handler ran before eww opened the window.
       -- Check after a render-completion window and close any now-orphaned HUD.
-      local render_sm = sm
+      local render_sm = t
       stale_check_timer = hl.timer(function()
         stale_check_timer = nil
         if last_sm ~= render_sm then Render.close() end
       end, { timeout = 500, type = "oneshot" })
     end, { timeout = math.max(dms, 1), type = "oneshot" })
+    _pending_timer_ref = pending_timer
+  end
+
+  return function(sm)
+    sm = sm or ""
+    if sm == last_sm then return end
+    prev_sm = last_sm
+    last_sm = sm
+
+    -- Chaining between operator-pending submaps while the timer is still running:
+    -- redirect the timer to the new submap so the clock continues from when the
+    -- first operator key was pressed rather than restarting.
+    if pending_timer and requires_delay(sm) and requires_delay(prev_sm) then
+      pending_target = sm
+      write_current_submap(sm)
+      return
+    end
+
+    teardown(sm)
+
+    local skip_next, skip_target, next_delay = read_oneshot_flags(state_dir)
+    if sm == "" then clear_skip_files(state_dir); return end
+    if sm == "NORMAL" then clear_skip_files(state_dir) end
+    if resolve_skip(skip_next, skip_target, sm, state_dir) then return end
+    if not should_auto_show(sm, config) then return end
+
+    local spec = Submap.registry[sm]
+    schedule_hud(sm, compute_delay({
+      sm              = sm,
+      prev_sm         = prev_sm,
+      next_delay      = next_delay,
+      delay_ms        = config.delay_ms,
+      vim_delay_ms    = config.vim_delay_ms,
+      submap_delay_ms = spec and spec.delay_ms,
+      hud_visible     = file_exists(state_dir .. "/whichkey-visible"),
+    }))
   end
 end
 

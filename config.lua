@@ -44,8 +44,9 @@ local XCC = os.getenv("XDG_CONFIG_HOME") or ((os.getenv("HOME") or "") .. "/.con
 --- @field enabled  string[]|nil  Only show HUD for these submaps; nil (default) means all except `disabled`
 
 --- @class HyprVimWhichKey
---- @field enabled?  boolean  true: show the which-key HUD on submap entry (requires eww)
---- @field delay_ms? integer  Milliseconds to wait before showing the panel (0 = instant)
+--- @field enabled?      boolean  true: show the which-key HUD on submap entry (requires eww)
+--- @field delay_ms?     integer  Milliseconds to wait before showing the panel (0 = instant)
+--- @field vim_delay_ms? integer  Delay for vim operator-pending submaps (DELETE/CHANGE/YANK and their sub-modes); overrides delay_ms for those submaps (default 300)
 --- @field position? "bottom-right"|"bottom-left"|"bottom-center"|"top-right"|"top-left"|"top-center"  Panel anchor position
 --- @field auto_show? HyprVimAutoShow
 
@@ -105,9 +106,10 @@ Config.defaults = {
     errors   = true,
   },
   which_key = {
-    enabled  = true,
-    delay_ms = 0,
-    position = "bottom-right",
+    enabled      = true,
+    delay_ms     = 0,
+    vim_delay_ms = 300,
+    position     = "bottom-right",
     auto_show = {
       disabled = { "NORMAL", "VISUAL", "V-LINE", "INSERT" },
       enabled  = nil,
