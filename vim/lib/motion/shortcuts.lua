@@ -21,14 +21,12 @@ local NORMAL = {
   k = { "", "UP" },
   l = { "", "RIGHT" },
   -- Word motions
-  w = { { "CTRL", "RIGHT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } },
-  W = { { "CTRL", "RIGHT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } },
-  -- w = { "CTRL", "RIGHT" },
-  -- b = { "CTRL", "LEFT" },
-  b = { { "CTRL", "LEFT" }, { "CTRL", "LEFT" }, { "", "RIGHT" } },
-  B = { { "CTRL", "LEFT" }, { "CTRL", "LEFT" }, { "", "RIGHT" } },
-  e = { { "CTRL", "RIGHT" }, { "", "LEFT" } },
-  E = { { "CTRL", "RIGHT" }, { "", "LEFT" } },
+  w = { { "CTRL", "RIGHT" }, { "", "RIGHT" } },
+  W = { { "CTRL", "RIGHT" }, { "", "RIGHT" } },
+  e = { { "", "RIGHT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } },
+  E = { { "", "RIGHT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } },
+  b = { "CTRL", "LEFT" },
+  B = { "CTRL", "LEFT" },
   -- Line boundaries
   ["0"] = { "", "HOME" },
   ["_"] = { "", "HOME" },
@@ -48,7 +46,7 @@ local NORMAL = {
   ["CTRL + b"] = { "", "Prior" },
   ["CTRL + y"] = { "", "Prior" },
   -- Undo
-  u = { "CTRL", "Z" },
+  u = { "CTRL", "z" },
   ["CTRL + r"] = { "CTRL", "Y" },
 }
 
@@ -66,11 +64,11 @@ local VISUAL = {
   L = { "SHIFT", "END" },
   -- Word motions (extends selection)
   w = { "CTRL SHIFT", "RIGHT" },
-  b = { "CTRL SHIFT", "LEFT" },
-  e = { "CTRL SHIFT", "RIGHT" },
   W = { "CTRL SHIFT", "RIGHT" },
-  B = { "CTRL SHIFT", "LEFT" },
+  e = { "CTRL SHIFT", "RIGHT" },
   E = { "CTRL SHIFT", "RIGHT" },
+  b = { "CTRL SHIFT", "LEFT" },
+  B = { "CTRL SHIFT", "LEFT" },
 }
 
 return { NORMAL = NORMAL, VISUAL = VISUAL, TERM_KEYSYMS = TERM_KEYSYMS }
