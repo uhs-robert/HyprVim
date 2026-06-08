@@ -10,6 +10,7 @@
 --   /  search register (read-only, mirrors find-state.json)
 
 local Hypr = require("hypr") ---@class HyprVimHyprland
+local Clipboard = require("lib.clipboard") ---@class Clipboard
 
 --- @class Registers
 local Registers = {}
@@ -20,27 +21,7 @@ local function state_dir() return require("config").state_dir .. "/registers" en
 local function reg_path(name) return state_dir() .. "/" .. name end
 local function pending_path() return state_dir() .. "/pending-register" end
 
--- Clipboard helpers (safe to call from event loop: uses external processes, not hyprctl socket).
-
-local function clipboard_read()
-  local p = io.popen("wl-paste --no-newline 2>/dev/null")
-  if not p then return "" end
-  local s = p:read("*a") or ""
-  p:close()
-  return s
-end
-
-local function clipboard_write(text)
-  -- Single chars need explicit MIME type to avoid mangling.
-  local flag = (#text == 1) and "--type text/plain" or ""
-  local p = io.popen("wl-copy " .. flag, "w")
-  if not p then return end
-  p:write(text)
-  p:close()
-end
-
 -- Register file I/O.
-
 local function reg_read(name)
   local f = io.open(reg_path(name), "r")
   if not f then return "" end
@@ -57,7 +38,6 @@ local function reg_write(name, content)
 end
 
 -- Pending register (set before an operation, cleared after).
-
 function Registers.set_pending(name)
   local f = io.open(pending_path(), "w")
   if f then
@@ -93,10 +73,10 @@ function Registers.load(name)
       f:close()
       term = data:match('"find_term"%s*:%s*"([^"]*)"') or ""
     end
-    clipboard_write(term)
+    Clipboard.write(term)
     return
   end
-  clipboard_write(reg_read(name))
+  Clipboard.write(reg_read(name))
 end
 
 -- Cycle numbered registers 1->9 (oldest drops off, newest->1).
@@ -125,17 +105,16 @@ function Registers.handle_yank(mods, key, return_mode)
 
   Hypr.send(mods, key)
 
-  hl.timer(function()
-    local content = clipboard_read()
+  Clipboard.read_async(150, function(content)
     reg_write(reg, content)
     if reg ~= "0" then reg_write("0", content) end
     -- If we saved to a named register, restore unnamed to clipboard.
     if reg ~= DEFAULT_REG then
       local unnamed = reg_read(DEFAULT_REG)
-      if unnamed ~= "" then clipboard_write(unnamed) end
+      if unnamed ~= "" then Clipboard.write(unnamed) end
     end
     Hypr.switch_mode(return_mode)
-  end, { timeout = 150, type = "oneshot" })
+  end)
 end
 
 -- Handle delete (Ctrl+X): send shortcut, async-save to register + cycle numbered registers.
@@ -145,25 +124,25 @@ function Registers.handle_delete(mods, key, return_mode)
   Registers.clear_pending()
 
   if reg == "_" then
-    -- Black hole: save clipboard, delete, restore clipboard.
-    local backup = clipboard_read()
-    Hypr.send(mods, key)
-    hl.timer(function()
-      clipboard_write(backup)
-      Hypr.switch_mode(return_mode)
-    end, { timeout = 50, type = "oneshot" })
+    -- Black hole: capture clipboard before delete, delete, restore clipboard.
+    Clipboard.read_async(50, function(backup)
+      Hypr.send(mods, key)
+      hl.timer(function()
+        Clipboard.write(backup)
+        Hypr.switch_mode(return_mode)
+      end, { timeout = 50, type = "oneshot" })
+    end)
     return
   end
 
   Hypr.send(mods, key)
 
-  hl.timer(function()
-    local content = clipboard_read()
+  Clipboard.read_async(200, function(content)
     cycle_numbered()
     reg_write("1", content)
     reg_write(reg, content)
     Hypr.switch_mode(return_mode)
-  end, { timeout = 200, type = "oneshot" })
+  end)
 end
 
 -- Handle paste: load register to clipboard, send paste shortcut.
