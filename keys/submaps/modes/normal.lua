@@ -62,6 +62,9 @@ Submap.define({
   name = "NORMAL",
   escape = false,
   catchall = "stay",
+  on_enter = function(ctx)
+    if ctx.from == "reset" then require("lib.clipboard").save_pre_vim() end
+  end,
   on_exit = function(ctx)
     local keep = { GOTO = true, CHANGE = true, YANK = true, DELETE = true }
     if not keep[ctx.to] then vim.count.clear() end

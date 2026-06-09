@@ -25,6 +25,7 @@ function Hyprland.normal() Submap.enter("NORMAL") end
 
 --- Exit vim mode entirely (back to plain Hyprland binds).
 function Hyprland.exit_vim()
+  require("lib.clipboard").restore_pre_vim()
   Submap.reset()
   Submap.previous = nil
 end

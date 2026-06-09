@@ -4,6 +4,7 @@
 -- Named registers: a-z
 -- Special registers:
 --   "  unnamed (syncs with system clipboard)
+--   +  system clipboard (explicit opt-in; yank writes to clipboard, paste reads live clipboard)
 --   0  yank register (last yank, not overwritten by deletes)
 --   1-9 numbered delete history (newest->1, cycles on each delete)
 --   _  black hole (delete without affecting clipboard)
@@ -76,6 +77,10 @@ function Registers.load(name)
     Clipboard.write(term)
     return
   end
+  if name == "+" then
+    -- Live system clipboard; nothing to write, it's already there.
+    return
+  end
   Clipboard.write(reg_read(name))
 end
 
@@ -109,8 +114,9 @@ function Registers.handle_yank(mods, key, return_mode)
   Clipboard.read_async(150, function(content)
     reg_write(reg, content)
     if reg ~= "0" then reg_write("0", content) end
-    -- If we saved to a named register, restore unnamed to clipboard.
-    if reg ~= DEFAULT_REG then
+    -- "+" register: leave clipboard as-is (already has the content).
+    -- Named register: restore unnamed register to clipboard.
+    if reg ~= DEFAULT_REG and reg ~= "+" then
       local unnamed = reg_read(DEFAULT_REG)
       if unnamed ~= "" then Clipboard.write(unnamed) end
     end
@@ -157,7 +163,9 @@ function Registers.handle_paste(mods, key, return_mode, count)
   Registers.load(reg)
 
   hl.timer(function()
-    for _ = 1, count do Hypr.send(mods, key) end
+    for _ = 1, count do
+      Hypr.send(mods, key)
+    end
     hl.timer(function() Hypr.switch_mode(return_mode) end, { timeout = 150, type = "oneshot" })
   end, { timeout = 150, type = "oneshot" })
 end
