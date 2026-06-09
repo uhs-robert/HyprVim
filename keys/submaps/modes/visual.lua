@@ -152,8 +152,27 @@ Submap.define({
 -- V-INSIDE / V-AROUND (text objects in visual mode)
 -- ---------------------------------------------------------------------------
 
-local function visual_text_object(name, parent_name, word_seq, para_seq)
+---@param name        string   submap name
+---@param parent_name string   submap to return to after selection
+---@param objects     { [1]: string, [2]: Shortcut[], [3]?: string }[]  { key, seq, label? }
+local function visual_text_object(name, parent_name, objects)
   local parent = Submap.switch(parent_name)
+  local binds = {
+    -- stylua: ignore start
+    { "SPACE",                    wk.toggle },
+    { LEADER .. " + " .. ACT,    reset     },
+    { LEADER .. " + " .. EXIT,   reset     },
+    -- stylua: ignore end
+  }
+  for _, obj in ipairs(objects) do
+    local key, seq, label = obj[1], obj[2], obj[3]
+    local act = function()
+      motion.send_sequence(seq)
+      parent()
+    end
+    table.insert(binds, { key, act, label })
+    table.insert(binds, { "SHIFT + " .. key, act })
+  end
   Submap.define({
     name = name,
     escape = "NORMAL",
@@ -162,30 +181,20 @@ local function visual_text_object(name, parent_name, word_seq, para_seq)
       parent()
     end,
     catchall = "stay",
-    binds = {
-      -- stylua: ignore start
-      { "w",         function() motion.send_sequence(word_seq) parent() end, "Word"      },
-      { "SHIFT + w", function() motion.send_sequence(word_seq) parent() end              },
-      { "p",         function() motion.send_sequence(para_seq) parent() end, "Paragraph" },
-      { "SHIFT + p", function() motion.send_sequence(para_seq) parent() end              },
-      { "SPACE",     wk.toggle },
-      { LEADER .. " + " .. ACT, reset },
-      { LEADER .. " + " .. EXIT, reset },
-      -- stylua: ignore end
-    },
+    binds = binds,
   }).setup()
 end
 
-visual_text_object(
-  "V-INSIDE",
-  "VISUAL",
-  { { "CTRL", "RIGHT" }, { "CTRL SHIFT", "LEFT" } },
-  { { "", "END" }, { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } }
-)
+local INSIDE_WORD = { { "CTRL", "RIGHT" }, { "CTRL SHIFT", "LEFT" } }
+local AROUND_WORD = { { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } }
+local PARA_SEQ = { { "", "END" }, { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } }
 
-visual_text_object(
-  "V-AROUND",
-  "VISUAL",
-  { { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } },
-  { { "", "END" }, { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } }
-)
+visual_text_object("V-INSIDE", "VISUAL", {
+  { "w", INSIDE_WORD, "Word" },
+  { "p", PARA_SEQ, "Paragraph" },
+})
+
+visual_text_object("V-AROUND", "VISUAL", {
+  { "w", AROUND_WORD, "Word" },
+  { "p", PARA_SEQ, "Paragraph" },
+})
