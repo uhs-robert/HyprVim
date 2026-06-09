@@ -226,13 +226,17 @@ function Find.prev_char() repeat_find("char_term", true) end
 ---Dismiss the active find bar and clean up till/active state.
 ---Called when leaving NORMAL mode so the app's find UI is not left open.
 function Find.deactivate()
-  local active = state_get("active", "false")
+  local t = state_read()
+  local active = t["active"] or "false"
+  local till = t["till"] or "false"
+  if active ~= "true" and till ~= "true" then return end
   if active == "true" then Hypr.send("", "Escape") end
-  if state_get("till", "false") == "true" then
+  if till == "true" then
     Hypr.send("", "LEFT")
-    state_set("till", "false")
+    t["till"] = "false"
   end
-  state_set("active", "false")
+  t["active"] = "false"
+  state_write(t)
 end
 
 return Find
