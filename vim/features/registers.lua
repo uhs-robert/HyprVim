@@ -148,15 +148,16 @@ function Registers.handle_delete(mods, key, return_mode)
 end
 
 -- Handle paste: load register to clipboard, send paste shortcut.
-function Registers.handle_paste(mods, key, return_mode)
+function Registers.handle_paste(mods, key, return_mode, count)
   return_mode = return_mode or "NORMAL"
+  count = (count and count > 0) and count or 1
   local reg = Registers.get_pending()
   Registers.clear_pending()
 
   Registers.load(reg)
 
   hl.timer(function()
-    Hypr.send(mods, key)
+    for _ = 1, count do Hypr.send(mods, key) end
     hl.timer(function() Hypr.switch_mode(return_mode) end, { timeout = 150, type = "oneshot" })
   end, { timeout = 150, type = "oneshot" })
 end
