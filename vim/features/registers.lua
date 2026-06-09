@@ -14,6 +14,7 @@ local Hypr = require("hypr") ---@class HyprVimHyprland
 local Clipboard = require("lib.clipboard") ---@class Clipboard
 
 --- @class Registers
+--- @field enter_registers fun()  refresh REGISTERS submap binds then enter it
 local Registers = {}
 
 local DEFAULT_REG = '"'
@@ -78,7 +79,17 @@ function Registers.load(name)
     return
   end
   if name == "+" then
-    -- Live system clipboard; nothing to write, it's already there.
+    local path = require("config").state_dir .. "/clipboard_pre_vim"
+    local f = io.open(path, "r")
+    local content = f and (f:read("*a") or "") or ""
+    if f then f:close() end
+    if content ~= "" then Clipboard.write(content) end
+    return
+  end
+  if name == "*" then
+    Clipboard.read_primary_async(50, function(content)
+      if content ~= "" then Clipboard.write(content) end
+    end)
     return
   end
   Clipboard.write(reg_read(name))
@@ -112,13 +123,23 @@ function Registers.handle_yank(mods, key, return_mode)
   Hypr.send(mods, key)
 
   Clipboard.read_async(150, function(content)
-    reg_write(reg, content)
-    if reg ~= "0" then reg_write("0", content) end
-    -- "+" register: leave clipboard as-is (already has the content).
-    -- Named register: restore unnamed register to clipboard.
-    if reg ~= DEFAULT_REG and reg ~= "+" then
-      local unnamed = reg_read(DEFAULT_REG)
-      if unnamed ~= "" then Clipboard.write(unnamed) end
+    if reg == "*" then
+      Clipboard.write_primary(content)
+    else
+      reg_write(reg, content)
+      if reg ~= "0" then reg_write("0", content) end
+      if reg == "+" then
+        -- Persist to pre-vim file so content survives vim exit via restore_pre_vim.
+        local f2 = io.open(require("config").state_dir .. "/clipboard_pre_vim", "w")
+        if f2 then
+          f2:write(content)
+          f2:close()
+        end
+      elseif reg ~= DEFAULT_REG then
+        -- Named register: restore unnamed register to clipboard.
+        local unnamed = reg_read(DEFAULT_REG)
+        if unnamed ~= "" then Clipboard.write(unnamed) end
+      end
     end
     Hypr.switch_mode(return_mode)
   end)
@@ -146,9 +167,20 @@ function Registers.handle_delete(mods, key, return_mode)
   Hypr.send(mods, key)
 
   Clipboard.read_async(200, function(content)
-    cycle_numbered()
-    reg_write("1", content)
-    reg_write(reg, content)
+    if reg == "*" then
+      Clipboard.write_primary(content)
+    else
+      cycle_numbered()
+      reg_write("1", content)
+      reg_write(reg, content)
+      if reg == "+" then
+        local f2 = io.open(require("config").state_dir .. "/clipboard_pre_vim", "w")
+        if f2 then
+          f2:write(content)
+          f2:close()
+        end
+      end
+    end
     Hypr.switch_mode(return_mode)
   end)
 end

@@ -38,6 +38,31 @@ function Clipboard.write(text)
   Hypr.exec("wl-copy " .. flag .. "<'" .. path .. "'")
 end
 
+---Read Wayland primary selection asynchronously, call cb(content) after delay_ms.
+---@param delay_ms integer
+---@param cb fun(content: string)
+function Clipboard.read_primary_async(delay_ms, cb)
+  local path = tmp_read()
+  Hypr.exec("wl-paste --primary --no-newline 2>/dev/null >'" .. path .. "' || true")
+  hl.timer(function()
+    local f = io.open(path, "r")
+    local content = f and (f:read("*a") or "") or ""
+    if f then f:close() end
+    cb(content)
+  end, { timeout = delay_ms, type = "oneshot" })
+end
+
+---Write text to the Wayland primary selection.
+---@param text string
+function Clipboard.write_primary(text)
+  local path = tmp_write()
+  local f = io.open(path, "w")
+  if not f then return end
+  f:write(text)
+  f:close()
+  Hypr.exec("wl-copy --primary <'" .. path .. "'")
+end
+
 ---Save the current clipboard so it can be restored when vim mode exits.
 ---Called once when entering NORMAL from the reset (non-vim) state.
 function Clipboard.save_pre_vim()

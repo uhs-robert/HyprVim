@@ -117,7 +117,7 @@ Submap.define({
       { "D",                  Submap.switch("DELETE"),    "+Delete"         },
       { "V",                  Submap.switch("VISUAL"),    "+Visual"         },
       { "SHIFT + V",          Submap.switch("V-LINE"),    "+V-Line"         },
-      { "SHIFT + APOSTROPHE", Submap.switch("REGISTERS"), "+Registers"      },
+      { "SHIFT + APOSTROPHE", function() vim.registers.enter_registers() end, "+Registers" },
       { "M",          set_mark,  "+Set-Mark"        },
       { "APOSTROPHE", jump_mark, "+Marks"           },
       { "GRAVE",      goto_mark, "+Marks then exit" },

@@ -66,7 +66,7 @@ end
 --- @param sm string
 --- @return string|nil
 function Items.build_register_items(sm)
-  if sm ~= "GET-REGISTER" then return nil end
+  if sm ~= "REGISTERS" then return nil end
   local reg_dir = Config.state_dir .. "/registers"
   if not file_exists(reg_dir) then return nil end
 
@@ -92,6 +92,21 @@ function Items.build_register_items(sm)
     local item = make_item(k, p, reg_read(path))
     if item and item ~= "" then items[#items + 1] = item end
   end
+
+  local function trim(s) return s:gsub("[\n\t\r]", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "") end
+
+  local pre_vim_path = Config.state_dir .. "/clipboard_pre_vim"
+  if file_exists(pre_vim_path) then
+    local f = io.open(pre_vim_path, "r")
+    local content = trim(f and (f:read(50) or "") or "")
+    if f then f:close() end
+    local item = make_item("PLUS", "system", content)
+    if item and item ~= "" then items[#items + 1] = item end
+  end
+
+  local primary = trim(pread("wl-paste --primary --no-newline 2>/dev/null"))
+  local primary_item = make_item("ASTERISK", "primary", primary)
+  if primary_item and primary_item ~= "" then items[#items + 1] = primary_item end
 
   add('"', "default", reg_dir .. '/"')
   add("0", "yank", reg_dir .. "/0")
