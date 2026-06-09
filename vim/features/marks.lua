@@ -7,6 +7,8 @@ local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
 
 --- @class Marks
+--- @field enter_jump   fun()  refresh MARKS submap binds then enter it
+--- @field enter_delete fun()  refresh DELETE-MARK submap binds then enter it
 local Marks = {}
 
 ---@return string  absolute path to the marks state file
@@ -127,8 +129,8 @@ function Marks.set(char)
   Marks.dispatch_after()
 end
 
----Focus the monitor, workspace, and window stored in mark `char`.
----Removes the mark if the window no longer exists.
+---Focus the window stored in mark `char`. Removes the mark if the window no longer exists.
+---`focuswindow address:X` switches workspace automatically.
 ---@param char string
 function Marks.jump(char)
   if not char or char == "" then return end
@@ -141,41 +143,20 @@ function Marks.jump(char)
     return
   end
 
-  -- Focus the monitor if it still exists.
-  local monitors = hl.get_monitors()
-  local mon_exists = false
-  for _, mon in ipairs(monitors or {}) do
-    if mon.name == m.monitor then
-      mon_exists = true
-      break
-    end
-  end
-
-  if mon_exists then hl.dispatch(hl.dsp.focus(m.monitor)) end
-
-  -- Switch to workspace.
-  hl.dispatch(hl.dsp.workspace.move(tostring(m.workspace)))
-
-  -- Check if window still exists.
   local windows = hl.get_windows()
-  local win_exists = false
   for _, w in ipairs(windows or {}) do
     if w.address == m.window then
-      win_exists = true
-      break
+      Hypr.focus_window(m.window)
+      notify(string.format("Jumped to '%s' -> %s", char, m.class or ""))
+      Marks.dispatch_after()
+      return
     end
   end
 
-  if win_exists then
-    Hypr.focus_window(m.window)
-    notify(string.format("Jumped to '%s' -> %s", char, m.class or ""))
-  else
-    -- Stale mark: remove it.
-    marks[char] = nil
-    json_write(marks)
-    notify(string.format("Mark '%s' deleted (window closed)", char), "low")
-  end
-
+  -- Stale mark: remove it.
+  marks[char] = nil
+  json_write(marks)
+  notify(string.format("Mark '%s' deleted (window closed)", char), "low")
   Marks.dispatch_after()
 end
 
@@ -211,6 +192,10 @@ function Marks.clear()
   notify(string.format("Cleared %d marks", n))
   Marks.dispatch_after()
 end
+
+---Return the raw marks table (char -> Mark).
+---@return table<string, Mark>
+function Marks.all() return json_read() end
 
 ---Return all marks as a formatted multiline string and post a desktop notification.
 ---@return string

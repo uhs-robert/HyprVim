@@ -112,7 +112,7 @@ Submap.define({
     { "SHIFT + 4", function() count.clear() motion.send_raw({ "SHIFT", "End" },  1) del("NORMAL")() end, "End of line"   },
     { "SHIFT + 6", function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) del("NORMAL")() end, "Start of line" },
     { "0",         function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) del("NORMAL")() end, "Start of line" },
-    { "m",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-MARK")) end, "+Delete Mark" },
+    { "m",         function() count.clear() vim.marks.enter_delete() end, "+Delete Mark" },
     { "i",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-INSIDE")) end, "+Inner" },
     { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("DELETE-INSIDE")) end },
     { "a",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-AROUND")) end, "+Around" },

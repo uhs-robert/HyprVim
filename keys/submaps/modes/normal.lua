@@ -27,8 +27,8 @@ end
 -- ── Marks ─────────────────────────────────────────────────────────────────────
 -- stylua: ignore start
 local function set_mark()  vim.marks.set_after("NORMAL") Submap.enter("SET-MARK") end
-local function jump_mark() vim.marks.set_after("NORMAL") Submap.enter("MARKS") end
-local function goto_mark() vim.marks.set_after("reset")  Submap.enter("MARKS") end
+local function jump_mark() vim.marks.set_after("NORMAL") vim.marks.enter_jump() end
+local function goto_mark() vim.marks.set_after("reset")  vim.marks.enter_jump() end
 
 -- ── Insert mode ───────────────────────────────────────────────────────────────
 local function insert_at_cursor() Submap.enter("INSERT") end

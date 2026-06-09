@@ -1,4 +1,4 @@
-local Submap = require("lib.submap")
+local Submap = require("lib.submap") ---@class HyprVimSubmap
 
 --- @class HyprVimHyprland
 local Hyprland = {}
@@ -34,7 +34,7 @@ function Hyprland.suspend_vim() Submap.reset({ is_temporary = true }) end
 
 --- Focus a specific window by its hex address.
 ---@param addr string  hex window address (e.g. "0x1234abcd")
-function Hyprland.focus_window(addr) hl.dispatch(hl.dsp.exec_cmd("hyprctl dispatch focuswindow address:" .. addr)) end
+function Hyprland.focus_window(addr) hl.dispatch(hl.dsp.focus({ window = "address:" .. addr })) end
 
 --- Close the active window gracefully.
 function Hyprland.close_window() hl.dispatch(hl.dsp.window.close()) end

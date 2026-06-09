@@ -17,22 +17,49 @@ local Hyprctl = require("whichkey.lib.hyprctl") ---@class HyprCtl
 --- @class Items
 local Items = {}
 
+-- TODO: build_mark_items exists because hl.bind descriptions cannot be updated or removed
+-- per-submap once registered; only hl.unbind exists and it is global. So whichkey reads
+-- marks.json directly instead of relying on hyprctl bind descriptions.
+-- If Hyprland gains per-submap unbind:
+--   - Remove build_mark_items entirely; MARKS/SET-MARK/DELETE-MARK fall through to
+--     Hyprctl.build_items like every other submap.
+--   - In vim-marks.lua refresh callback, replace the no-op overwrite pattern with
+--     hl.unbind calls for deleted mark keys so binds are cleanly removed.
+-- Track: https://github.com/hyprwm/Hyprland/discussions/15040
 --- @param sm string
 --- @return string|nil
 function Items.build_mark_items(sm)
   local marks_file = Config.state_dir .. "/marks.json"
-  if sm ~= "JUMP-MARK" and sm ~= "SET-MARK" and sm ~= "DELETE-MARK" then return nil end
-  if not file_exists(marks_file) then return nil end
-  local result = pread(
-    'jq -c \'to_entries | map(select(.value | type == "object")) | map({'
-      .. 'key:.key, desc:((.value.class // "?") + '
-      .. '(if ((.value.title // "") | length) > 0 then " \\u00b7 " + (.value.title | .[0:20]) else "" end) + '
-      .. '" [ws:" + (.value.workspace | tostring) + "]"), class:""}) | '
-      .. 'sort_by(if (.key | test("^[a-z]$")) then [0,.key] elif (.key | test("^[A-Z]$")) then [1,.key] else [2,.key] end)\' '
-      .. sh_escape(marks_file)
-      .. " 2>/dev/null"
-  )
-  if result == "" or result == "[]" or result == "null" then return nil end
+  if sm ~= "MARKS" and sm ~= "SET-MARK" and sm ~= "DELETE-MARK" then return nil end
+
+  local marks_jq = 'to_entries | map(select(.value | type == "object")) | map({'
+    .. 'key:.key, desc:((.value.class // "?") + '
+    .. '(if ((.value.title // "") | length) > 0 then " \\u00b7 " + (.value.title | .[0:20]) else "" end) + '
+    .. '" [ws:" + (.value.workspace | tostring) + "]"), class:""}) | '
+    .. 'sort_by(if (.key | test("^[a-z]$")) then [0,.key] elif (.key | test("^[A-Z]$")) then [1,.key] else [2,.key] end)'
+
+  -- SET-MARK: show occupied slots; fall through to hyprctl when none so all slots appear.
+  if sm == "SET-MARK" then
+    if not file_exists(marks_file) then return nil end
+    local result = pread("jq -c '" .. marks_jq .. "' " .. sh_escape(marks_file) .. " 2>/dev/null")
+    if result == "" or result == "[]" or result == "null" then return nil end
+    return result
+  end
+
+  -- MARKS / DELETE-MARK: always return a result (never fall through to hyprctl so stale
+  -- hl.bind descriptions never leak into the HUD as ghost entries).
+  local static_items
+  if sm == "DELETE-MARK" then
+    static_items = '[{"key":"DELETE","desc":"Clear all marks","class":""},{"key":"ESCAPE","desc":"Exit","class":""}]'
+  else
+    static_items = '[{"key":"ESCAPE","desc":"Exit","class":""}]'
+  end
+
+  if not file_exists(marks_file) then return static_items end
+
+  local result =
+    pread("jq -c '(" .. marks_jq .. ") + " .. static_items .. "' " .. sh_escape(marks_file) .. " 2>/dev/null")
+  if result == "" or result == "null" then return static_items end
   return result
 end
 
