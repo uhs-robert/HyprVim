@@ -33,52 +33,25 @@ Submap.define({
   escape = "NORMAL",
   catchall = "stay",
   binds = function()
-    -- stylua: ignore start
-    return {
-      { "SHIFT + APOSTROPHE", function() set('"') end, "Unnamed register (default)" },
-      { "0",                  function() set("0") end, "Yank register (last yank)"  },
-      { "SHIFT + MINUS",      function() set("_") end, "Black hole register"        },
-      { "PLUS",               function() set("+") end, "System clipboard"           },
-      { "ASTERISK",           function() set("*") end, "Primary selection"          },
-      { "SLASH",              function() set("/") end, "Search register"            },
-      { "SHIFT + SLASH",      wk.toggle },
-      { LEADER .. " + " .. ACT,  Submap.reset },
-      { LEADER .. " + " .. EXIT, Submap.reset },
-    }
-    -- stylua: ignore end
-  end,
-}).setup()
+    local result = {}
 
---- Refresh: rebinds a-z and 1-9 with content preview desc (or no-op+nil when empty).
---- Called before each REGISTERS entry so HUD shows only filled slots.
-local function refresh_registers()
-  hl.define_submap("REGISTERS", function()
     local letters = "abcdefghijklmnopqrstuvwxyz"
     for i = 1, #letters do
       local c = letters:sub(i, i)
       local preview = reg_preview(reg_dir .. "/" .. c)
-      if preview then
-        hl.bind(c:upper(), function() set(c) end, { desc = preview })
-      else
-        hl.bind(c:upper(), function() end, { desc = nil })
-      end
+      result[#result + 1] = { c:upper(), function() set(c) end, preview }
     end
+
     for i = 1, 9 do
       local s = tostring(i)
       local preview = reg_preview(reg_dir .. "/" .. s)
-      if preview then
-        hl.bind(s, function() set(s) end, { desc = preview })
-      else
-        hl.bind(s, function() end, { desc = nil })
-      end
+      result[#result + 1] = { s, function() set(s) end, preview }
     end
-    -- "  unnamed
+
     local unnamed_preview = reg_preview(reg_dir .. '/"')
-    hl.bind("SHIFT + APOSTROPHE", function() set('"') end, { desc = unnamed_preview or "Unnamed register" })
-    -- 0  yank
     local yank_preview = reg_preview(reg_dir .. "/0")
-    hl.bind("0", function() set("0") end, { desc = yank_preview and ("yank: " .. yank_preview) or "Yank register" })
-    -- /  search
+    local pre_vim_preview = reg_preview(config.state_dir .. "/clipboard_pre_vim")
+
     local term = nil
     local f = io.open(find_state_path, "r")
     if f then
@@ -87,14 +60,21 @@ local function refresh_registers()
       local t = data:match('"find_term"%s*:%s*"([^"]*)"')
       if t and t ~= "" then term = t end
     end
-    hl.bind("SLASH", function() set("/") end, { desc = term and ("search: " .. term) or "Search register" })
-    local pre_vim_preview = reg_preview(config.state_dir .. "/clipboard_pre_vim")
-    hl.bind("SHIFT + EQUAL", function() set("+") end, { desc = pre_vim_preview or "System clipboard" })
-    hl.bind("SHIFT + 8", function() set("*") end, { desc = "Primary selection" })
-  end)
-end
 
-reg.enter_registers = function()
-  refresh_registers()
-  Submap.enter("REGISTERS")
-end
+    -- stylua: ignore start
+    result[#result + 1] = { "SHIFT + APOSTROPHE", function() set('"') end, unnamed_preview  or "Unnamed register (default)" }
+    result[#result + 1] = { "0",                  function() set("0") end, yank_preview and ("yank: " .. yank_preview) or "Yank register (last yank)" }
+    result[#result + 1] = { "SHIFT + MINUS",      function() set("_") end, "Black hole register"                        }
+    result[#result + 1] = { "PLUS",               function() set("+") end, pre_vim_preview  or "System clipboard"       }
+    result[#result + 1] = { "ASTERISK",           function() set("*") end, "Primary selection"                          }
+    result[#result + 1] = { "SLASH",              function() set("/") end, term and ("search: " .. term) or "Search register" }
+    result[#result + 1] = { "SHIFT + SLASH",      wk.toggle                                                             }
+    result[#result + 1] = { LEADER .. " + " .. ACT,  Submap.reset                                                       }
+    result[#result + 1] = { LEADER .. " + " .. EXIT, Submap.reset                                                       }
+    -- stylua: ignore end
+
+    return result
+  end,
+}).setup()
+
+reg.enter_registers = function() Submap.enter("REGISTERS") end
