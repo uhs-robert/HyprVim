@@ -194,11 +194,13 @@ function Registers.handle_paste(mods, key, return_mode, count)
 
   Registers.load(reg)
 
+  local shortcuts = {}
+  for _ = 1, count do
+    shortcuts[#shortcuts + 1] = { mods, key }
+  end
+
   hl.timer(function()
-    for _ = 1, count do
-      Hypr.send(mods, key)
-    end
-    hl.timer(function() Hypr.switch_mode(return_mode) end, { timeout = 150, type = "oneshot" })
+    Hypr.send_batch(shortcuts, 20, function() Hypr.switch_mode(return_mode) end)
   end, { timeout = 150, type = "oneshot" })
 end
 
