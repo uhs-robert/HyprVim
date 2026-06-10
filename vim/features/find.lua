@@ -18,19 +18,28 @@ local function state_path() return Config.state_dir .. "/find-state.json" end
 local function state_read()
   local f = io.open(state_path(), "r")
   if not f then return {} end
-  local s = f:read("*a")
-  f:close()
   local t = {}
-  for k, v in s:gmatch('"([^"]+)"%s*:%s*"([^"]*)"') do
-    t[k] = v
+  for line in f:lines() do
+    local k, raw = line:match('^%s*"([^"]+)"%s*:%s*"(.*)"')
+    if k then
+      t[k] = raw:gsub('\\(.)', function(c)
+        if c == '"' then return '"' end
+        if c == '\\' then return '\\' end
+        if c == 'n' then return '\n' end
+        if c == 'r' then return '\r' end
+        return c
+      end)
+    else
+      k = line:match('^%s*"([^"]+)"%s*:%s*true')
+      if k then
+        t[k] = "true"
+      else
+        k = line:match('^%s*"([^"]+)"%s*:%s*false')
+        if k then t[k] = "false" end
+      end
+    end
   end
-  -- booleans stored as strings
-  for k, v in s:gmatch('"([^"]+)"%s*:%s*(true)') do
-    t[k] = v
-  end
-  for k, v in s:gmatch('"([^"]+)"%s*:%s*(false)') do
-    t[k] = v
-  end
+  f:close()
   return t
 end
 
@@ -42,7 +51,7 @@ local function state_write(t)
     if v == "true" or v == "false" then
       parts[#parts + 1] = string.format('  "%s": %s', k, v)
     else
-      parts[#parts + 1] = string.format('  "%s": "%s"', k, (tostring(v):gsub('"', '\\"')))
+      parts[#parts + 1] = string.format('  "%s": %q', k, tostring(v))
     end
   end
   table.sort(parts)
