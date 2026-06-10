@@ -18,8 +18,9 @@ local function close_workspace_windows(kill)
   local ws = hl.get_active_workspace()
   if not ws then return end
   local action = kill and hl.dsp.window.kill or hl.dsp.window.close
-  for _, w in ipairs(hl.get_workspace_windows(ws) or {}) do
-    hl.dispatch(action({ address = w.address }))
+  local windows = hl.get_workspace_windows(ws) or {}
+  for i, w in ipairs(windows) do
+    hl.timer(function() hl.dispatch(action("address:" .. w.address)) end, { timeout = 50 * i, type = "oneshot" })
   end
 end
 
@@ -61,8 +62,12 @@ local commands = {
     local win = hl.get_active_window()
     local ws = hl.get_active_workspace()
     if not (win and ws) then return end
+    local to_close = {}
     for _, w in ipairs(hl.get_workspace_windows(ws) or {}) do
-      if w.address ~= win.address then hl.dispatch(hl.dsp.window.close({ address = w.address })) end
+      if w.address ~= win.address then to_close[#to_close + 1] = w end
+    end
+    for i, w in ipairs(to_close) do
+      hl.timer(function() hl.dispatch(hl.dsp.window.close("address:" .. w.address)) end, { timeout = 50 * i, type = "oneshot" })
     end
   end,
   split      = function() hl.dispatch(hl.dsp.layout("preselect d")) end,
