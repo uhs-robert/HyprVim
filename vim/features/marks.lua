@@ -54,7 +54,7 @@ local function json_write(t)
       m.window or "",
       m.monitor or "",
       m.class or "",
-      (m.title or ""):gsub('"', '\\"')
+      m.title or ""
     )
   end
   table.sort(parts)
