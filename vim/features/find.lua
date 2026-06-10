@@ -6,6 +6,7 @@
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
 local Prompt = require("lib.prompt") ---@class Prompt
+local Clipboard = require("lib.clipboard") ---@class Clipboard
 
 --- @class Find
 local Find = {}
@@ -90,24 +91,6 @@ local function clipboard_write(text)
   hl.dispatch(hl.dsp.exec_cmd("wl-copy " .. flag .. " < " .. tmp .. " ; rm " .. tmp))
 end
 
----Read the Wayland clipboard without blocking the compositor.
----`callback` receives the clipboard contents (or `""` on failure/empty).
----@param callback fun(s: string)
-local function clipboard_read_async(callback)
-  local tmp = os.tmpname()
-  _G._hv_clip_cb = function()
-    local f = io.open(tmp, "r")
-    local s = f and f:read("*a") or ""
-    if f then
-      f:close()
-      os.remove(tmp)
-    end
-    _G._hv_clip_cb = nil
-    callback(s)
-  end
-  Hypr.cmd_then_dispatch("wl-paste --no-newline 2>/dev/null > " .. tmp, "_hv_clip_cb()")()
-end
-
 ---Open the app's find bar (Ctrl+F), paste `term`, and commit the search.
 ---Persists all state so `n`/`N`/`;`/`,` can repeat or reverse later.
 ---@param term      string   search string
@@ -122,22 +105,19 @@ local function do_find(term, direction, term_type, is_till)
   state_set("last_action_term_type", term_type)
   state_set("till", is_till and "true" or "false")
 
-  clipboard_write(term)
-
-  -- Open find bar, paste term, dismiss autocomplete, run search.
-  -- Uses hl.timer chains to avoid blocking the event loop.
+  -- Open find bar first so clipboard_write doesn't trigger auto-paste on open.
   Hypr.send("CTRL", "f")
   hl.timer(function()
-    Hypr.send("CTRL", "v")
+    clipboard_write(term)
     hl.timer(function()
-      Hypr.send("", "space")
-      Hypr.send("", "BackSpace")
+      Hypr.send("CTRL", "a") -- clear any existing search term
+      Hypr.send("CTRL", "v")
       hl.timer(function()
         Hypr.send("", "Return")
         Hypr.normal()
       end, { timeout = 100, type = "oneshot" })
-    end, { timeout = 50, type = "oneshot" })
-  end, { timeout = 150, type = "oneshot" })
+    end, { timeout = 100, type = "oneshot" })
+  end, { timeout = 100, type = "oneshot" })
 end
 
 ---Exit vim mode, show the search prompt, then call `do_find` with the entered term.
@@ -191,26 +171,18 @@ end
 ---Implements `*` (forward) and `#` (backward).
 ---@param direction string  `"forward"` or `"backward"`
 local function word_under_cursor(direction)
-  -- Select word: CTRL+RIGHT positions at end, CTRL+SHIFT+LEFT selects back.
-  Hypr.send("CTRL", "RIGHT")
-  hl.timer(function()
-    Hypr.send("CTRL SHIFT", "LEFT")
-    hl.timer(function()
-      Hypr.send("CTRL", "c")
-      hl.timer(function()
-        clipboard_read_async(function(s)
-          local term = s:gsub("[\r\n]", ""):gsub("%s+$", "")
-          term = term:match("^%S+") or term
-          Hypr.send("", "RIGHT") -- deselect
-          if term == "" then
-            Hypr.normal()
-            return
-          end
-          do_find(term, direction, "find_term", false)
-        end)
-      end, { timeout = 200, type = "oneshot" })
-    end, { timeout = 150, type = "oneshot" })
-  end, { timeout = 100, type = "oneshot" })
+  -- Select word same as "iw": go to start, extend to end.
+  Hypr.send_all({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
+  Hypr.send("CTRL", "c")
+  Clipboard.read_async(150, function(s)
+    Hypr.send("", "RIGHT") -- deselect
+    local term = s:gsub("[\r\n]", ""):gsub("%s+$", ""):match("^%S+") or ""
+    if term == "" then
+      Hypr.normal()
+      return
+    end
+    do_find(term, direction, "find_term", false)
+  end)
 end
 
 -- Public API all map directly to vim motions:
