@@ -66,10 +66,10 @@ function Hyprland.workspace_rel(delta)
   hl.dispatch(hl.dsp.focus({ workspace = "e" .. (delta >= 0 and "+" or "") .. tostring(delta) }))
 end
 
---- @param n integer workspace number
+--- @param n integer|string workspace number or selector (e.g. "name:Web", "empty", "e+1")
 function Hyprland.focus_workspace(n) hl.dispatch(hl.dsp.focus({ workspace = n })) end
 
---- @param n integer workspace number
+--- @param n integer|string workspace number or selector
 function Hyprland.move_to_workspace(n) hl.dispatch(hl.dsp.window.move({ workspace = n })) end
 
 ---@type table<string, integer>

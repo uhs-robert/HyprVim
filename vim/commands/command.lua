@@ -118,19 +118,19 @@ end
 ---Argument-taking commands: name -> handler(args_string).
 ---@type table<string, fun(args: string)>
 local arg_commands = {
-  ws             = function(a) Hypr.focus_workspace(tonumber(a) or 0) end,
-  tab            = function(a) Hypr.focus_workspace(tonumber(a) or 0) end,
-  workspace      = function(a) Hypr.focus_workspace(tonumber(a) or 0) end,
+  ws             = function(a) Hypr.focus_workspace(tonumber(a) or a) end,
+  tab            = function(a) Hypr.focus_workspace(tonumber(a) or a) end,
+  workspace      = function(a) Hypr.focus_workspace(tonumber(a) or a) end,
   move           = function(a)
     local x, y = a:match("^([+-]?%d+)%s+([+-]?%d+)$")
     if x then
       hl.dispatch(hl.dsp.window.move({ x = tonumber(x), y = tonumber(y) }))
     else
-      Hypr.move_to_workspace(tonumber(a) or 0)
+      Hypr.move_to_workspace(tonumber(a) or a)
     end
   end,
-  ["move!"]      = function(a) hl.dispatch(hl.dsp.window.move({ workspace = (tonumber(a) or 0), follow = false })) end,
-  move_to_workspace = function(a) Hypr.move_to_workspace(tonumber(a) or 0) end,
+  ["move!"]      = function(a) hl.dispatch(hl.dsp.window.move({ workspace = (tonumber(a) or a), follow = false })) end,
+  move_to_workspace = function(a) Hypr.move_to_workspace(tonumber(a) or a) end,
   resize         = function(a) hl.dispatch(hl.dsp.window.resize({ x = -(tonumber(a) or 0), y = 0, relative = true })) end,
   resize_width   = function(a) hl.dispatch(hl.dsp.window.resize({ x = -(tonumber(a) or 0), y = 0, relative = true })) end,
   vresize        = function(a) hl.dispatch(hl.dsp.window.resize({ x = 0, y = -(tonumber(a) or 0), relative = true })) end,
@@ -151,12 +151,31 @@ local arg_commands = {
     local n = tonumber(a)
     if n then hl.config({ general = { gaps_in = n, gaps_out = n } }) end
   end,
+  float          = function(a) hl.dispatch(hl.dsp.window.float({ action = a })) end,
+  fullscreen     = function(a) hl.dispatch(hl.dsp.window.fullscreen({ mode = a })) end,
+  monitor        = function(a) hl.dispatch(hl.dsp.focus({ monitor = a })) end,
+  mon            = function(a) hl.dispatch(hl.dsp.focus({ monitor = a })) end,
+  send_monitor   = function(a) hl.dispatch(hl.dsp.window.move({ monitor = a })) end,
+  swap           = function(a) hl.dispatch(hl.dsp.window.swap({ direction = a })) end,
+  special        = function(a) hl.dispatch(hl.dsp.workspace.toggle_special(a)) end,
+  send_special   = function(a) hl.dispatch(hl.dsp.window.move({ workspace = "special:" .. a })) end,
+  rename         = function(a) hl.dispatch(hl.dsp.workspace.rename({ name = a })) end,
+  prop           = function(a)
+    local prop, val = a:match("^(%S+)%s+(.*)")
+    if prop then hl.dispatch(hl.dsp.window.set_prop({ prop = prop, value = val })) end
+  end,
+  focus          = function(a) hl.dispatch(hl.dsp.focus({ window = a })) end,
+  zorder         = function(a) hl.dispatch(hl.dsp.window.alter_zorder({ mode = a })) end,
 }
 -- stylua: ignore end
 
 local COMPLETIONS = {}
-for k in pairs(commands) do COMPLETIONS[#COMPLETIONS + 1] = k end
-for k in pairs(arg_commands) do COMPLETIONS[#COMPLETIONS + 1] = k end
+for k in pairs(commands) do
+  COMPLETIONS[#COMPLETIONS + 1] = k
+end
+for k in pairs(arg_commands) do
+  COMPLETIONS[#COMPLETIONS + 1] = k
+end
 
 ---Look up and run a command string against the dispatch tables and special prefixes.
 ---@param cmd string  raw input from the prompt (may have leading/trailing whitespace)
@@ -185,11 +204,15 @@ local function execute(cmd)
       restore_submap()
     end
     Hypr.cmd_then_dispatch(
-      Config.term_cmd("hyprvim-shell") .. " bash -c " .. sq(
-        "_hv_tmp=$(mktemp); " .. shell_cmd .. " 2>&1 | tee \"$_hv_tmp\";"
-        .. " [ -s \"$_hv_tmp\" ] && { echo; read -rsn1 -p '[done] press any key...'; };"
-        .. " rm -f \"$_hv_tmp\""
-      ),
+      Config.term_cmd("hyprvim-shell")
+        .. " bash -c "
+        .. sq(
+          "_hv_tmp=$(mktemp); "
+            .. shell_cmd
+            .. ' 2>&1 | tee "$_hv_tmp";'
+            .. " [ -s \"$_hv_tmp\" ] && { echo; read -rsn1 -p '[done] press any key...'; };"
+            .. ' rm -f "$_hv_tmp"'
+        ),
       "_hv_shell_done()"
     )()
     return true

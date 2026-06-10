@@ -197,7 +197,7 @@ Multi-clipboard management with named registers (`"a` - `"z`) and special regist
 
 ### Commands
 
-Press `:` in **NORMAL** mode to execute Vim-style commands. Common commands: `:w` (save), `:q` (quit), `:wq` (save & quit), `:split` (split window), `:float` (toggle floating), `:ws <num>` (switch workspace), `:reload` (reload Hyprland config), `:update` (apply HyprVim update).
+Press `:` in **NORMAL** mode to execute Vim-style commands. Common commands: `:w` (save), `:q` (quit), `:wq` (save & quit), `:split` (split window), `:float [on|off]` (floating), `:fullscreen [maximized|fullscreen]`, `:ws <N|name:Web|empty>` (switch workspace), `:move N` (send window to workspace), `:monitor <dir|name>` (focus monitor), `:focus class:firefox` (focus window), `:rename <name>` (rename workspace), `:special <name>` (scratchpad), `:swap <l|r|u|d>`, `:resize N`, `:opacity V`, `:prop <name> <value>`, `:reload`, `:update`, `:!cmd` (shell). Full reference: `:help`.
 
 > **📖 Learn more:** [Command Mode wiki](https://github.com/uhs-robert/hyprvim/wiki/Modes#-command-mode)
 
