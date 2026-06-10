@@ -46,8 +46,8 @@ local function delete_eol()    vim.motion.send_raw({ "SHIFT", "End" }, 1) vim.re
 local function delete_before() vim.motion.send_raw({ "SHIFT", "LEFT" }, 1) vim.registers.handle_delete("CTRL", "x", "NORMAL") end
 local function delete_under()  vim.motion.send_raw({ "SHIFT", "RIGHT" }, 1) vim.registers.handle_delete("CTRL", "x", "NORMAL") end
 local function paste()         vim.registers.handle_paste("CTRL", "v", "NORMAL", vim.count.get()) end
-local function indent_line()   send("", "HOME") send("", "tab") end
-local function unindent_line() send("", "HOME") send("SHIFT", "tab") end
+local function indent_line()   Hypr.send_batch({ { "", "HOME" }, { "", "TAB" } }) end
+local function unindent_line() Hypr.send_batch({ { "", "HOME" }, { "SHIFT", "TAB" } }) end
 
 -- ── Misc ──────────────────────────────────────────────────────────────────────
 local function line_start()     vim.count.clear() send("", "HOME") end
