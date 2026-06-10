@@ -31,13 +31,13 @@ local footer = {
 local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
   local function parent() hl.dispatch(hl.dsp.submap(op_name)) end
 
-  local text_obj_rows = function(word_seq, para_seq, action)
+  local text_obj_rows = function(word_seq, para_seq, word_action, para_action)
     return {
       -- stylua: ignore start
-      { "w",         function() motion.send_sequence(word_seq) action() end, "Word" },
-      { "SHIFT + w", function() motion.send_sequence(word_seq) action() end },
-      { "p",         function() motion.send_sequence(para_seq) action() end, "Paragraph" },
-      { "SHIFT + p", function() motion.send_sequence(para_seq) action() end },
+      { "w",         function() motion.send_sequence(word_seq) word_action() end, "Word" },
+      { "SHIFT + w", function() motion.send_sequence(word_seq) word_action() end },
+      { "p",         function() motion.send_sequence(para_seq) para_action() end, "Paragraph" },
+      { "SHIFT + p", function() motion.send_sequence(para_seq) para_action() end },
       { "SPACE",                 wk.toggle },
       { LEADER .. " + " .. ACT, Submap.reset },
       { LEADER .. " + " .. EXIT, Submap.reset },
@@ -53,7 +53,8 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
     binds = text_obj_rows(
       { { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } },
       { { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } },
-      on_word
+      on_word,
+      on_para
     ),
   }).setup()
 
@@ -65,6 +66,7 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
     binds = text_obj_rows(
       { { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } },
       { { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } },
+      on_word,
       on_para
     ),
   }).setup()
