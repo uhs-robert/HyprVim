@@ -98,7 +98,6 @@ end
 
 Submap.define({
   name = "DELETE",
-  on_enter = function() count.clear() end,
   escape = "NORMAL",
   back = false,
   catchall = "stay",
@@ -141,7 +140,6 @@ make_sub_submaps(
 
 Submap.define({
   name = "CHANGE",
-  on_enter = function() count.clear() end,
   escape = "NORMAL",
   back = false,
   catchall = "stay",
@@ -193,7 +191,6 @@ end
 
 Submap.define({
   name = "YANK",
-  on_enter = function() count.clear() end,
   escape = "NORMAL",
   back = false,
   catchall = "stay",
