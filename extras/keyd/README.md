@@ -61,3 +61,7 @@ This file is intentionally minimal, just keybinds and no scripting.
 - Keep bindings minimal and avoid duplicating HyprVim features.
 - Prefer a few universal motion keys (like arrows) for quick, transient actions.
 - If you want personal tweaks, keep them in your own keyd config so this repo stays generic.
+
+## See Also
+
+A more complete, maintained, and up-to-date version of this config lives in [uhs-robert/dotfiles](https://github.com/uhs-robert/dotfiles/blob/main/system/etc/keyd/default.conf). Note it includes personal tweaks not relevant to all users.

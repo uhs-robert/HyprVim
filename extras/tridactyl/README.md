@@ -88,3 +88,7 @@ cp extras/tridactyl/tridactylrc ~/.config/tridactyl/tridactylrc
 - `,r` - re-source config
 - `,,` - open search
 - `,<` - tabopen search
+
+## See Also
+
+A more complete, maintained, and up-to-date version of this config lives in [uhs-robert/dotfiles](https://github.com/uhs-robert/dotfiles/blob/main/home/tridactyl/.config/tridactyl/tridactylrc). Note it includes personal container binds, work-specific commands, and an extended search key tree not relevant to all users.

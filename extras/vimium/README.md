@@ -26,3 +26,7 @@ This folder provides two Vimium configuration files:
 - Use `J`/`K` for tab switching.
 - Use `g`-prefixed searches (e.g., `gh` for GitHub, `gy` for YouTube).
 - Use `<space>` as a leader for common searches and tab selection.
+
+## See Also
+
+More complete, maintained, and up-to-date versions of these configs live in [uhs-robert/dotfiles](https://github.com/uhs-robert/dotfiles/tree/main/home/vimium). Note they include personal search engines and work-specific binds not relevant to all users.

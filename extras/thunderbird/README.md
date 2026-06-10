@@ -39,3 +39,7 @@ The `keys.json` file provides a Vim-flavored keymap for Thunderbird's main 3-pan
 - Use `u` to undo.
 - Use `q`, `ctrl+h`, `ctrl+c`, or `ctrl+x` to close a tab and refresh mail.
 - Use `o` or `ctrl+l` to open the selected message.
+
+## See Also
+
+A more complete, maintained, and up-to-date version of this config lives in [uhs-robert/dotfiles](https://github.com/uhs-robert/dotfiles/blob/main/home/thunderbird/tbkeys/keys.json). Note it includes personal binds not relevant to all users.

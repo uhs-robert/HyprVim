@@ -33,3 +33,7 @@ The `basic-modules.jsonc` file provides a minimal module definition for `hyprlan
 - The module shows the current submap name whenever you are inside a Hyprland submap.
 - Click the module to reset back to the default submap.
 - Adjust the icon, color, or placement to match your bar layout.
+
+## See Also
+
+A more complete, maintained, and up-to-date Waybar config lives in [uhs-robert/dotfiles](https://github.com/uhs-robert/dotfiles/tree/main/home/waybar/.config/waybar). Note it includes a full personal bar setup (media, hardware, weather, notifications, and more) not intended as a drop-in for all users.
