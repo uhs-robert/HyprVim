@@ -31,7 +31,7 @@ function VLineMotion.setup()
   os.execute("mkdir -p " .. state_dir())
   local f = io.open(flag_path(), "w")
   if f then f:close() end
-  Hypr.send_all({ { "", "End" }, { "SHIFT", "Home" } })
+  Hypr.send_batch({ { "", "End" }, { "SHIFT", "Home" } })
 end
 
 ---Clear the first-motion flag. Called on V-LINE exit to avoid stale state.
