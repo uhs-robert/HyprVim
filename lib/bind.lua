@@ -101,7 +101,7 @@ end
 ---Pass the key through to the active window unchanged.
 ---@return fun()
 function Bind.pass()
-  return function() hl.dispatch(hl.dsp.pass()) end
+  return function() hl.dispatch(hl.dsp.pass({ window = "active" })) end
 end
 
 return Bind

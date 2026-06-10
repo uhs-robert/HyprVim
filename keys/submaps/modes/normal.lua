@@ -183,9 +183,9 @@ Submap.define({
       { "SHIFT + COMMA",  unindent_line, "Unindent line", { repeating = true } },
 
       -- GUI passthrough / helpers
-      { "tab",         Bind.pass       },
-      { "SHIFT + tab", Bind.pass       },
-      { "RETURN",      Bind.pass       },
+      { "tab",         Bind.pass()       },
+      { "SHIFT + tab", Bind.pass()       },
+      { "RETURN",      Bind.pass()       },
       { "q",           escape_gui },
       { "CTRL + q",    Submap.switch("NORMAL") },
       { "CTRL + c",    escape_gui },
