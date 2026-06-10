@@ -28,25 +28,47 @@ local function build_cmd(label, opts, state_file)
     local comp_block = ""
     if opts.completions and #opts.completions > 0 then
       local wl = sq(table.concat(opts.completions, " "))
-      comp_block = "_hv_complete() {\n"
-        .. "    local words=" .. wl .. "\n"
-        .. "    local matches\n"
-        .. "    mapfile -t matches < <(compgen -W \"$words\" -- \"$READLINE_LINE\")\n"
-        .. "    if [ \"${#matches[@]}\" -eq 1 ]; then\n"
-        .. "        READLINE_LINE=\"${matches[0]}\"\n"
-        .. "        READLINE_POINT=\"${#matches[0]}\"\n"
-        .. "    elif [ \"${#matches[@]}\" -gt 1 ]; then\n"
-        .. "        printf '\\n'\n"
-        .. "        printf '  %s\\n' \"${matches[@]}\"\n"
+      comp_block = "_hv_cycle_base=''\n"
+        .. "_hv_cycle_idx=-1\n"
+        .. "_hv_complete() {\n"
+        .. "    local words="
+        .. wl
+        .. "\n"
+        .. "    local matches found m\n"
+        .. '    if [ -n "$_hv_cycle_base" ]; then\n'
+        .. '        mapfile -t matches < <(compgen -W "$words" -- "$_hv_cycle_base")\n'
+        .. "        found=0\n"
+        .. '        for m in "${matches[@]}"; do [ "$m" = "$READLINE_LINE" ] && { found=1; break; }; done\n'
+        .. '        [ $found -eq 0 ] && { _hv_cycle_base="$READLINE_LINE"; _hv_cycle_idx=-1; }\n'
+        .. "    else\n"
+        .. '        _hv_cycle_base="$READLINE_LINE"\n'
+        .. "    fi\n"
+        .. '    mapfile -t matches < <(compgen -W "$words" -- "$_hv_cycle_base")\n'
+        .. '    [ "${#matches[@]}" -eq 0 ] && return\n'
+        .. '    if [ "${#matches[@]}" -eq 1 ]; then\n'
+        .. '        READLINE_LINE="${matches[0]}"\n'
+        .. '        READLINE_POINT="${#READLINE_LINE}"\n'
+        .. "        _hv_cycle_base=''\n"
+        .. "        _hv_cycle_idx=-1\n"
+        .. "    else\n"
+        .. "        _hv_cycle_idx=$(( (_hv_cycle_idx + 1) % ${#matches[@]} ))\n"
+        .. '        READLINE_LINE="${matches[$_hv_cycle_idx]}"\n'
+        .. '        READLINE_POINT="${#READLINE_LINE}"\n'
         .. "    fi\n"
         .. "}\n"
         .. "bind -x '\"\\t\": _hv_complete'\n"
     end
     f:write(
-      "trap 'rm -f " .. sq(script) .. "' EXIT\n"
-      .. comp_block
-      .. "read -e -r -p " .. sq(label) .. " __hv_in\n"
-      .. "printf '%s' \"$__hv_in\" > " .. sq(state_file) .. "\n"
+      "trap 'rm -f "
+        .. sq(script)
+        .. "' EXIT\n"
+        .. comp_block
+        .. "read -e -r -p "
+        .. sq(label)
+        .. " __hv_in\n"
+        .. "printf '%s' \"$__hv_in\" > "
+        .. sq(state_file)
+        .. "\n"
     )
     f:close()
   end
