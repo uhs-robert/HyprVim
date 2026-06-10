@@ -107,6 +107,10 @@ local aliases = {
 }
 for alias, canonical in pairs(aliases) do commands[alias] = commands[canonical] end
 
+if Config.commands then
+  for name, fn in pairs(Config.commands) do commands[name] = fn end
+end
+
 local COMPLETIONS = {}
 for k in pairs(commands) do COMPLETIONS[#COMPLETIONS + 1] = k end
 for _, name in ipairs({ "resize", "vresize", "size", "move", "tab", "opacity", "gaps", "ws" }) do

@@ -258,6 +258,10 @@ require("hyprvim").setup({
   --     { "SUPER + x", function() end },                       -- add a new bind
   --   },
   -- },
+  -- commands = {
+  --   browser = function() hl.dispatch(hl.dsp.exec_cmd("firefox")) end, -- add a new :command
+  --   q       = function() my_custom_quit() end,                        -- override a built-in
+  -- },
 })
 ```
 
@@ -343,6 +347,22 @@ require("hyprvim").setup({
 Because `keymaps` are evaluated at `setup()` call time, inside your own Hyprland config, any functions that you have defined there are in scope.
 
 Built-in submap names: `"NORMAL"`, `"VISUAL"`, `"V-LINE"`, `"INSERT"`, `"G-MOTION"`, `"G-VISUAL"`.
+
+### Adding Custom Commands
+
+Pass a `commands` table to `setup()` to add new `:commands` or override built-ins.
+
+```lua
+require("hyprvim").setup({
+  commands = {
+    browser  = function() hl.dispatch(hl.dsp.exec_cmd("firefox")) end,
+    files    = function() hl.dispatch(hl.dsp.exec_cmd("thunar")) end,
+    myaction = function() hl.exec_cmd("my-script") end,
+  },
+})
+```
+
+Custom commands appear in tab-completion alongside the built-in ones.
 
 ### Other Extensions
 
