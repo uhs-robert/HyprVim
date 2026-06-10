@@ -78,8 +78,55 @@ function Hyprland.toggle_pseudo() hl.dispatch(hl.dsp.window.pseudo()) end
 --- Center the active floating window.
 function Hyprland.center_window() hl.dispatch(hl.dsp.window.center()) end
 
---- @param value number opacity 0.0–1.0
-function Hyprland.set_opacity(value) hl.dispatch(hl.dsp.window.set_prop("alpha", tostring(value))) end
+--- @param active number active opacity 0.0–1.0
+--- @param inactive number|nil inactive opacity; omit to leave unchanged
+--- @param fullscreen number|nil fullscreen opacity; omit to leave unchanged
+function Hyprland.set_opacity(active, inactive, fullscreen)
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity",          value = tostring(active) }))
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_override", value = "1" }))
+  if inactive then
+    hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_inactive",          value = tostring(inactive) }))
+    hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_inactive_override", value = "1" }))
+  end
+  if fullscreen then
+    hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_fullscreen",          value = tostring(fullscreen) }))
+    hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_fullscreen_override", value = "1" }))
+  end
+end
+
+function Hyprland.set_active_opacity(v)
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity",          value = tostring(v) }))
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_override", value = "1" }))
+end
+
+function Hyprland.set_inactive_opacity(v)
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_inactive",          value = tostring(v) }))
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_inactive_override", value = "1" }))
+end
+
+function Hyprland.set_fullscreen_opacity(v)
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_fullscreen",          value = tostring(v) }))
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_fullscreen_override", value = "1" }))
+end
+
+--- Reset opacity to window-rule defaults (removes any setprop override).
+function Hyprland.reset_opacity()
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity",                     value = "1" }))
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_override",            value = "0" }))
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_inactive",            value = "1" }))
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_inactive_override",   value = "0" }))
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_fullscreen",          value = "1" }))
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "opacity_fullscreen_override", value = "0" }))
+end
+
+local _nodim = {} -- address -> bool, tracks no_dim state per window
+
+function Hyprland.toggle_dim()
+  local win = hl.get_active_window()
+  if not win then return end
+  _nodim[win.address] = not _nodim[win.address]
+  hl.dispatch(hl.dsp.window.set_prop({ prop = "no_dim", value = _nodim[win.address] and "1" or "0" }))
+end
 
 --- @param delta integer +1 or -1
 function Hyprland.workspace_rel(delta)

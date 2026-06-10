@@ -77,6 +77,7 @@ local commands = {
   pin        = function() Hypr.toggle_pin() end,
   center     = function() Hypr.center_window() end,
   pseudo     = function() Hypr.toggle_pseudo() end,
+  dim        = function() Hypr.toggle_dim() end,
   tabn       = function() Hypr.workspace_rel(1) end,
   tabp       = function() Hypr.workspace_rel(-1) end,
   reload     = function() os.execute("hyprctl reload &") end,
@@ -144,8 +145,39 @@ local arg_commands = {
     if w then hl.dispatch(hl.dsp.window.resize({ x = tonumber(w), y = tonumber(h) })) end
   end,
   opacity        = function(a)
+    if a == "reset" then Hypr.reset_opacity(); return end
+    local sa, si, sf = a:match("^([%d%.]+)%s+([%d%.]+)%s+([%d%.]+)$")
+    if sa then
+      local av, iv, fv = tonumber(sa), tonumber(si), tonumber(sf)
+      if av and iv and fv then Hypr.set_opacity(av, iv, fv) end
+      return
+    end
+    local sa2, si2 = a:match("^([%d%.]+)%s+([%d%.]+)$")
+    if sa2 then
+      local av, iv = tonumber(sa2), tonumber(si2)
+      if av and iv then Hypr.set_opacity(av, iv) end
+      return
+    end
     local v = tonumber(a)
-    if v and v >= 0 and v <= 1 then Hypr.set_opacity(v) end
+    if v then Hypr.set_opacity(v) end
+  end,
+  dim                = function(a)
+    local win = hl.get_active_window()
+    if not win then return end
+    local enable = a == "on"
+    hl.dispatch(hl.dsp.window.set_prop({ prop = "no_dim", value = enable and "0" or "1" }))
+  end,
+  active_opacity     = function(a)
+    local v = tonumber(a)
+    if v then Hypr.set_active_opacity(v) end
+  end,
+  inactive_opacity   = function(a)
+    local v = tonumber(a)
+    if v then Hypr.set_inactive_opacity(v) end
+  end,
+  fullscreen_opacity = function(a)
+    local v = tonumber(a)
+    if v then Hypr.set_fullscreen_opacity(v) end
   end,
   gaps           = function(a)
     local n = tonumber(a)
