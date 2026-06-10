@@ -103,7 +103,11 @@ local aliases = {
   tn = "tabn",  tp = "tabp",
   r  = "reload", edit = "e", t = "term", terminal = "term",
   poweroff = "shutdown", pick = "picker", hyprpicker = "picker",
-  h = "help", close = "q", kill = "q!"
+  h = "help", close = "q", kill = "q!",
+  write = "w", save = "w",
+  write_quit = "wq", save_quit = "wq",
+  quit = "q",
+  close_workspace = "qa", kill_workspace = "qa!",
 }
 for alias, canonical in pairs(aliases) do commands[alias] = commands[canonical] end
 
@@ -111,72 +115,84 @@ if Config.commands then
   for name, fn in pairs(Config.commands) do commands[name] = fn end
 end
 
-local COMPLETIONS = {}
-for k in pairs(commands) do COMPLETIONS[#COMPLETIONS + 1] = k end
-for _, name in ipairs({ "resize", "vresize", "size", "move", "tab", "opacity", "gaps", "ws" }) do
-  COMPLETIONS[#COMPLETIONS + 1] = name
-end
-
----Pattern-match table for parameterised commands (`:ws N`, `:move N`, `:opacity V`, `s/`).
----Each entry is `{ pattern, handler }` where handler receives all pattern captures.
----@type { [1]: string, [2]: fun(...: string): true|nil }[]
-local patterns = {
-  { "^ws%s*(%d+)$",        function(n) Hypr.focus_workspace(tonumber(n) or 0) end },
-  { "^tab%s*(%d+)$",       function(n) Hypr.focus_workspace(tonumber(n) or 0) end },
-  { "^move%s*(%d+)$",      function(n) Hypr.move_to_workspace(tonumber(n) or 0) end },
-  { "^move%s+([+-]?%d+)%s+([+-]?%d+)$", function(x, y)
-      hl.dispatch(hl.dsp.exec_cmd(
-        "hyprctl dispatch movewindowpixel exact " .. x .. " " .. y .. ",active"
-      ))
-    end },
-  { "^resize%s*([+-]?%d+)$", function(n)
-      hl.dispatch(hl.dsp.window.resize({ x = -(tonumber(n) or 0), y = 0, relative = true }))
-    end },
-  { "^vresize%s*([+-]?%d+)$", function(n)
-      hl.dispatch(hl.dsp.window.resize({ x = 0, y = -(tonumber(n) or 0), relative = true }))
-    end },
-  { "^size%s+(%d+)%s+(%d+)$", function(w, h)
-      hl.dispatch(hl.dsp.exec_cmd(
-        "hyprctl dispatch resizewindowpixel exact " .. w .. " " .. h .. ",active"
-      ))
-    end },
-  { "^opacity%s+([%d%.]+)$", function(v)
-      v = tonumber(v)
-      if v and v >= 0 and v <= 1 then Hypr.set_opacity(v) end
-    end },
-  { "^gaps%s+([%d%.]+)$", function(n)
-      n = tonumber(n)
-      if n then hl.config({ general = { gaps_in = n, gaps_out = n } }) end
-    end },
-  { "^%%?s/",              function() Hypr.send("CTRL", "h") end },
-  { "^!(.+)$",            function(shell_cmd)
-      _G._hv_shell_done = function()
-        _G._hv_shell_done = nil
-        restore_submap()
-      end
-      Hypr.cmd_then_dispatch(
-        Config.term_cmd("hyprvim-shell") .. " bash -c " .. sq(
-          "_hv_tmp=$(mktemp); " .. shell_cmd .. " 2>&1 | tee \"$_hv_tmp\";"
-          .. " [ -s \"$_hv_tmp\" ] && { echo; read -rsn1 -p '[done] press any key...'; };"
-          .. " rm -f \"$_hv_tmp\""
-        ),
-        "_hv_shell_done()"
-      )()
-      return true
-    end },
+---Argument-taking commands: name -> handler(args_string).
+---@type table<string, fun(args: string)>
+local arg_commands = {
+  ws             = function(a) Hypr.focus_workspace(tonumber(a) or 0) end,
+  tab            = function(a) Hypr.focus_workspace(tonumber(a) or 0) end,
+  workspace      = function(a) Hypr.focus_workspace(tonumber(a) or 0) end,
+  move           = function(a)
+    local x, y = a:match("^([+-]?%d+)%s+([+-]?%d+)$")
+    if x then
+      hl.dispatch(hl.dsp.window.move({ x = tonumber(x), y = tonumber(y) }))
+    else
+      Hypr.move_to_workspace(tonumber(a) or 0)
+    end
+  end,
+  ["move!"]      = function(a) hl.dispatch(hl.dsp.window.move({ workspace = (tonumber(a) or 0), follow = false })) end,
+  move_to_workspace = function(a) Hypr.move_to_workspace(tonumber(a) or 0) end,
+  resize         = function(a) hl.dispatch(hl.dsp.window.resize({ x = -(tonumber(a) or 0), y = 0, relative = true })) end,
+  resize_width   = function(a) hl.dispatch(hl.dsp.window.resize({ x = -(tonumber(a) or 0), y = 0, relative = true })) end,
+  vresize        = function(a) hl.dispatch(hl.dsp.window.resize({ x = 0, y = -(tonumber(a) or 0), relative = true })) end,
+  resize_height  = function(a) hl.dispatch(hl.dsp.window.resize({ x = 0, y = -(tonumber(a) or 0), relative = true })) end,
+  size           = function(a)
+    local w, h = a:match("^(%d+)%s+(%d+)$")
+    if w then hl.dispatch(hl.dsp.window.resize({ x = tonumber(w), y = tonumber(h) })) end
+  end,
+  resize_exact   = function(a)
+    local w, h = a:match("^(%d+)%s+(%d+)$")
+    if w then hl.dispatch(hl.dsp.window.resize({ x = tonumber(w), y = tonumber(h) })) end
+  end,
+  opacity        = function(a)
+    local v = tonumber(a)
+    if v and v >= 0 and v <= 1 then Hypr.set_opacity(v) end
+  end,
+  gaps           = function(a)
+    local n = tonumber(a)
+    if n then hl.config({ general = { gaps_in = n, gaps_out = n } }) end
+  end,
 }
 -- stylua: ignore end
 
----Look up and run a command string against the dispatch table then the pattern list.
+local COMPLETIONS = {}
+for k in pairs(commands) do COMPLETIONS[#COMPLETIONS + 1] = k end
+for k in pairs(arg_commands) do COMPLETIONS[#COMPLETIONS + 1] = k end
+
+---Look up and run a command string against the dispatch tables and special prefixes.
 ---@param cmd string  raw input from the prompt (may have leading/trailing whitespace)
 ---@return true|nil  true if the command dispatched an async operation
 local function execute(cmd)
   cmd = cmd:gsub("^%s+", ""):gsub("%s+$", "")
+
   local fn = commands[cmd]
   if fn then return fn() end
-  for _, p in ipairs(patterns) do
-    local caps = { cmd:match(p[1]) }
-    if caps[1] ~= nil then return p[2](table.unpack(caps)) end
+
+  local name, args = cmd:match("^(%S+)%s+(.*)")
+  if name then
+    local afn = arg_commands[name]
+    if afn then return afn(args) end
+  end
+
+  if cmd:match("^%%?s/") then
+    Hypr.send("CTRL", "h")
+    return
+  end
+
+  local shell_cmd = cmd:match("^!(.+)$")
+  if shell_cmd then
+    _G._hv_shell_done = function()
+      _G._hv_shell_done = nil
+      restore_submap()
+    end
+    Hypr.cmd_then_dispatch(
+      Config.term_cmd("hyprvim-shell") .. " bash -c " .. sq(
+        "_hv_tmp=$(mktemp); " .. shell_cmd .. " 2>&1 | tee \"$_hv_tmp\";"
+        .. " [ -s \"$_hv_tmp\" ] && { echo; read -rsn1 -p '[done] press any key...'; };"
+        .. " rm -f \"$_hv_tmp\""
+      ),
+      "_hv_shell_done()"
+    )()
+    return true
   end
 end
 

@@ -63,14 +63,14 @@ function Hyprland.set_opacity(value) hl.dispatch(hl.dsp.window.set_prop("alpha",
 
 --- @param delta integer +1 or -1
 function Hyprland.workspace_rel(delta)
-  hl.dispatch(hl.dsp.workspace.move("e" .. (delta >= 0 and "+" or "") .. tostring(delta)))
+  hl.dispatch(hl.dsp.focus({ workspace = "e" .. (delta >= 0 and "+" or "") .. tostring(delta) }))
 end
 
 --- @param n integer workspace number
-function Hyprland.focus_workspace(n) hl.dispatch(hl.dsp.workspace.move(tostring(n))) end
+function Hyprland.focus_workspace(n) hl.dispatch(hl.dsp.focus({ workspace = n })) end
 
 --- @param n integer workspace number
-function Hyprland.move_to_workspace(n) hl.dispatch(hl.dsp.window.move(tostring(n))) end
+function Hyprland.move_to_workspace(n) hl.dispatch(hl.dsp.window.move({ workspace = n })) end
 
 ---@type table<string, integer>
 local NOTIFY_ICONS = {
