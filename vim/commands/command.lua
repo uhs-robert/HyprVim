@@ -103,22 +103,46 @@ local aliases = {
   tn = "tabn",  tp = "tabp",
   r  = "reload", edit = "e", t = "term", terminal = "term",
   poweroff = "shutdown", pick = "picker", hyprpicker = "picker",
-  h = "help"
+  h = "help", close = "q", kill = "q!"
 }
 for alias, canonical in pairs(aliases) do commands[alias] = commands[canonical] end
 
 local COMPLETIONS = {}
 for k in pairs(commands) do COMPLETIONS[#COMPLETIONS + 1] = k end
+for _, name in ipairs({ "resize", "vresize", "size", "move", "tab", "opacity", "gaps", "ws" }) do
+  COMPLETIONS[#COMPLETIONS + 1] = name
+end
 
 ---Pattern-match table for parameterised commands (`:ws N`, `:move N`, `:opacity V`, `s/`).
----Each entry is `{ pattern, handler }` where handler receives the first capture (or `""` when there is none).
----@type { [1]: string, [2]: fun(cap: string): true|nil }[]
+---Each entry is `{ pattern, handler }` where handler receives all pattern captures.
+---@type { [1]: string, [2]: fun(...: string): true|nil }[]
 local patterns = {
   { "^ws%s*(%d+)$",        function(n) Hypr.focus_workspace(tonumber(n) or 0) end },
+  { "^tab%s*(%d+)$",       function(n) Hypr.focus_workspace(tonumber(n) or 0) end },
   { "^move%s*(%d+)$",      function(n) Hypr.move_to_workspace(tonumber(n) or 0) end },
+  { "^move%s+([+-]?%d+)%s+([+-]?%d+)$", function(x, y)
+      hl.dispatch(hl.dsp.exec_cmd(
+        "hyprctl dispatch movewindowpixel exact " .. x .. " " .. y .. ",active"
+      ))
+    end },
+  { "^resize%s*([+-]?%d+)$", function(n)
+      hl.dispatch(hl.dsp.window.resize({ x = -(tonumber(n) or 0), y = 0, relative = true }))
+    end },
+  { "^vresize%s*([+-]?%d+)$", function(n)
+      hl.dispatch(hl.dsp.window.resize({ x = 0, y = -(tonumber(n) or 0), relative = true }))
+    end },
+  { "^size%s+(%d+)%s+(%d+)$", function(w, h)
+      hl.dispatch(hl.dsp.exec_cmd(
+        "hyprctl dispatch resizewindowpixel exact " .. w .. " " .. h .. ",active"
+      ))
+    end },
   { "^opacity%s+([%d%.]+)$", function(v)
       v = tonumber(v)
       if v and v >= 0 and v <= 1 then Hypr.set_opacity(v) end
+    end },
+  { "^gaps%s+([%d%.]+)$", function(n)
+      n = tonumber(n)
+      if n then hl.config({ general = { gaps_in = n, gaps_out = n } }) end
     end },
   { "^%%?s/",              function() Hypr.send("CTRL", "h") end },
   { "^!(.+)$",            function(shell_cmd)
@@ -147,8 +171,8 @@ local function execute(cmd)
   local fn = commands[cmd]
   if fn then return fn() end
   for _, p in ipairs(patterns) do
-    local cap = cmd:match(p[1])
-    if cap ~= nil then return p[2](cap) end
+    local caps = { cmd:match(p[1]) }
+    if caps[1] ~= nil then return p[2](table.unpack(caps)) end
   end
 end
 
