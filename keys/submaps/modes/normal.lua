@@ -35,10 +35,10 @@ local function insert_at_cursor() Submap.enter("INSERT") end
 local function insert_after()     Submap.enter("INSERT") send("", "RIGHT") end
 local function insert_eol()       Submap.enter("INSERT") send("", "END") end
 local function insert_bol()       Submap.enter("INSERT") send("", "HOME") end
-local function open_below()       send("", "END") send("", "Return") Submap.enter("INSERT") end
-local function open_above()       send("", "HOME") send("", "Return") send("", "Up") Submap.enter("INSERT") end
-local function open_below_se()    send("", "END") send("SHIFT", "Return") Submap.enter("INSERT") end
-local function open_above_se()    send("", "HOME") send("SHIFT", "Return") send("", "Up") Submap.enter("INSERT") end
+local function open_below()    Hypr.send_batch({ { "", "END" }, { "", "Return" } }, nil, function() Submap.enter("INSERT") end) end
+local function open_above()    Hypr.send_batch({ { "", "HOME" }, { "", "Return" }, { "", "Up" } }, nil, function() Submap.enter("INSERT") end) end
+local function open_below_se() Hypr.send_batch({ { "", "END" }, { "SHIFT", "Return" } }, nil, function() Submap.enter("INSERT") end) end
+local function open_above_se() Hypr.send_batch({ { "", "HOME" }, { "SHIFT", "Return" }, { "", "Up" } }, nil, function() Submap.enter("INSERT") end) end
 
 -- ── Change / delete / paste / indent ─────────────────────────────────────────
 local function change_eol()    vim.count.clear() vim.motion.send_raw({ "SHIFT", "End" }, 1) vim.registers.handle_delete("CTRL", "x", "INSERT") end

@@ -17,6 +17,26 @@ function Hyprland.send_all(shortcuts)
   end
 end
 
+--- Send shortcuts sequentially via chained hyprctl eval + sleep (avoids double-send from hl.timer).
+--- @param shortcuts {[1]: string, [2]: string, [3]?: string}[]
+--- @param delay_ms  integer|nil  ms between each key (default 50)
+--- @param cb        fun()|nil    called ~delay_ms after last key fires
+function Hyprland.send_batch(shortcuts, delay_ms, cb)
+  local delay = (delay_ms or 20) / 1000
+  local parts = {}
+  for _, s in ipairs(shortcuts) do
+    parts[#parts + 1] = string.format(
+      "hyprctl dispatch 'hl.dsp.send_shortcut({mods=[[%s]],key=[[%s]],window=[[%s]]})'",
+      s[1] or "",
+      s[2],
+      s[3] or "activewindow"
+    )
+  end
+  local cmd = table.concat(parts, string.format(" && sleep %.3f && ", delay))
+  hl.dispatch(hl.dsp.exec_cmd(cmd))
+  if cb then hl.timer(cb, { timeout = (delay_ms or 50) * #shortcuts, type = "oneshot" }) end
+end
+
 --- @param name string submap name
 function Hyprland.switch_mode(name) Submap.enter(name) end
 
