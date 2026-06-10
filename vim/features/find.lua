@@ -126,7 +126,7 @@ local function do_find(term, direction, term_type, is_till)
       hl.timer(function()
         Hypr.send("", "Return")
         Hypr.normal()
-      end, { timeout = 50, type = "oneshot" })
+      end, { timeout = 100, type = "oneshot" })
     end, { timeout = 50, type = "oneshot" })
   end, { timeout = 150, type = "oneshot" })
 end
