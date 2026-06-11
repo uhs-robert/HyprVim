@@ -87,7 +87,7 @@ function Registers.load(name)
     return
   end
   if name == "*" then
-    Clipboard.read_primary_async(50, function(content)
+    Clipboard.read_primary_async(150, function(content)
       if content ~= "" then Clipboard.write(content) end
     end)
     return
