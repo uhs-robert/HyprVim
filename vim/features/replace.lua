@@ -1,5 +1,5 @@
 -- vim/features/replace.lua
--- r (replace count chars) and R (replace with string) commands.
+-- r (replace count chars, via R-CHAR submap) and R (replace with string) commands.
 
 local VimCount = require("vim.lib.count") ---@class VimCount
 local Hypr = require("hypr") ---@class HyprVimHyprland
@@ -45,20 +45,13 @@ local function replace_script(text, n)
   return "sleep 0.1; " .. select .. "wtype -- " .. sq(text)
 end
 
----`r`: prompt for a single character and overwrite the next [count] characters with it.
-function Replace.character()
+---`r` (called from the R-CHAR submap): overwrite the next [count] characters with `char`.
+---Suspends vim binds so the injected keys are not intercepted, then returns to NORMAL.
+---@param char string  literal replacement character
+function Replace.character(char)
   local n = VimCount.get()
-  Hypr.exit_vim()
-  hl.timer(function()
-    Prompt.async("Replace char: ", { wm_class = "hyprvim-replace" }, function(char)
-      if not char then
-        Hypr.normal()
-        return
-      end
-      char = char:sub(1, 1)
-      Hypr.cmd_then_dispatch(replace_script(string.rep(char, n), n), 'hl.dsp.submap("NORMAL")')()
-    end)
-  end, { timeout = 100, type = "oneshot" })
+  Hypr.suspend_vim()
+  Hypr.cmd_then_dispatch(replace_script(string.rep(char, n), n), 'hl.dsp.submap("NORMAL")')()
 end
 
 ---`R`: prompt for a replacement string and overwrite the next `#string` characters with it.

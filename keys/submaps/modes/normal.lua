@@ -66,7 +66,7 @@ Submap.define({
     if ctx.from == "reset" then require("lib.clipboard").save_pre_vim() end
   end,
   on_exit = function(ctx)
-    local keep = { GOTO = true, CHANGE = true, YANK = true, DELETE = true }
+    local keep = { GOTO = true, CHANGE = true, YANK = true, DELETE = true, ["R-CHAR"] = true }
     if not keep[ctx.to] then vim.count.clear() end
   end,
   binds = function()
@@ -137,7 +137,7 @@ Submap.define({
       { "COMMA",         cc(vim.find.prev_char),       "Reverse find (,)"         },
 
       -- Commands
-      { "R",                 vim.replace.character,  "Replace Char"     },
+      { "R",                 Submap.switch("R-CHAR"), "+Replace Char"   },
       { "SHIFT + R",         vim.replace.string,     "Replace Forward"  },
       { "SHIFT + SEMICOLON", cc(vim.command.prompt), "Command mode (:)" },
 
