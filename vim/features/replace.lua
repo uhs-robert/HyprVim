@@ -4,7 +4,7 @@
 local VimCount = require("vim.lib.count") ---@class VimCount
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
-local Prompt = require("lib.prompt")
+local Prompt = require("lib.prompt") ---@class Prompt
 
 --- @class ReplaceModule
 local Replace = {}
@@ -29,10 +29,12 @@ local function replace_script(text, n)
   if (Config.applications or {}).input_method == "paste" and n > 1 then
     local tmp = os.tmpname()
     local f = io.open(tmp, "w")
-    if f then
-      f:write(text)
-      f:close()
+    if not f then
+      Hypr.notify("replace: failed to open tmp file " .. tmp, "error", 3000)
+      return ""
     end
+    f:write(text)
+    f:close()
     return string.format(
       "sleep 0.1; %swl-copy -n < %s; sleep 0.2; wtype -M ctrl -k v -m ctrl; sleep 0.3; rm %s",
       select,
