@@ -64,19 +64,6 @@ local function state_write(t)
   end
 end
 
----@param key     string
----@param default string|nil
----@return string
-local function state_get(key, default) return state_read()[key] or default or "" end
-
----@param key   string
----@param value string|boolean
-local function state_set(key, value)
-  local t = state_read()
-  t[key] = tostring(value)
-  state_write(t)
-end
-
 ---Open the app's find bar (Ctrl+F), paste `term`, and commit the search.
 ---Persists all state so `n`/`N`/`;`/`,` can repeat or reverse later.
 ---@param term      string   search string
@@ -84,12 +71,14 @@ end
 ---@param term_type string   state key: `"char_term"` or `"find_term"`
 ---@param is_till   boolean  true when called from `t`/`T` (cursor stops before match)
 local function do_find(term, direction, term_type, is_till)
-  state_set("active", "true")
-  state_set("direction", direction)
-  state_set(term_type, term)
-  state_set("last_action_direction", direction)
-  state_set("last_action_term_type", term_type)
-  state_set("till", is_till and "true" or "false")
+  local t = state_read()
+  t.active = "true"
+  t.direction = direction
+  t[term_type] = term
+  t.last_action_direction = direction
+  t.last_action_term_type = term_type
+  t.till = is_till and "true" or "false"
+  state_write(t)
 
   Clipboard.write(term)
   hl.timer(function()
@@ -131,9 +120,10 @@ end
 ---@param term_type string   `"char_term"` or `"find_term"`
 ---@param flip      boolean  true to reverse direction (i.e. `N` vs `n`)
 local function repeat_find(term_type, flip)
-  local active = state_get("active", "false")
-  local direction = state_get("direction", "forward")
-  local term = state_get(term_type, "")
+  local t = state_read()
+  local active = t.active or "false"
+  local direction = t.direction or "forward"
+  local term = t[term_type] or ""
 
   if active == "true" then
     local use_shift = (direction == "backward")
