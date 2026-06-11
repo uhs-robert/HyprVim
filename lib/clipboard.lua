@@ -12,13 +12,14 @@ local function pre_vim_path() return require("config").state_dir .. "/clipboard_
 -- Time for a spawned wl-paste to finish writing its tmpfile.
 local SETTLE_MS = 50
 
----Read the clipboard after delay_ms (gives the app time to set it first).
+---Read a selection after delay_ms (gives the app time to set it first).
+---@param flag ""|"--primary "  wl-paste selection flag
 ---@param delay_ms integer
----@param cb fun(content: string)  receives clipboard text ("" if empty)
-function Clipboard.read_async(delay_ms, cb)
+---@param cb fun(content: string)  receives selection text ("" if empty)
+local function read_selection(flag, delay_ms, cb)
   local path = os.tmpname()
   hl.timer(function()
-    Hypr.exec("wl-paste --no-newline 2>/dev/null >'" .. path .. "' || true")
+    Hypr.exec("wl-paste " .. flag .. "--no-newline 2>/dev/null >'" .. path .. "' || true")
     hl.timer(function()
       local f = io.open(path, "r")
       local content = f and (f:read("*a") or "") or ""
@@ -29,46 +30,36 @@ function Clipboard.read_async(delay_ms, cb)
   end, { timeout = delay_ms, type = "oneshot" })
 end
 
----Write text to the clipboard. Writes to a tmpfile via io.open (no Wayland call), then
+---Write text to a selection. Writes to a tmpfile via io.open (no Wayland call), then
 ---dispatches wl-copy via Hypr.exec so the compositor thread is never blocked.
+---@param flag string  wl-copy flags ("", "--primary " or "--type text/plain ")
 ---@param text string
-function Clipboard.write(text)
+local function write_selection(flag, text)
   local path = os.tmpname()
   local f = io.open(path, "w")
   if not f then return end
   f:write(text)
   f:close()
-  local flag = (#text == 1) and "--type text/plain " or ""
   Hypr.exec("wl-copy " .. flag .. "<'" .. path .. "' && rm -f '" .. path .. "'")
 end
 
----Read the primary selection after delay_ms (same flow as read_async).
+---Read the clipboard after delay_ms.
 ---@param delay_ms integer
 ---@param cb fun(content: string)
-function Clipboard.read_primary_async(delay_ms, cb)
-  local path = os.tmpname()
-  hl.timer(function()
-    Hypr.exec("wl-paste --primary --no-newline 2>/dev/null >'" .. path .. "' || true")
-    hl.timer(function()
-      local f = io.open(path, "r")
-      local content = f and (f:read("*a") or "") or ""
-      if f then f:close() end
-      os.remove(path)
-      cb(content)
-    end, { timeout = SETTLE_MS, type = "oneshot" })
-  end, { timeout = delay_ms, type = "oneshot" })
-end
+function Clipboard.read_async(delay_ms, cb) read_selection("", delay_ms, cb) end
+
+---Read the primary selection after delay_ms.
+---@param delay_ms integer
+---@param cb fun(content: string)
+function Clipboard.read_primary_async(delay_ms, cb) read_selection("--primary ", delay_ms, cb) end
+
+---Write text to the clipboard.
+---@param text string
+function Clipboard.write(text) write_selection((#text == 1) and "--type text/plain " or "", text) end
 
 ---Write text to the Wayland primary selection.
 ---@param text string
-function Clipboard.write_primary(text)
-  local path = os.tmpname()
-  local f = io.open(path, "w")
-  if not f then return end
-  f:write(text)
-  f:close()
-  Hypr.exec("wl-copy --primary <'" .. path .. "' && rm -f '" .. path .. "'")
-end
+function Clipboard.write_primary(text) write_selection("--primary ", text) end
 
 ---Save the current clipboard so it can be restored when vim mode exits.
 ---Called once when entering NORMAL from the reset (non-vim) state.
