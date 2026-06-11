@@ -41,6 +41,7 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
     for _, row in ipairs(footer) do
       table.insert(rows, row)
     end
+    return rows
   end
 
   Submap.define({
