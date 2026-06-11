@@ -177,10 +177,11 @@ function Registers.handle_delete(return_mode)
     -- Black hole: capture clipboard before delete, delete, restore clipboard.
     Clipboard.read_async(50, function(backup)
       Hypr.send("CTRL", "x")
+      -- 200ms (matching the read delay below) so the cut lands before the restore.
       hl.timer(function()
         Clipboard.write(backup)
         Hypr.switch_mode(return_mode)
-      end, { timeout = 50, type = "oneshot" })
+      end, { timeout = 200, type = "oneshot" })
     end)
     return
   end
