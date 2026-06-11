@@ -7,6 +7,7 @@ local motion = vim.motion
 local count = vim.count
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
+local Hypr = require("hypr") ---@class HyprVimHyprland
 local config = require("config") ---@class HyprVimConfigModule
 
 local LEADER = config.keys.leader or "SUPER"
@@ -17,8 +18,8 @@ local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, k
 
 local footer = {
   { "SPACE", wk.toggle },
-  { LEADER .. " + " .. ACT, Submap.reset },
-  { LEADER .. " + " .. EXIT, Submap.reset },
+  { LEADER .. " + " .. ACT, Hypr.exit_vim },
+  { LEADER .. " + " .. EXIT, Hypr.exit_vim },
 }
 
 --- Build and register the I/A/G sub-submaps for one operator.

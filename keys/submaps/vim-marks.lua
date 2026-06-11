@@ -5,9 +5,11 @@ local Submap = require("lib.submap") ---@class HyprVimSubmap
 local vim = require("vim") ---@class Vim
 local marks = vim.marks
 local wk = require("whichkey") ---@class WhichKey
+local Hypr = require("hypr") ---@class HyprVimHyprland
 local config = require("config") ---@class HyprVimConfigModule
 local LEADER = (config.keys or {}).leader or "SUPER"
 local ACT = (config.keys or {}).activate or "ESCAPE"
+local EXIT = (config.keys or {}).exit or "ESCAPE"
 
 local lowercase = "abcdefghijklmnopqrstuvwxyz"
 local uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -23,7 +25,8 @@ local function static_rows(name)
     table.insert(rows, { "BackSpace", function() marks.dispatch_after() end })
   end
   table.insert(rows, { "SPACE", wk.toggle })
-  table.insert(rows, { LEADER .. " + " .. ACT, Submap.reset })
+  table.insert(rows, { LEADER .. " + " .. ACT, Hypr.exit_vim })
+  table.insert(rows, { LEADER .. " + " .. EXIT, Hypr.exit_vim })
   return rows
 end
 

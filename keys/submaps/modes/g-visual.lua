@@ -3,6 +3,7 @@
 local Submap = require("lib.submap") ---@class HyprVimSubmap
 local vim = require("vim") ---@class Vim
 local wk = require("whichkey") ---@class WhichKey
+local Hypr = require("hypr") ---@class HyprVimHyprland
 local config = require("config") ---@class HyprVimConfigModule
 local LEADER = config.keys.leader or "SUPER"
 local ACT = config.keys.activate or "ESCAPE"
@@ -27,8 +28,8 @@ Submap.define({
     { "n",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, after_submap = "NORMAL" }) end,                     "Edit in Vim (Normal)" },
     { "i",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
     { "SPACE",     wk.toggle },
-    { LEADER .. " + " .. ACT, Submap.reset },
-    { LEADER .. " + " .. EXIT, Submap.reset },
+    { LEADER .. " + " .. ACT, Hypr.exit_vim },
+    { LEADER .. " + " .. EXIT, Hypr.exit_vim },
     -- stylua: ignore end
   },
 }).setup()

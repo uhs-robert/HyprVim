@@ -9,6 +9,7 @@ local lm = vim.line_motion
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
 local oe = vim.editor
+local Hypr = require("hypr") ---@class HyprVimHyprland
 local config = require("config") ---@class HyprVimConfigModule
 
 local LEADER = config.keys.leader or "SUPER"
@@ -23,8 +24,8 @@ local function vline() hl.dispatch(hl.dsp.submap("V-LINE")) end
 
 local footer = {
   { "SPACE", wk.toggle },
-  { LEADER .. " + " .. ACT, reset, { release = true } },
-  { LEADER .. " + " .. EXIT, reset, { release = true } },
+  { LEADER .. " + " .. ACT, Hypr.exit_vim, { release = true } },
+  { LEADER .. " + " .. EXIT, Hypr.exit_vim, { release = true } },
 }
 
 -- ---------------------------------------------------------------------------
@@ -115,9 +116,6 @@ Submap.define({
     { "SHIFT + g", function() lm.goto_end()   vline() end, "Last line"  },
     { "n",         function() count.clear() reset() oe.open({ copy_selected = true, after_submap = "NORMAL" }) end,                    "Edit in Vim (Normal)" },
     { "i",         function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
-    { "SPACE",                 wk.toggle },
-    { LEADER .. " + " .. ACT, reset },
-    { LEADER .. " + " .. EXIT, reset },
       -- stylua: ignore end
     }
     for _, row in ipairs(footer) do

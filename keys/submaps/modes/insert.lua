@@ -1,6 +1,7 @@
 -- keys/submaps/modes/insert.lua
 
 local Submap = require("lib.submap") ---@class HyprVimSubmap
+local Hypr = require("hypr") ---@class HyprVimHyprland
 local config = require("config") ---@class HyprVimConfigModule
 
 local LEADER = config.keys.leader or "SUPER"
@@ -12,7 +13,7 @@ Submap.define({
   escape = "NORMAL",
   back = false,
   binds = {
-    { LEADER .. " + " .. ACT, Submap.reset },
-    { LEADER .. " + " .. EXIT, Submap.reset },
+    { LEADER .. " + " .. ACT, Hypr.exit_vim },
+    { LEADER .. " + " .. EXIT, Hypr.exit_vim },
   },
 }).setup()

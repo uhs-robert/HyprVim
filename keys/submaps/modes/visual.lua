@@ -8,6 +8,7 @@ local count = vim.count
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
 local oe = vim.editor
+local Hypr = require("hypr") ---@class HyprVimHyprland
 local config = require("config") ---@class HyprVimConfigModule
 local LEADER = config.keys.leader or "SUPER"
 local ACT = config.keys.activate or "ESCAPE"
@@ -53,8 +54,8 @@ local function passthrough(key) return function() send("CTRL", key) normal() end
 
 local footer = {
   { "SPACE", wk.toggle },
-  { LEADER .. " + " .. ACT, reset, { release = true } },
-  { LEADER .. " + " .. EXIT, reset, { release = true } },
+  { LEADER .. " + " .. ACT, Hypr.exit_vim, { release = true } },
+  { LEADER .. " + " .. EXIT, Hypr.exit_vim, { release = true } },
 }
 
 -- ---------------------------------------------------------------------------

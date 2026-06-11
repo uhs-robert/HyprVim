@@ -2,6 +2,7 @@
 -- R-CHAR submap: delete char under cursor, pass the key, return to NORMAL
 
 local Submap = require("lib.submap") ---@class HyprVimSubmap
+local Hypr = require("hypr") ---@class HyprVimHyprland
 local config = require("config") ---@class HyprVimConfigModule
 local LEADER = config.keys.leader or "SUPER"
 local ACT = config.keys.activate or "ESCAPE"
@@ -20,8 +21,8 @@ Submap.define({
   catchall = "stay",
   binds = function()
     local rows = {
-      { LEADER .. " + " .. ACT, Submap.reset },
-      { LEADER .. " + " .. EXIT, Submap.reset },
+      { LEADER .. " + " .. ACT, Hypr.exit_vim },
+      { LEADER .. " + " .. EXIT, Hypr.exit_vim },
     }
 
     local letters = "abcdefghijklmnopqrstuvwxyz"
