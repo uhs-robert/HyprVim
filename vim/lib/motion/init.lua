@@ -43,7 +43,7 @@ end
 ---Terminals receive the raw key so the inner editor handles it natively.
 ---GUI apps receive the mapped shortcut from NORMAL shortcuts.
 ---@param key  string  vim motion key, e.g. `"j"`, `"w"`, `"gg"`, `"{"`
----@param opts { count?: integer, force_gui?: boolean, shortcut?: {[1]:string,[2]:string}, after?: fun() }|nil
+---@param opts { count?: integer, force_gui?: boolean, shortcut?: {[1]:string,[2]:string} }|nil
 function VimMotion.send(key, opts)
   opts = opts or {}
   local n = opts.count or VimCount.get()
@@ -63,13 +63,11 @@ function VimMotion.send(key, opts)
     ---@cast shortcut {[1]:string,[2]:string}[]
     for _ = 1, n do
       Hypr.send_all(shortcut)
-      if opts.after then opts.after() end
     end
   else
     ---@cast shortcut {[1]:string,[2]:string}
     for _ = 1, n do
       Hypr.send(shortcut[1], shortcut[2])
-      if opts.after then opts.after() end
     end
   end
 end
