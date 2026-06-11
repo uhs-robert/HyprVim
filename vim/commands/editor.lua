@@ -14,7 +14,7 @@ local _dir = debug.getinfo(1, "S").source:sub(2):match("(.*/)") or "./"
 local SCRIPT = _dir .. "../../scripts/vim-open-editor"
 
 ---@class EditorOpenOpts
----@field copy_sel    boolean|nil  copy the active selection into the scratch file before opening
+---@field copy_selected boolean|nil  copy the active selection into the scratch file before opening
 ---@field insert_mode boolean|nil  start the editor in INSERT mode
 ---@field ext         string|nil   file extension for syntax highlighting (e.g. "md", "py")
 ---@field after_submap string|nil  if set, dispatch to this submap once the editor exits
@@ -24,7 +24,7 @@ local SCRIPT = _dir .. "../../scripts/vim-open-editor"
 ---@param opts EditorOpenOpts|nil
 function Editor.open(opts)
   opts = opts or {}
-  local copy_sel = opts.copy_sel ~= false
+  local copy_selected = opts.copy_selected ~= false
   local ext = opts.ext or "md"
   -- stylua: ignore
   local args = { SCRIPT,
@@ -33,7 +33,7 @@ function Editor.open(opts)
     "--ext",    ext,
   }
   if Window.is_terminal() then args[#args + 1] = "--terminal" end
-  if copy_sel then args[#args + 1] = "--copy-selected" end
+  if copy_selected then args[#args + 1] = "--copy-selected" end
   if opts.insert_mode then args[#args + 1] = "--insert-mode" end
   local cmd = table.concat(args, " ")
   if opts.after_submap then
