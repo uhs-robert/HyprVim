@@ -16,7 +16,6 @@ local EXIT = config.keys.exit or "ESCAPE"
 local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key })) end
 
 local normal = Submap.switch("NORMAL")
-local visual = Submap.switch("VISUAL")
 local reset = Submap.reset
 local va = motion.action_visual
 local vm = motion.action

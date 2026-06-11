@@ -21,6 +21,12 @@ local function visual() hl.dispatch(hl.dsp.submap("VISUAL")) end
 local function reset() hl.dispatch(hl.dsp.submap("reset")) end
 local function vline() hl.dispatch(hl.dsp.submap("V-LINE")) end
 
+local footer = {
+  { "SPACE", wk.toggle },
+  { LEADER .. " + " .. ACT, reset, { release = true } },
+  { LEADER .. " + " .. EXIT, reset, { release = true } },
+}
+
 -- ---------------------------------------------------------------------------
 -- V-LINE
 -- ---------------------------------------------------------------------------
@@ -78,13 +84,13 @@ Submap.define({
       -- G-VLINE
       { "g",         function() hl.dispatch(hl.dsp.submap("G-VLINE")) end, "+Go Line" },
       { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("G-VLINE")) end },
-      -- Footer
-      { "SPACE",                 wk.toggle },
-      { LEADER .. " + " .. ACT, function() lm.reset() reset() end },
       -- stylua: ignore end
     }
     for i = 0, 9 do
       table.insert(rows, { tostring(i), function() count.append(tostring(i)) end })
+    end
+    for _, row in ipairs(footer) do
+      table.insert(rows, row)
     end
     return rows
   end,
@@ -102,7 +108,8 @@ Submap.define({
     visual()
   end,
   catchall = "stay",
-  binds = {
+  binds = function()
+    local rows = {
     -- stylua: ignore start
     { "g",         function() lm.goto_start() vline() end, "First line" },
     { "SHIFT + g", function() lm.goto_end()   vline() end, "Last line"  },
@@ -111,6 +118,11 @@ Submap.define({
     { "SPACE",                 wk.toggle },
     { LEADER .. " + " .. ACT, reset },
     { LEADER .. " + " .. EXIT, reset },
-    -- stylua: ignore end
-  },
+      -- stylua: ignore end
+    }
+    for _, row in ipairs(footer) do
+      table.insert(rows, row)
+    end
+    return rows
+  end,
 }).setup()
