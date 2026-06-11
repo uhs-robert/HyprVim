@@ -138,7 +138,6 @@ local function repeat_find(term_type, flip)
   if active == "true" then
     local use_shift = (direction == "backward")
     if flip then use_shift = not use_shift end
-    Hypr.suspend_vim()
     hl.timer(function()
       Hypr.send(use_shift and "SHIFT" or "", "F3")
       Hypr.normal()
@@ -150,7 +149,6 @@ local function repeat_find(term_type, flip)
     end
     local new_dir = direction
     if flip then new_dir = (direction == "forward") and "backward" or "forward" end
-    Hypr.suspend_vim()
     hl.timer(function() do_find(term, new_dir, term_type, false) end, { timeout = 20, type = "oneshot" })
   end
 end
@@ -159,7 +157,6 @@ end
 ---Implements `*` (forward) and `#` (backward).
 ---@param direction string  `"forward"` or `"backward"`
 local function word_under_cursor(direction)
-  Hypr.suspend_vim()
   hl.timer(function()
     Hypr.send_all({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
     hl.timer(function()
