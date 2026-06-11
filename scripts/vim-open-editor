@@ -30,7 +30,6 @@ local TERM_FLAGS = {
 --- @field ext string|nil File extension for the scratch file (e.g. "md")
 --- @field terminal string Terminal emulator binary name
 --- @field editor string Editor binary name ("vim" or "nvim")
---- @field menu string Prompt tool name (rofi, wofi, tofi, ...)
 --- @field tmpdir string Directory for scratch files
 
 --- @type Cfg
@@ -41,7 +40,6 @@ local cfg = {
   ext = nil,
   terminal = os.getenv("TERMINAL") or "",
   editor = os.getenv("EDITOR") or "nvim",
-  menu = "",
   tmpdir = (os.getenv("XDG_CACHE_HOME") or (os.getenv("HOME") .. "/.cache")) .. "/hyprvim/open-vim",
 }
 
@@ -94,7 +92,6 @@ local function show_help()
   print_br("-i, --insert-mode\n  Start the editor in INSERT mode at end-of-content.")
   print_br("-t, --term <terminal>\n  Terminal emulator to use (uses $TERMINAL if not specified).")
   print_br("-E, --editor <editor>\n  Editor to launch (vim or nvim).")
-  print_br("-m, --menu <tool>\n  Prompt tool for dialogs (rofi, wofi, tofi, fuzzel, dmenu, zenity, kdialog).")
   print_br("-T, --terminal\n  Hint that the focused window is a terminal (uses Ctrl+Shift+C to copy).")
   os.exit(0)
 end
@@ -124,10 +121,6 @@ local function parse_args()
       i = i + 1
       if not arg[i] or arg[i]:sub(1, 1) == "-" then die(a .. " requires a value") end
       cfg.editor = arg[i]
-    elseif a == "--menu" or a == "-m" then
-      i = i + 1
-      if not arg[i] or arg[i]:sub(1, 1) == "-" then die(a .. " requires a value") end
-      cfg.menu = arg[i]
     else
       io.stderr:write("Unknown argument: " .. a .. "\n")
       show_help()
@@ -145,20 +138,6 @@ local function kill_existing()
   print("An existing instance was found and terminated.")
   run("hyprctl dispatch closewindow class:" .. TERM_CLASS)
   os.exit(1)
-end
-
---- Populate `cfg.menu` by auto-detecting an available prompt tool.
---- Checks in preference order: rofi, wofi, tofi, fuzzel, dmenu, zenity, kdialog.
-local function detect_menu()
-  if cfg.menu ~= "" then return end
-  local tools = { "rofi", "wofi", "tofi", "fuzzel", "dmenu", "zenity", "kdialog" }
-  for _, t in ipairs(tools) do
-    if cmd_exists(t) then
-      cfg.menu = t
-      return
-    end
-  end
-  die("No prompt tool found. Install one of: " .. table.concat(tools, ", "))
 end
 
 --- Verify that all required external commands are installed: editor, wtype, wl-paste, wl-copy.
@@ -287,7 +266,6 @@ end
 local function main()
   parse_args()
   kill_existing()
-  detect_menu()
   check_deps()
 
   local tmpfile = create_tmpfile()

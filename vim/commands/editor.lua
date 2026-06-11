@@ -32,10 +32,6 @@ function Editor.open(opts)
     "--editor", Config.applications.editor,
     "--ext",    ext,
   }
-  if Config.applications.menu and Config.applications.menu ~= "" then
-    args[#args + 1] = "--menu"
-    args[#args + 1] = Config.applications.menu
-  end
   if Window.is_terminal() then args[#args + 1] = "--terminal" end
   if copy_sel then args[#args + 1] = "--copy-selected" end
   if opts.insert_mode then args[#args + 1] = "--insert-mode" end
