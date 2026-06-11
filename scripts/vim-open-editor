@@ -4,24 +4,6 @@
 
 local TERM_CLASS = "hyprvim-open-vim"
 
---- Per-terminal flags for setting the window class and launching a command.
---- @class TermFlags
---- @field class string  Flag to set the window class/app-id (e.g. "--class", "--app-id")
---- @field exec  string  Flag to execute a command inside the terminal (e.g. "-e", "--")
---- @field pre?  string  Extra word inserted before the class flag (e.g. "start" for wezterm)
-
--- stylua: ignore
---- @type table<string, TermFlags>
-local TERM_FLAGS = {
-  kitty      = { class = "--class",   exec = "-e" },
-  ghostty    = { class = "--class",   exec = "-e" },
-  alacritty  = { class = "--class",   exec = "-e" },
-  wezterm    = { class = "--class",   exec = "--",  pre = "start" },
-  foot       = { class = "--app-id",  exec = "-e" },
-  footclient = { class = "--app-id",  exec = "-e" },
-  xterm      = { class = "-class",    exec = "-e" },
-}
-
 --- Runtime configuration populated by CLI argument parsing.
 --- @class Cfg
 --- @field copy_sel boolean Pre-fill the scratch file with the current selection
@@ -216,16 +198,18 @@ local function copy_selected(tmpfile)
 end
 
 --- Build the terminal launch prefix for the configured terminal.
---- Looks up flag conventions in TERM_FLAGS; falls back to "--class ... -e".
 --- @return string  e.g. "kitty --class hyprvim-open-vim -e"
 local function build_term_cmd()
   if cfg.terminal == "" then die("No terminal specified. Set $TERMINAL or use --term") end
-  local flags = TERM_FLAGS[cfg.terminal] or { class = "--class", exec = "-e" }
-  local parts = { cfg.terminal }
-  if flags.pre then parts[#parts + 1] = flags.pre end
-  parts[#parts + 1] = flags.class .. " " .. TERM_CLASS
-  parts[#parts + 1] = flags.exec
-  return table.concat(parts, " ")
+  local script_path = pread("readlink -f " .. sq(arg[0] or ""))
+  local root = script_path:match("^(.*)/scripts/[^/]+$")
+  if root then package.path = root .. "/?.lua;" .. package.path end
+  local ok, Config = pcall(require, "config")
+  if ok then
+    Config.setup({ applications = { terminal = cfg.terminal } })
+    return Config.term_cmd(TERM_CLASS)
+  end
+  return cfg.terminal .. " --class " .. TERM_CLASS .. " -e"
 end
 
 --- Open `tmpfile` in a floating terminal editor and block until it closes.
