@@ -84,7 +84,6 @@ Submap.define({
       { "CTRL + s", function() send("CTRL", "s") end, nil, { repeating = true } },
       -- G-VLINE
       { "g",         function() hl.dispatch(hl.dsp.submap("G-VLINE")) end, "+Go Line" },
-      { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("G-VLINE")) end },
       -- stylua: ignore end
     }
     for i = 0, 9 do
