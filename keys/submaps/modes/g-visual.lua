@@ -22,7 +22,7 @@ Submap.define({
   catchall = "stay",
   binds = {
     -- stylua: ignore start
-    { "e",         function() vim.motion.send_sequence({ { "CTRL", "LEFT" }, { "", "LEFT" } }) visual() end, "Prev end of word" },
+    { "e",         function() vim.motion.send_sequence({ { "CTRL SHIFT", "LEFT" }, { "SHIFT", "LEFT" } }) visual() end, "Prev end of word" },
     { "g",         function() send("CTRL SHIFT", "HOME") visual() end, "First line" },
     { "SHIFT + g", function() send("CTRL SHIFT", "END")  visual() end, "Last line"  },
     { "n",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, after_submap = "NORMAL" }) end,                     "Edit in Vim (Normal)" },
