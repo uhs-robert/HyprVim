@@ -1,5 +1,7 @@
 local Submap = require("lib.submap") ---@class HyprVimSubmap
 
+local DEFAULT_DELAY_MS = 20
+
 --- @class HyprVimHyprland
 local Hyprland = {}
 
@@ -19,10 +21,10 @@ end
 
 --- Send shortcuts sequentially via chained hyprctl eval + sleep (avoids double-send from hl.timer).
 --- @param shortcuts {[1]: string, [2]: string, [3]?: string}[]
---- @param delay_ms  integer|nil  ms between each key (default 50)
+--- @param delay_ms  integer|nil  ms between each key (default 20)
 --- @param cb        fun()|nil    called ~delay_ms after last key fires
 function Hyprland.send_batch(shortcuts, delay_ms, cb)
-  local delay = (delay_ms or 20) / 1000
+  local delay = (delay_ms or DEFAULT_DELAY_MS) / 1000
   local parts = {}
   for _, s in ipairs(shortcuts) do
     parts[#parts + 1] = string.format(
@@ -34,7 +36,7 @@ function Hyprland.send_batch(shortcuts, delay_ms, cb)
   end
   local cmd = table.concat(parts, string.format(" && sleep %.3f && ", delay))
   hl.dispatch(hl.dsp.exec_cmd(cmd))
-  if cb then hl.timer(cb, { timeout = (delay_ms or 50) * #shortcuts, type = "oneshot" }) end
+  if cb then hl.timer(cb, { timeout = (delay_ms or DEFAULT_DELAY_MS) * #shortcuts, type = "oneshot" }) end
 end
 
 --- @param name string submap name
