@@ -24,7 +24,9 @@ local Render = {}
 
 Render.state_dir = Config.state_dir
 Render.eww_dir = Eww.dir
-Render.position = (Config.which_key and Config.which_key.position) or "bottom-right"
+Render.position = os.getenv("HYPRVIM_WHICH_KEY_POSITION")
+  or (Config.which_key and Config.which_key.position)
+  or "bottom-right"
 
 os.execute("mkdir -p '" .. Render.state_dir .. "'")
 

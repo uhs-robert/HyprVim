@@ -47,7 +47,20 @@ function WhichKey.toggle()
   local mon = hl.get_active_monitor and hl.get_active_monitor()
   local screen = (mon and mon.name) or ""
 
-  os.execute("(lua " .. sh_escape(dir .. "render.lua") .. " " .. sh_escape(target) .. " " .. sh_escape(screen) .. ") &")
+  local cfg = require("config")
+  local position = (cfg.which_key and cfg.which_key.position) or "bottom-right"
+
+  os.execute(
+    "(HYPRVIM_WHICH_KEY_POSITION="
+      .. sh_escape(position)
+      .. " lua "
+      .. sh_escape(dir .. "render.lua")
+      .. " "
+      .. sh_escape(target)
+      .. " "
+      .. sh_escape(screen)
+      .. ") &"
+  )
 end
 
 --- Cancel any pending HUD timer. Call from keybind actions that immediately exit
