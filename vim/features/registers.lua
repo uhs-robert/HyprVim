@@ -39,7 +39,8 @@ local function reg_write(name, content)
   f:close()
 end
 
--- Pending register (set before an operation, cleared after).
+---Set the pending register for the next operation (cleared after use).
+---@param name string register name
 function Registers.set_pending(name)
   local f = io.open(pending_path(), "w")
   if f then
@@ -48,6 +49,8 @@ function Registers.set_pending(name)
   end
 end
 
+---Return the pending register name, or `"` (unnamed) if none is set.
+---@return string
 function Registers.get_pending()
   local f = io.open(pending_path(), "r")
   if not f then return DEFAULT_REG end
@@ -56,6 +59,7 @@ function Registers.get_pending()
   return (s ~= "" and s) or DEFAULT_REG
 end
 
+---Clear the pending register without reading it.
 function Registers.clear_pending() os.remove(pending_path()) end
 
 ---Save content to a register. No-op for the read-only `/` register.
@@ -125,8 +129,10 @@ local function cycle_numbered()
   end
 end
 
--- Handle yank (Ctrl+C): send shortcut, then async-save to register after clipboard settles.
--- return_mode: submap to switch to after saving.
+---Handle yank: send the copy shortcut, then async-save the clipboard to the pending register.
+---@param mods string modifiers for the copy shortcut (e.g. `"CTRL"`)
+---@param key string key for the copy shortcut (e.g. `"c"`)
+---@param return_mode? string submap to switch to after saving (default `"NORMAL"`)
 function Registers.handle_yank(mods, key, return_mode)
   return_mode = return_mode or "NORMAL"
   local reg = Registers.get_pending()
@@ -158,7 +164,9 @@ function Registers.handle_yank(mods, key, return_mode)
   end)
 end
 
--- Handle delete (Ctrl+X): send shortcut, async-save to register + cycle numbered registers.
+---Handle delete: send Ctrl+X, async-save the clipboard to the pending register
+---and cycle the numbered delete history (1-9).
+---@param return_mode? string submap to switch to after saving (default `"NORMAL"`)
 function Registers.handle_delete(return_mode)
   return_mode = return_mode or "NORMAL"
   local reg = Registers.get_pending()
