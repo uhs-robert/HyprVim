@@ -213,10 +213,8 @@ function Marks.list()
     lines[#lines + 1] = string.format("%s: %s (ws:%d)", k, ttl, m.workspace or 0)
   end
   local result = (#lines > 0) and table.concat(lines, "\n") or "No marks set"
-  local notifications = Config.notifications or {}
-  if notifications.all or notifications.marks then
-    Hypr.notify(string.format("Marks (%d)\n%s", #lines, result), "info", 5000)
-  end
+  -- Explicit list request: always notify, unlike the gated set/jump toasts.
+  Hypr.notify(string.format("Marks (%d)\n%s", #lines, result), "info", 5000)
   return result
 end
 
