@@ -65,8 +65,8 @@ Submap.define({
     result[#result + 1] = { "SHIFT + APOSTROPHE", function() set('"') end, unnamed_preview  or "Unnamed register (default)" }
     result[#result + 1] = { "0",                  function() set("0") end, yank_preview and ("yank: " .. yank_preview) or "Yank register (last yank)" }
     result[#result + 1] = { "SHIFT + MINUS",      function() set("_") end, "Black hole register"                        }
-    result[#result + 1] = { "PLUS",               function() set("+") end, pre_vim_preview  or "System clipboard"       }
-    result[#result + 1] = { "ASTERISK",           function() set("*") end, "Primary selection"                          }
+    result[#result + 1] = { "SHIFT + EQUAL",      function() set("+") end, pre_vim_preview  or "System clipboard"       }
+    result[#result + 1] = { "SHIFT + 8",          function() set("*") end, "Primary selection"                          }
     result[#result + 1] = { "SLASH",              function() set("/") end, term and ("search: " .. term) or "Search register" }
     result[#result + 1] = { "SHIFT + SLASH",      wk.toggle                                                             }
     result[#result + 1] = { LEADER .. " + " .. ACT,  Submap.reset                                                       }
