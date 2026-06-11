@@ -21,10 +21,26 @@ notify_action() {
   title="$1" body="$2" label="$3" cmd="$4"
   if command -v notify-send >/dev/null 2>&1; then
     ACTION=$(notify-send -A "ok=$label" -u normal -t 0 "$title" "$body")
-    [ "$ACTION" = "ok" ] && sh -c "$cmd"
+    [ "$ACTION" = "ok" ] && { sh -c "$cmd" || notify_fail "Update failed (dirty tree or no network?)."; }
   else
     hyprctl notify 1 10000 'rgb(7FA3C9)' "$title - $body"
   fi
+}
+
+# Passive failure notification.
+notify_fail() {
+  body="$1"
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send -u critical "HyprVim" "$body"
+  else
+    hyprctl notify 3 10000 'rgb(D9534F)' "HyprVim - $body"
+  fi
+}
+
+# Remote default branch name (falls back to main).
+default_branch() {
+  b=$(git -C "$repo" symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null | cut -d/ -f2-)
+  [ -n "$b" ] && echo "$b" || echo main
 }
 
 case "$op/$channel" in
@@ -32,9 +48,17 @@ check/nightly)
   git -C "$repo" fetch -q 2>/dev/null
   LOCAL=$(git -C "$repo" rev-parse HEAD 2>/dev/null)
   REMOTE=$(git -C "$repo" rev-parse '@{u}' 2>/dev/null)
+  PULL="git -C '$repo' pull"
+  if [ -z "$REMOTE" ]; then
+    # Detached HEAD (e.g. after a stable-channel tag checkout): compare against
+    # the remote default branch and re-attach before pulling.
+    BRANCH=$(default_branch)
+    REMOTE=$(git -C "$repo" rev-parse "origin/$BRANCH" 2>/dev/null)
+    PULL="git -C '$repo' checkout '$BRANCH' && $PULL"
+  fi
   [ -n "$REMOTE" ] && [ "$LOCAL" != "$REMOTE" ] &&
     notify_action "HyprVim" "Nightly update available." "Update now" \
-      "git -C '$repo' pull && hyprctl reload"
+      "$PULL && hyprctl reload"
   ;;
 check/stable)
   LATEST=$(curl -sf "https://api.github.com/repos/$REPO_API/releases/latest" |
@@ -52,7 +76,12 @@ check/pinned)
       "git -C '$repo' checkout '$ref' && hyprctl reload"
   ;;
 apply/nightly)
-  git -C "$repo" pull && hyprctl reload
+  {
+    git -C "$repo" symbolic-ref -q HEAD >/dev/null ||
+      git -C "$repo" checkout "$(default_branch)"
+  } &&
+    git -C "$repo" pull && hyprctl reload ||
+    notify_fail "Nightly update failed (dirty tree or no network?)."
   ;;
 apply/stable)
   LATEST=$(curl -sf "https://api.github.com/repos/$REPO_API/releases/latest" |
@@ -60,9 +89,11 @@ apply/stable)
   [ -n "$LATEST" ] &&
     git -C "$repo" fetch --tags -q &&
     git -C "$repo" checkout "$LATEST" &&
-    hyprctl reload
+    hyprctl reload ||
+    notify_fail "Stable update failed (network or dirty tree?)."
   ;;
 apply/pinned)
-  git -C "$repo" checkout "$ref" && hyprctl reload
+  git -C "$repo" checkout "$ref" && hyprctl reload ||
+    notify_fail "Checkout of pinned ref $ref failed."
   ;;
 esac
