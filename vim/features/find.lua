@@ -23,11 +23,11 @@ local function state_read()
   for line in f:lines() do
     local k, raw = line:match('^%s*"([^"]+)"%s*:%s*"(.*)"')
     if k then
-      t[k] = raw:gsub('\\(.)', function(c)
+      t[k] = raw:gsub("\\(.)", function(c)
         if c == '"' then return '"' end
-        if c == '\\' then return '\\' end
-        if c == 'n' then return '\n' end
-        if c == 'r' then return '\r' end
+        if c == "\\" then return "\\" end
+        if c == "n" then return "\n" end
+        if c == "r" then return "\r" end
         return c
       end)
     else
@@ -105,19 +105,17 @@ local function do_find(term, direction, term_type, is_till)
   state_set("last_action_term_type", term_type)
   state_set("till", is_till and "true" or "false")
 
-  -- Open find bar first so clipboard_write doesn't trigger auto-paste on open.
-  Hypr.send("CTRL", "f")
+  clipboard_write(term)
   hl.timer(function()
-    clipboard_write(term)
+    Hypr.send("CTRL", "f")
     hl.timer(function()
-      Hypr.send("CTRL", "a") -- clear any existing search term
       Hypr.send("CTRL", "v")
       hl.timer(function()
         Hypr.send("", "Return")
         Hypr.normal()
       end, { timeout = 100, type = "oneshot" })
-    end, { timeout = 100, type = "oneshot" })
-  end, { timeout = 100, type = "oneshot" })
+    end, { timeout = 150, type = "oneshot" })
+  end, { timeout = 50, type = "oneshot" })
 end
 
 ---Exit vim mode, show the search prompt, then call `do_find` with the entered term.
@@ -138,7 +136,6 @@ local function prompt_and_find(term_type, direction, is_till)
         Hypr.normal()
         return
       end
-      Hypr.normal()
       hl.timer(function() do_find(term, direction, term_type, is_till) end, { timeout = 50, type = "oneshot" })
     end)
   end, { timeout = 100, type = "oneshot" })
@@ -155,7 +152,11 @@ local function repeat_find(term_type, flip)
   if active == "true" then
     local use_shift = (direction == "backward")
     if flip then use_shift = not use_shift end
-    Hypr.send(use_shift and "SHIFT" or "", "F3")
+    Hypr.suspend_vim()
+    hl.timer(function()
+      Hypr.send(use_shift and "SHIFT" or "", "F3")
+      Hypr.normal()
+    end, { timeout = 20, type = "oneshot" })
   else
     if term == "" then
       Hypr.normal()
@@ -163,7 +164,8 @@ local function repeat_find(term_type, flip)
     end
     local new_dir = direction
     if flip then new_dir = (direction == "forward") and "backward" or "forward" end
-    do_find(term, new_dir, term_type, false)
+    Hypr.suspend_vim()
+    hl.timer(function() do_find(term, new_dir, term_type, false) end, { timeout = 20, type = "oneshot" })
   end
 end
 
@@ -171,18 +173,22 @@ end
 ---Implements `*` (forward) and `#` (backward).
 ---@param direction string  `"forward"` or `"backward"`
 local function word_under_cursor(direction)
-  -- Select word same as "iw": go to start, extend to end.
-  Hypr.send_all({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
-  Hypr.send("CTRL", "c")
-  Clipboard.read_async(150, function(s)
-    Hypr.send("", "RIGHT") -- deselect
-    local term = s:gsub("[\r\n]", ""):gsub("%s+$", ""):match("^%S+") or ""
-    if term == "" then
-      Hypr.normal()
-      return
-    end
-    do_find(term, direction, "find_term", false)
-  end)
+  Hypr.suspend_vim()
+  hl.timer(function()
+    Hypr.send_all({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
+    hl.timer(function()
+      Clipboard.read_primary_async(150, function(s)
+        Hypr.send("", "RIGHT") -- deselect
+        hl.dispatch(hl.dsp.exec_cmd("wl-copy --primary < /dev/null"))
+        local term = s:gsub("[\r\n]", ""):gsub("%s+$", ""):match("^%S+") or ""
+        if term == "" then
+          Hypr.normal()
+          return
+        end
+        do_find(term, direction, "find_term", false)
+      end)
+    end, { timeout = 50, type = "oneshot" })
+  end, { timeout = 20, type = "oneshot" })
 end
 
 -- Public API all map directly to vim motions:
