@@ -77,20 +77,6 @@ local function state_set(key, value)
   state_write(t)
 end
 
----Write `text` to the Wayland clipboard; uses `text/plain` MIME for single characters
----to avoid triggering autocomplete in applications that inspect MIME types.
----@param text string
-local function clipboard_write(text)
-  local flag = (#text == 1) and "--type text/plain" or ""
-  local tmp = os.tmpname()
-  local f = io.open(tmp, "w")
-  if f then
-    f:write(text)
-    f:close()
-  end
-  hl.dispatch(hl.dsp.exec_cmd("wl-copy " .. flag .. " < " .. tmp .. " ; rm " .. tmp))
-end
-
 ---Open the app's find bar (Ctrl+F), paste `term`, and commit the search.
 ---Persists all state so `n`/`N`/`;`/`,` can repeat or reverse later.
 ---@param term      string   search string
@@ -105,7 +91,7 @@ local function do_find(term, direction, term_type, is_till)
   state_set("last_action_term_type", term_type)
   state_set("till", is_till and "true" or "false")
 
-  clipboard_write(term)
+  Clipboard.write(term)
   hl.timer(function()
     Hypr.send("CTRL", "f")
     hl.timer(function()
