@@ -58,14 +58,23 @@ end
 
 function Registers.clear_pending() os.remove(pending_path()) end
 
--- Save clipboard content to a register.
+---Save content to a register. No-op for the read-only `/` register.
+---@param name string register name
+---@param content string
 function Registers.save(name, content)
   if name == "/" then return end -- read-only
   reg_write(name, content)
 end
 
--- Load a register's content to the clipboard.
-function Registers.load(name)
+---Load a register's content to the clipboard.
+---@param name string register name (e.g. `"a"`, `"*"`)
+---@param on_loaded? fun() called once the clipboard write has been dispatched.
+--- For `"*"` this fires only after the async primary-selection read completes,
+--- so callers can safely chain a paste without racing the clipboard write.
+function Registers.load(name, on_loaded)
+  local function done()
+    if on_loaded then on_loaded() end
+  end
   if name == "/" then
     -- Read search term from find-state.json.
     local f = io.open(require("config").state_dir .. "/find-state.json", "r")
@@ -76,6 +85,7 @@ function Registers.load(name)
       term = data:match('"find_term"%s*:%s*"([^"]*)"') or ""
     end
     Clipboard.write(term)
+    done()
     return
   end
   if name == "+" then
@@ -84,15 +94,18 @@ function Registers.load(name)
     local content = f and (f:read("*a") or "") or ""
     if f then f:close() end
     if content ~= "" then Clipboard.write(content) end
+    done()
     return
   end
   if name == "*" then
     Clipboard.read_primary_async(150, function(content)
       if content ~= "" then Clipboard.write(content) end
+      done()
     end)
     return
   end
   Clipboard.write(reg_read(name))
+  done()
 end
 
 -- Cycle numbered registers 1->9 (oldest drops off, newest->1).
@@ -185,23 +198,28 @@ function Registers.handle_delete(return_mode)
   end)
 end
 
--- Handle paste: load register to clipboard, send paste shortcut.
+---Handle paste: load the pending register to the clipboard, then send the paste shortcut.
+---@param mods string modifiers for the paste shortcut (e.g. `"CTRL"`)
+---@param key string key for the paste shortcut (e.g. `"v"`)
+---@param return_mode? string submap to switch to after pasting (default `"NORMAL"`)
+---@param count? integer how many times to send the paste shortcut (default 1)
 function Registers.handle_paste(mods, key, return_mode, count)
   return_mode = return_mode or "NORMAL"
   count = (count and count > 0) and count or 1
   local reg = Registers.get_pending()
   Registers.clear_pending()
 
-  Registers.load(reg)
-
   local shortcuts = {}
   for _ = 1, count do
     shortcuts[#shortcuts + 1] = { mods, key }
   end
 
-  hl.timer(function()
-    Hypr.send_batch(shortcuts, 20, function() Hypr.switch_mode(return_mode) end)
-  end, { timeout = 150, type = "oneshot" })
+  Registers.load(reg, function()
+    -- 150ms lets wl-copy settle before the paste lands.
+    hl.timer(function()
+      Hypr.send_batch(shortcuts, 20, function() Hypr.switch_mode(return_mode) end)
+    end, { timeout = 150, type = "oneshot" })
+  end)
 end
 
 return Registers
