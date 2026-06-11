@@ -196,6 +196,13 @@ local function make_spawner(eww_dir, state_dir, render, position)
   end
 end
 
+--- Closes the HUD only if it is actually visible, avoiding a shell fork
+--- and eww IPC round-trips on every submap change while hidden.
+--- @param state_dir string
+local function close_hud(state_dir)
+  if file_exists(state_dir .. "/whichkey-visible") then Render.close() end
+end
+
 --- Removes the skip-next and skip-target flag files.
 --- @param state_dir string
 local function clear_skip_files(state_dir)
@@ -236,7 +243,7 @@ local function make_submap_handler(config, state_dir, spawn_render)
   local function teardown(sm)
     cancel_timer()
     if stale_check_timer then stale_check_timer:set_enabled(false); stale_check_timer = nil end
-    Render.close()
+    close_hud(state_dir)
     write_current_submap(sm)
   end
 
@@ -254,7 +261,7 @@ local function make_submap_handler(config, state_dir, spawn_render)
       local render_sm = t
       stale_check_timer = hl.timer(function()
         stale_check_timer = nil
-        if last_sm ~= render_sm then Render.close() end
+        if last_sm ~= render_sm then close_hud(state_dir) end
       end, { timeout = 500, type = "oneshot" })
     end, { timeout = math.max(dms, 1), type = "oneshot" })
     _pending_timer_ref = pending_timer
@@ -309,7 +316,7 @@ function Listen.init(Config)
 
   local spawn_render = make_spawner(eww_dir, state_dir, render, config.position)
 
-  hl.on("window.open", function() Render.close() end)
+  hl.on("window.open", function() close_hud(state_dir) end)
   hl.on("keybinds.submap", make_submap_handler(config, state_dir, spawn_render))
 end
 
