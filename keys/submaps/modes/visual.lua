@@ -17,7 +17,7 @@ local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, k
 
 local normal = Submap.switch("NORMAL")
 local visual = Submap.switch("VISUAL")
-local reset = Submap.switch("reset")
+local reset = Submap.reset
 local va = motion.action_visual
 local vm = motion.action
 local va_seq = motion.action_seq
@@ -54,7 +54,8 @@ local function passthrough(key) return function() send("CTRL", key) normal() end
 
 local footer = {
   { "SPACE", wk.toggle },
-  { LEADER .. " + " .. ACT, reset },
+  { LEADER .. " + " .. ACT, reset, { release = true } },
+  { LEADER .. " + " .. EXIT, reset, { release = true } },
 }
 
 -- ---------------------------------------------------------------------------
@@ -157,13 +158,7 @@ Submap.define({
 ---@param objects     { [1]: string, [2]: Shortcut[], [3]?: string }[]  { key, seq, label? }
 local function visual_text_object(name, parent_name, objects)
   local parent = Submap.switch(parent_name)
-  local binds = {
-    -- stylua: ignore start
-    { "SPACE",                    wk.toggle },
-    { LEADER .. " + " .. ACT,    reset     },
-    { LEADER .. " + " .. EXIT,   reset     },
-    -- stylua: ignore end
-  }
+  local binds = { table.unpack(footer) }
   for _, obj in ipairs(objects) do
     local key, seq, label = obj[1], obj[2], obj[3]
     local act = function()
