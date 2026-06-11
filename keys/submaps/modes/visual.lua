@@ -28,9 +28,9 @@ local function open_editor(insert)
   return function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = insert or false, after_submap = "NORMAL" }) end
 end
 
-local function change_sel()    reg.handle_delete("CTRL", "x", "INSERT") end
-local function delete_sel()    reg.handle_delete("CTRL", "x", "NORMAL") end
-local function backspace_sel() wk.close() reg.handle_delete("", "BackSpace", "NORMAL") end
+local function change_sel()    reg.handle_delete("INSERT") end
+local function delete_sel()    reg.handle_delete("NORMAL") end
+local function backspace_sel() wk.close() reg.handle_delete("NORMAL") end
 local function delete_bol()    send("SHIFT", "HOME") send("", "Delete") normal() end
 local function yank_sel()      reg.handle_yank("CTRL", "c", "NORMAL") end
 local function yank_bol()      motion.send_sequence({ { "", "END" }, { "SHIFT", "HOME" } }) reg.handle_yank("CTRL", "c", "NORMAL") end

@@ -146,7 +146,7 @@ function Registers.handle_yank(mods, key, return_mode)
 end
 
 -- Handle delete (Ctrl+X): send shortcut, async-save to register + cycle numbered registers.
-function Registers.handle_delete(mods, key, return_mode)
+function Registers.handle_delete(return_mode)
   return_mode = return_mode or "NORMAL"
   local reg = Registers.get_pending()
   Registers.clear_pending()
@@ -155,7 +155,7 @@ function Registers.handle_delete(mods, key, return_mode)
   if reg == "_" then
     -- Black hole: capture clipboard before delete, delete, restore clipboard.
     Clipboard.read_async(50, function(backup)
-      Hypr.send(mods, key)
+      Hypr.send("CTRL", "x")
       hl.timer(function()
         Clipboard.write(backup)
         Hypr.switch_mode(return_mode)
@@ -164,7 +164,7 @@ function Registers.handle_delete(mods, key, return_mode)
     return
   end
 
-  Hypr.send(mods, key)
+  Hypr.send("CTRL", "x")
 
   Clipboard.read_async(200, function(content)
     if reg == "*" then

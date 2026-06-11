@@ -8,6 +8,5 @@ VimLib.count = require("vim.lib.count")
 VimLib.hypr = require("hypr")
 VimLib.motion = require("vim.lib.motion")
 VimLib.line_motion = require("vim.lib.line_motion")
-VimLib.operator = require("vim.lib.operator")
 
 return VimLib

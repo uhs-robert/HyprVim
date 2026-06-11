@@ -27,7 +27,6 @@ local Vim = {
   count       = lib.count,
   motion      = lib.motion,
   line_motion = lib.line_motion,
-  operator    = lib.operator,
   hypr        = lib.hypr,
   -- features
   marks       = features.marks,
