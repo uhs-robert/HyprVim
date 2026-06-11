@@ -55,7 +55,7 @@ local function line_end()       vim.count.clear() send("", "END") end
 local function last_line()      vim.count.clear() send("CTRL", "END") end
 local function backspace_move() wk.close() vim.motion.send("h") end
 local function escape_gui()     vim.count.clear() send("", "ESCAPE") end
-local function escape_normal()  vim.count.clear() wk.close() vim.find.deactivate() Hypr.send("", "Escape", "active") end
+local function escape_normal()  vim.count.clear() wk.close() vim.find.deactivate() Hypr.send("", "Escape", "activewindow") end
 -- stylua: ignore end
 
 Submap.define({
