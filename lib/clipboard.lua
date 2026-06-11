@@ -9,18 +9,23 @@ local Clipboard = {} ---@class Clipboard
 
 local function pre_vim_path() return require("config").state_dir .. "/clipboard_pre_vim" end
 
----Dispatch wl-paste to a tmpfile via Hypr.exec, then call cb(content) after delay_ms.
----@param delay_ms integer  Milliseconds to wait before reading the tmpfile
----@param cb fun(content: string)  Called with clipboard text (empty string if clipboard is empty)
+-- Time for a spawned wl-paste to finish writing its tmpfile.
+local SETTLE_MS = 50
+
+---Read the clipboard after delay_ms (gives the app time to set it first).
+---@param delay_ms integer
+---@param cb fun(content: string)  receives clipboard text ("" if empty)
 function Clipboard.read_async(delay_ms, cb)
   local path = os.tmpname()
-  Hypr.exec("wl-paste --no-newline 2>/dev/null >'" .. path .. "' || true")
   hl.timer(function()
-    local f = io.open(path, "r")
-    local content = f and (f:read("*a") or "") or ""
-    if f then f:close() end
-    os.remove(path)
-    cb(content)
+    Hypr.exec("wl-paste --no-newline 2>/dev/null >'" .. path .. "' || true")
+    hl.timer(function()
+      local f = io.open(path, "r")
+      local content = f and (f:read("*a") or "") or ""
+      if f then f:close() end
+      os.remove(path)
+      cb(content)
+    end, { timeout = SETTLE_MS, type = "oneshot" })
   end, { timeout = delay_ms, type = "oneshot" })
 end
 
@@ -37,18 +42,20 @@ function Clipboard.write(text)
   Hypr.exec("wl-copy " .. flag .. "<'" .. path .. "' && rm -f '" .. path .. "'")
 end
 
----Read Wayland primary selection asynchronously, call cb(content) after delay_ms.
+---Read the primary selection after delay_ms (same flow as read_async).
 ---@param delay_ms integer
 ---@param cb fun(content: string)
 function Clipboard.read_primary_async(delay_ms, cb)
   local path = os.tmpname()
-  Hypr.exec("wl-paste --primary --no-newline 2>/dev/null >'" .. path .. "' || true")
   hl.timer(function()
-    local f = io.open(path, "r")
-    local content = f and (f:read("*a") or "") or ""
-    if f then f:close() end
-    os.remove(path)
-    cb(content)
+    Hypr.exec("wl-paste --primary --no-newline 2>/dev/null >'" .. path .. "' || true")
+    hl.timer(function()
+      local f = io.open(path, "r")
+      local content = f and (f:read("*a") or "") or ""
+      if f then f:close() end
+      os.remove(path)
+      cb(content)
+    end, { timeout = SETTLE_MS, type = "oneshot" })
   end, { timeout = delay_ms, type = "oneshot" })
 end
 
