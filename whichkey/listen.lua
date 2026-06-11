@@ -148,10 +148,17 @@ local function read_oneshot_flags(state_dir)
   local next_delay = read_file(delay_path)
 
   -- Consume targetless skip and delay flags immediately; targeted skip stays until matched.
-  if skip_next and skip_target == "" then os.execute("rm -f " .. sh_escape(skip_path)) end
-  if next_delay ~= "" then os.execute("rm -f " .. sh_escape(delay_path)) end
+  if skip_next and skip_target == "" then os.remove(skip_path) end
+  if next_delay ~= "" then os.remove(delay_path) end
 
   return skip_next, skip_target, next_delay
+end
+
+--- Removes the skip-next and skip-target flag files.
+--- @param state_dir string
+local function clear_skip_files(state_dir)
+  os.remove(state_dir .. "/whichkey-skip-next")
+  os.remove(state_dir .. "/whichkey-skip-target")
 end
 
 --- Returns true if the skip flag applies to sm and clears the flag files.
@@ -164,9 +171,7 @@ end
 local function resolve_skip(skip_next, skip_target, sm, state_dir)
   if not skip_next then return false end
   if skip_target ~= "" and skip_target ~= sm then return false end
-  os.execute(
-    "rm -f " .. sh_escape(state_dir .. "/whichkey-skip-next") .. " " .. sh_escape(state_dir .. "/whichkey-skip-target")
-  )
+  clear_skip_files(state_dir)
   return true
 end
 
@@ -203,14 +208,6 @@ local function close_hud(state_dir)
   if file_exists(state_dir .. "/whichkey-visible") then Render.close() end
 end
 
---- Removes the skip-next and skip-target flag files.
---- @param state_dir string
-local function clear_skip_files(state_dir)
-  os.execute(
-    "rm -f " .. sh_escape(state_dir .. "/whichkey-skip-next") .. " " .. sh_escape(state_dir .. "/whichkey-skip-target")
-  )
-end
-
 --- Returns the keybinds.submap event handler.
 --- Tracks previous submap for delay chaining, manages the pending timer,
 --- and decides whether to show the HUD immediately, after a delay, or not at all.
@@ -228,7 +225,7 @@ local function make_submap_handler(config, state_dir, spawn_render)
       local f = io.open(state_dir .. "/current-submap", "w")
       if f then f:write(sm .. "\n"); f:close() end
     else
-      os.execute("rm -f " .. sh_escape(state_dir .. "/current-submap"))
+      os.remove(state_dir .. "/current-submap")
     end
   end
 
