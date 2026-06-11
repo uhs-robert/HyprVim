@@ -34,7 +34,7 @@ function Bind.key(keys, action, desc, opts)
 
   opts = opts or {}
 
-  if desc then opts.desc = desc end
+  if desc then opts.desc = desc --[[@as string]] end
 
   for _, key in ipairs(as_list(keys)) do
     hl.bind(key, action, opts)
@@ -83,18 +83,23 @@ function Bind.leader_fn(keys, f, desc, opts, ...)
   Bind.leader_key(keys, function() f(table.unpack(args)) end, desc, opts)
 end
 
---- @param rows     { [1]: string|string[], [2]: any, [3]: string, [4]: HL.BindOptions|nil }[]
+--- @param rows     { [1]: string|string[], [2]: any, [3]: string|HL.BindOptions|nil, [4]: HL.BindOptions|nil }[]
 --- @param defaults HL.BindOptions|nil
 function Bind.keys(rows, defaults)
   for _, row in ipairs(rows or {}) do
+    local desc, row_opts = row[3], row[4]
+    if type(desc) == "table" and row_opts == nil then
+      row_opts = desc
+      desc = nil
+    end
     local opts = {}
     for k, v in pairs(defaults or {}) do
       opts[k] = v
     end
-    for k, v in pairs(row[4] or {}) do
+    for k, v in pairs(row_opts or {}) do
       opts[k] = v
     end
-    Bind.key(row[1], row[2], row[3], opts)
+    Bind.key(row[1], row[2], desc, opts)
   end
 end
 
