@@ -1,19 +1,5 @@
-local SCRIPT_DIRS = {
-  default = "~/.local/bin/",
-  rofi = "~/.config/rofi/bin/",
-  hypr = "~/.config/hypr/scripts/",
-}
-
 --- @class HyprVimUtils
 local Utils = {}
-
---- @param script string script filename
---- @param type? string key into SCRIPT_DIRS (default: "default")
---- @return string full path to script
-Utils.run_script = function(script, type)
-  local dir = SCRIPT_DIRS[type] or SCRIPT_DIRS.default
-  return dir .. script
-end
 
 --- Returns true if t is a sequence (array-like: all integer keys 1..n).
 local function is_array(t)
