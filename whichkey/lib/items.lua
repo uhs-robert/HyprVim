@@ -17,6 +17,35 @@ local Hyprctl = require("whichkey.lib.hyprctl") ---@class HyprCtl
 --- @class Items
 local Items = {}
 
+--- Escapes s for embedding in a JSON string literal.
+--- @param s string
+--- @return string
+local function json_escape(s)
+  return (
+    s:gsub('[%c"\\]', function(c)
+      if c == '"' then return '\\"' end
+      if c == "\\" then return "\\\\" end
+      return string.format("\\u%04x", c:byte())
+    end)
+  )
+end
+
+--- Strips a trailing incomplete UTF-8 sequence left by byte-level truncation.
+--- @param s string
+--- @return string
+local function trim_partial_utf8(s)
+  local i = #s
+  while i > 0 and s:byte(i) >= 0x80 and s:byte(i) < 0xC0 do
+    i = i - 1
+  end
+  if i > 0 then
+    local b = s:byte(i)
+    local need = (b >= 0xF0 and 4) or (b >= 0xE0 and 3) or (b >= 0xC0 and 2) or 1
+    if b >= 0xC0 and #s - i + 1 < need then return s:sub(1, i - 1) end
+  end
+  return s
+end
+
 -- TODO: build_mark_items exists because hl.bind descriptions cannot be updated or removed
 -- per-submap once registered; only hl.unbind exists and it is global. So whichkey reads
 -- marks.json directly instead of relying on hyprctl bind descriptions.
@@ -81,16 +110,18 @@ function Items.build_register_items(sm)
   local function make_item(key, prefix, content)
     if content == "" then return nil end
     local desc = prefix ~= "" and ("[" .. prefix .. "] " .. content) or content
-    if #desc > 45 then desc = desc:sub(1, 42) .. "..." end
-    return pread(
-      "jq -cn --arg k " .. sh_escape(key) .. " --arg d " .. sh_escape(desc) .. " '{key:$k,desc:$d,class:\"\"}'"
-    )
+    if #desc > 45 then
+      desc = trim_partial_utf8(desc:sub(1, 42)) .. "..."
+    else
+      desc = trim_partial_utf8(desc)
+    end
+    return '{"key":"' .. json_escape(key) .. '","desc":"' .. json_escape(desc) .. '","class":""}'
   end
 
   local items = {}
   local function add(k, p, path)
     local item = make_item(k, p, reg_read(path))
-    if item and item ~= "" then items[#items + 1] = item end
+    if item then items[#items + 1] = item end
   end
 
   local function trim(s) return s:gsub("[\n\t\r]", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "") end
@@ -101,12 +132,12 @@ function Items.build_register_items(sm)
     local content = trim(f and (f:read(50) or "") or "")
     if f then f:close() end
     local item = make_item("PLUS", "system", content)
-    if item and item ~= "" then items[#items + 1] = item end
+    if item then items[#items + 1] = item end
   end
 
   local primary = trim(pread("wl-paste --primary --no-newline 2>/dev/null"))
   local primary_item = make_item("ASTERISK", "primary", primary)
-  if primary_item and primary_item ~= "" then items[#items + 1] = primary_item end
+  if primary_item then items[#items + 1] = primary_item end
 
   add('"', "default", reg_dir .. '/"')
   add("0", "yank", reg_dir .. "/0")
@@ -121,7 +152,7 @@ function Items.build_register_items(sm)
   if file_exists(find_state) then
     local term = pread("jq -r '.find_term // \"\"' " .. sh_escape(find_state) .. " 2>/dev/null")
     local item = make_item("/", "search", term)
-    if item and item ~= "" then items[#items + 1] = item end
+    if item then items[#items + 1] = item end
   end
 
   if #items == 0 then return nil end
