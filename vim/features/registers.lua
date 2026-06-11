@@ -4,7 +4,7 @@
 -- Named registers: a-z
 -- Special registers:
 --   "  unnamed (syncs with system clipboard)
---   +  system clipboard (explicit opt-in; yank writes to clipboard, paste reads live clipboard)
+--   +  system clipboard (explicit opt-in; yank/delete write snapshot file, paste reads it. Pre-vim clipboard or latest + yank)
 --   0  yank register (last yank, not overwritten by deletes)
 --   1-9 numbered delete history (newest->1, cycles on each delete)
 --   _  black hole (delete without affecting clipboard)
