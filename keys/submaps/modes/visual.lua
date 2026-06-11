@@ -14,7 +14,7 @@ local LEADER = config.keys.leader or "SUPER"
 local ACT = config.keys.activate or "ESCAPE"
 local EXIT = config.keys.exit or "ESCAPE"
 
-local function send(mods, key) hl.dispatch(hl.dsp.send_shortcut({ mods = mods, key = key })) end
+local send = Hypr.send
 
 local normal = Submap.switch("NORMAL")
 local reset = Submap.reset
