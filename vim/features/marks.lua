@@ -123,9 +123,7 @@ function Marks.set(char)
   marks[char] = { workspace = ws, window = addr, monitor = mname, class = cls, title = ttl }
   json_write(marks)
 
-  local short = #ttl > 30 and (ttl:sub(1, 30) .. "…") or ttl
   notify(string.format("Mark '%s' -> %s (ws:%d)", char, cls, ws))
-  _ = short
   Marks.dispatch_after()
 end
 

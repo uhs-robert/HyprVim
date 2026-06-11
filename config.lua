@@ -102,7 +102,6 @@ Config.defaults = {
   notifications = {
     all      = false,
     marks    = false,
-    hints    = true,
     warnings = true,
     errors   = true,
   },
