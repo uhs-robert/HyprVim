@@ -80,7 +80,7 @@ end
 --- Print usage information and exit.
 local function show_help()
   print_br("hyprvim-open-vim <OPTIONS>")
-  print_br("Editor: " .. cfg.editor .. " (set via $HYPRVIM_EDITOR, defaults to nvim)")
+  print_br("Editor: " .. cfg.editor .. " (set via $EDITOR, defaults to nvim)")
   print_br("-e, --ext <ext>\n  Set file extension for the scratch file (e.g. --ext md).")
   print_br("-s, --copy-selected\n  Copy the currently selected text and start editing it.")
   print_br("-i, --insert-mode\n  Start the editor in INSERT mode at end-of-content.")

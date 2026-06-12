@@ -18,7 +18,7 @@ end)
 -- Global WhichKey Toggles
 if Config.which_key and Config.which_key.enabled then
   local wk = require("whichkey") ---@class WhichKey
-  hl.bind(leader .. "+ SHIFT + SLASH", function() wk.toggle() end)
+  hl.bind(leader .. " + SHIFT + SLASH", function() wk.toggle() end)
   hl.bind("ESCAPE", function() wk.close() end, { non_consuming = true })
   hl.bind("BackSpace", function() wk.close() end, { non_consuming = true })
 end
