@@ -5,6 +5,7 @@
 
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
+local Utils = require("lib.utils") ---@class HyprVimUtils
 
 --- @class Marks
 --- @field enter_jump   fun()  refresh MARKS submap binds then enter it
@@ -29,15 +30,20 @@ local function json_read()
   local s = f:read("*a")
   f:close()
   local t = {}
+  -- json_write escapes quotes/braces inside strings, so these patterns cannot misfire.
+  local function field(body, name)
+    local v = body:match('"' .. name .. '"%s*:%s*"([^"]*)"')
+    return v and Utils.json_unescape(v)
+  end
   -- Each mark: "X": { "workspace": N, "window": "0x...", "monitor": "...", ... }
-  for key, body in s:gmatch('"(.)"%s*:%s*(%b{})') do
+  for key, body in s:gmatch('"([^"]*)"%s*:%s*(%b{})') do
     local m = {}
     m.workspace = tonumber(body:match('"workspace"%s*:%s*(%d+)'))
-    m.window = body:match('"window"%s*:%s*"([^"]*)"')
-    m.monitor = body:match('"monitor"%s*:%s*"([^"]*)"')
-    m.class = body:match('"class"%s*:%s*"([^"]*)"')
-    m.title = body:match('"title"%s*:%s*"([^"]*)"')
-    t[key] = m
+    m.window = field(body, "window")
+    m.monitor = field(body, "monitor")
+    m.class = field(body, "class")
+    m.title = field(body, "title")
+    t[Utils.json_unescape(key)] = m
   end
   return t
 end
@@ -45,16 +51,17 @@ end
 ---Serialise `t` and write it to the marks state file.
 ---@param t table<string, Mark>
 local function json_write(t)
+  local esc = Utils.json_escape
   local parts = {}
   for k, m in pairs(t) do
     parts[#parts + 1] = string.format(
-      '  %q: {"workspace":%d,"window":%q,"monitor":%q,"class":%q,"title":%q}',
-      k,
+      '  "%s": {"workspace":%d,"window":"%s","monitor":"%s","class":"%s","title":"%s"}',
+      esc(k),
       m.workspace or 0,
-      m.window or "",
-      m.monitor or "",
-      m.class or "",
-      m.title or ""
+      esc(m.window or ""),
+      esc(m.monitor or ""),
+      esc(m.class or ""),
+      esc(m.title or "")
     )
   end
   table.sort(parts)

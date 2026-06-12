@@ -10,6 +10,7 @@ local file_exists = Utils.file_exists
 local write_file = Utils.write_file
 local pread = Utils.pread
 local sh_escape = Utils.sh_escape
+local json_escape = Utils.json_escape
 
 local Config = require("config") ---@class HyprVimConfigModule
 local Clipboard = require("lib.clipboard") ---@class Clipboard
@@ -18,19 +19,6 @@ local Find = require("vim.features.find") ---@class Find
 
 --- @class Items
 local Items = {}
-
---- Escapes s for embedding in a JSON string literal.
---- @param s string
---- @return string
-local function json_escape(s)
-  return (
-    s:gsub('[%c"\\]', function(c)
-      if c == '"' then return '\\"' end
-      if c == "\\" then return "\\\\" end
-      return string.format("\\u%04x", c:byte())
-    end)
-  )
-end
 
 --- Strips a trailing incomplete UTF-8 sequence left by byte-level truncation.
 --- @param s string

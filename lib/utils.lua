@@ -92,4 +92,22 @@ end
 --- @return string
 Utils.sh_escape = function(s) return "'" .. tostring(s):gsub("'", "'\\''") .. "'" end
 
+--- Escapes s for embedding in a JSON string literal. Quotes, backslashes, and braces
+--- become \u00XX so pattern-based readers ('"[^"]*"', '%b{}') stay safe too.
+--- @param s string
+--- @return string
+Utils.json_escape = function(s)
+  return (s:gsub('[%c"\\{}]', function(c) return string.format("\\u%04x", c:byte()) end))
+end
+
+--- Decodes \uXXXX escapes (as emitted by json_escape) back to bytes.
+--- @param s string
+--- @return string
+Utils.json_unescape = function(s)
+  return (s:gsub("\\u(%x%x%x%x)", function(h)
+    local n = tonumber(h, 16)
+    return n < 256 and string.char(n) or nil
+  end))
+end
+
 return Utils
