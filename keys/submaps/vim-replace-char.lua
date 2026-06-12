@@ -2,13 +2,8 @@
 -- R-CHAR submap: overwrite [count] chars under the cursor with the pressed key (US layout).
 
 local Submap = require("lib.submap") ---@class HyprVimSubmap
-local Hypr = require("hypr") ---@class HyprVimHyprland
 local vim = require("vim") ---@class Vim
-local config = require("config") ---@class HyprVimConfigModule
-
-local LEADER = config.keys.leader or "SUPER"
-local ACT = config.keys.activate or "ESCAPE"
-local EXIT = config.keys.exit or "ESCAPE"
+local common = require("keys.submaps.common")
 
 ---@param char string  literal character the keycode produces
 ---@return fun()
@@ -42,12 +37,9 @@ Submap.define({
   back = false,
   catchall = "stay",
   binds = function()
-    local rows = {
-      { LEADER .. " + " .. ACT, Hypr.exit_vim },
-      { LEADER .. " + " .. EXIT, Hypr.exit_vim },
-      { "SPACE", rep(" ") },
-      { "TAB", rep("\t") },
-    }
+    local rows = common.exit_rows()
+    table.insert(rows, { "SPACE", rep(" ") })
+    table.insert(rows, { "TAB", rep("\t") })
 
     local letters = "abcdefghijklmnopqrstuvwxyz"
     for i = 1, #letters do

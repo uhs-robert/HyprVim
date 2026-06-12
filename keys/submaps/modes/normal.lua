@@ -4,11 +4,10 @@ local Submap = require("lib.submap") ---@class HyprVimSubmap
 local Bind = require("lib.bind") ---@class HyprVimBindLib
 local vim = require("vim") ---@class Vim
 local wk = require("whichkey") ---@class WhichKey
-local config = require("config") ---@class HyprVimConfigModule
 local Hypr = require("hypr") ---@class HyprVimHyprland
+local common = require("keys.submaps.common")
 
-local LEADER = config.keys.leader or "SUPER"
-local EXIT = config.keys.exit or "ESCAPE"
+local LEADER, _, EXIT = common.keys()
 
 local send = Hypr.send
 local cc = vim.count.clear_then_fn

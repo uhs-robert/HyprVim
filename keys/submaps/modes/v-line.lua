@@ -10,11 +10,9 @@ local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
 local oe = vim.editor
 local Hypr = require("hypr") ---@class HyprVimHyprland
-local config = require("config") ---@class HyprVimConfigModule
+local common = require("keys.submaps.common")
 
-local LEADER = config.keys.leader or "SUPER"
-local ACT = config.keys.activate or "ESCAPE"
-local EXIT = config.keys.exit or "ESCAPE"
+local LEADER = common.keys()
 
 local send = Hypr.send
 local function normal() Submap.enter("NORMAL") end
@@ -22,11 +20,7 @@ local function visual() hl.dispatch(hl.dsp.submap("VISUAL")) end
 local function reset() hl.dispatch(hl.dsp.submap("reset")) end
 local function vline() hl.dispatch(hl.dsp.submap("V-LINE")) end
 
-local footer = {
-  { "SPACE", wk.toggle },
-  { LEADER .. " + " .. ACT, Hypr.exit_vim, { release = true } },
-  { LEADER .. " + " .. EXIT, Hypr.exit_vim, { release = true } },
-}
+local footer = common.footer()
 
 -- ---------------------------------------------------------------------------
 -- V-LINE

@@ -4,10 +4,7 @@ local Submap = require("lib.submap") ---@class HyprVimSubmap
 local vim = require("vim") ---@class Vim
 local wk = require("whichkey") ---@class WhichKey
 local Hypr = require("hypr") ---@class HyprVimHyprland
-local config = require("config") ---@class HyprVimConfigModule
-local LEADER = config.keys.leader or "SUPER"
-local ACT = config.keys.activate or "ESCAPE"
-local EXIT = config.keys.exit or "ESCAPE"
+local common = require("keys.submaps.common")
 
 local send = Hypr.send
 local function visual() hl.dispatch(hl.dsp.submap("VISUAL")) end
@@ -27,9 +24,7 @@ Submap.define({
     { "SHIFT + g", function() send("CTRL SHIFT", "END")  visual() end, "Last line"  },
     { "n",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, after_submap = "NORMAL" }) end,                     "Edit in Vim (Normal)" },
     { "i",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
-    { "SPACE",     wk.toggle },
-    { LEADER .. " + " .. ACT, Hypr.exit_vim },
-    { LEADER .. " + " .. EXIT, Hypr.exit_vim },
+    table.unpack(common.footer()),
     -- stylua: ignore end
   },
 }).setup()

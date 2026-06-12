@@ -6,21 +6,12 @@ local vim = require("vim") ---@class Vim
 local motion = vim.motion
 local count = vim.count
 local reg = vim.registers
-local wk = require("whichkey") ---@class WhichKey
 local Hypr = require("hypr") ---@class HyprVimHyprland
-local config = require("config") ---@class HyprVimConfigModule
-
-local LEADER = config.keys.leader or "SUPER"
-local ACT = config.keys.activate or "ESCAPE"
-local EXIT = config.keys.exit or "ESCAPE"
+local common = require("keys.submaps.common")
 
 local send = Hypr.send
 
-local footer = {
-  { "SPACE", wk.toggle },
-  { LEADER .. " + " .. ACT, Hypr.exit_vim },
-  { LEADER .. " + " .. EXIT, Hypr.exit_vim },
-}
+local footer = common.footer()
 
 --- Build and register the I/A/G sub-submaps for one operator.
 --- @param op_name  string  parent submap name (e.g. "DELETE")

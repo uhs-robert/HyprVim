@@ -5,10 +5,7 @@ local Bind = require("lib.bind") ---@class HyprVimBindLib
 local vim = require("vim") ---@class Vim
 local wk = require("whichkey") ---@class WhichKey
 local Hypr = require("hypr") ---@class HyprVimHyprland
-local config = require("config") ---@class HyprVimConfigModule
-local LEADER = config.keys.leader or "SUPER"
-local ACT = config.keys.activate or "ESCAPE"
-local EXIT = config.keys.exit or "ESCAPE"
+local common = require("keys.submaps.common")
 
 local send = Hypr.send
 local function normal() Submap.enter("NORMAL") end
@@ -29,9 +26,7 @@ Submap.define({
     { "g",          function() send("CTRL", "HOME")      normal() end, "Doc start"  },
     { "SHIFT + g",  function() send("CTRL", "END")       normal() end, "Last line"  },
     { "m",          function() vim.count.clear() vim.marks.list() normal() end, "Marks list" },
-    { "SPACE",      wk.toggle },
-    { LEADER .. " + " .. ACT, Hypr.exit_vim },
-    { LEADER .. " + " .. EXIT, Hypr.exit_vim },
+    table.unpack(common.footer()),
     -- stylua: ignore end
   },
 }).setup()

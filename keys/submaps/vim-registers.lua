@@ -5,11 +5,8 @@ local Submap = require("lib.submap") ---@class HyprVimSubmap
 local vim = require("vim") ---@class Vim
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
-local Hypr = require("hypr") ---@class HyprVimHyprland
 local config = require("config") ---@class HyprVimConfigModule
-local LEADER = config.keys.leader or "SUPER"
-local ACT = config.keys.activate or "ESCAPE"
-local EXIT = config.keys.exit or "ESCAPE"
+local common = require("keys.submaps.common")
 
 local reg_dir = config.state_dir .. "/registers"
 local find_state_path = config.state_dir .. "/find-state.json"
@@ -70,8 +67,9 @@ Submap.define({
     result[#result + 1] = { "SHIFT + 8",          function() set("*") end, "Primary selection"                          }
     result[#result + 1] = { "SLASH",              function() set("/") end, term and ("search: " .. term) or "Search register" }
     result[#result + 1] = { "SHIFT + SLASH",      wk.toggle                                                             }
-    result[#result + 1] = { LEADER .. " + " .. ACT,  Hypr.exit_vim                                                      }
-    result[#result + 1] = { LEADER .. " + " .. EXIT, Hypr.exit_vim                                                      }
+    for _, row in ipairs(common.exit_rows()) do
+      result[#result + 1] = row
+    end
     -- stylua: ignore end
 
     return result

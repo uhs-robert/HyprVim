@@ -1,0 +1,33 @@
+-- keys/submaps/common.lua
+-- Shared LEADER/ACT/EXIT keys and footer rows for submap specs
+
+local wk = require("whichkey") ---@class WhichKey
+local Hypr = require("hypr") ---@class HyprVimHyprland
+local config = require("config") ---@class HyprVimConfigModule
+
+local Common = {}
+
+--- @return string leader, string activate, string exit
+function Common.keys()
+  return config.keys.leader or "SUPER", config.keys.activate or "ESCAPE", config.keys.exit or "ESCAPE"
+end
+
+--- LEADER+ACT / LEADER+EXIT exit-vim rows.
+--- @return table[]
+function Common.exit_rows()
+  local LEADER, ACT, EXIT = Common.keys()
+  return {
+    { LEADER .. " + " .. ACT, Hypr.exit_vim, { release = true } },
+    { LEADER .. " + " .. EXIT, Hypr.exit_vim, { release = true } },
+  }
+end
+
+--- Whichkey toggle + exit-vim footer rows.
+--- @return table[]
+function Common.footer()
+  local rows = Common.exit_rows()
+  table.insert(rows, 1, { "SPACE", wk.toggle })
+  return rows
+end
+
+return Common
