@@ -104,10 +104,7 @@ function Submap.exit(spec)
 
   if escape == false then return end
   if escape == "reset" then return Submap.reset() end
-  if escape == "previous" then
-    if Submap.previous and Submap.previous ~= "reset" then return Submap.enter(Submap.previous) end
-    return Submap.reset()
-  end
+  if escape == "previous" then return Submap.back() end
   if type(escape) == "string" then return Submap.enter(escape) end
   if type(escape) == "function" then return escape(context({ spec = spec })) end
   return Submap.reset()
@@ -211,6 +208,10 @@ local function apply_individual_oneshots(rows, exit_fn)
   for _, row in ipairs(rows) do
     local opts = row[4]
     if type(opts) == "table" and opts.oneshot then
+      local kept = { keep = true }
+      for k, v in pairs(opts) do
+        if k ~= "oneshot" then kept[k] = v end
+      end
       result[#result + 1] = {
         row[1],
         function()
@@ -218,7 +219,7 @@ local function apply_individual_oneshots(rows, exit_fn)
           exit_fn()
         end,
         row[3],
-        { keep = true },
+        kept,
       }
     else
       result[#result + 1] = row
