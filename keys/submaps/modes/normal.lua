@@ -193,10 +193,10 @@ Submap.define({
       { "q",           escape_gui },
       { "CTRL + q",    Submap.switch("NORMAL") },
       { "CTRL + c",    escape_gui },
-      { "ALT + h",     alt_passthrough("h") },
-      { "ALT + j",     alt_passthrough("j") },
-      { "ALT + k",     alt_passthrough("k") },
-      { "ALT + l",     alt_passthrough("l") },
+      { "ALT + h",     alt_passthrough("left") },
+      { "ALT + j",     alt_passthrough("down") },
+      { "ALT + k",     alt_passthrough("up") },
+      { "ALT + l",     alt_passthrough("right") },
 
       -- Escape (non-consuming: sends Escape to the active window)
       { "ESCAPE", escape_normal, "Escape", { non_consuming = true } },
