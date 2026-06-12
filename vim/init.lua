@@ -6,7 +6,7 @@
 --   vim.motion.send("j")          -- move down
 --   vim.count.append("3")         -- accumulate count
 --   vim.marks.set("a")            -- set mark a
---   vim.registers.handle_yank("CTRL", "c", "NORMAL")
+--   vim.registers.handle_yank("CTRL", "c", { collapse = true })
 
 local root = debug.getinfo(1, "S").source:sub(2):match("(.*/)") or "./"
 package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path

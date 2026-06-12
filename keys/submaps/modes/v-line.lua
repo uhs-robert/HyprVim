@@ -62,7 +62,7 @@ Submap.define({
       { "x",         function() lm.reset() reg.handle_delete("NORMAL") end, nil, { repeating = true } },
       { "d",         function() lm.reset() reg.handle_delete("NORMAL") end, "Delete", { repeating = true } },
       { "SHIFT + d", function() lm.reset() send("SHIFT", "HOME") send("", "Delete") normal() end, "Delete to line start" },
-      { "y",         function() lm.reset() reg.handle_yank("CTRL", "c", "NORMAL") end, "Yank", { repeating = true } },
+      { "y",         function() lm.reset() reg.handle_yank("CTRL", "c", { collapse = true }) end, "Yank", { repeating = true } },
       { "p",         function() reg.handle_paste("CTRL", "v", "NORMAL") end, "Paste", { repeating = true } },
       -- Normal shortcuts passthrough
       { "CTRL + x", function() send("CTRL", "x") normal() end, nil, { repeating = true } },

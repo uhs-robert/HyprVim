@@ -189,8 +189,10 @@ end)
 -- YANK
 -- ---------------------------------------------------------------------------
 
-local function yank(after)
-  return function() reg.handle_yank("CTRL", "c", after) end
+-- collapse=false only for linewise yank, which positions the cursor itself.
+local function yank(after, collapse)
+  if collapse == nil then collapse = true end
+  return function() reg.handle_yank("CTRL", "c", { return_mode = after, collapse = collapse }) end
 end
 
 Submap.define({
@@ -208,7 +210,7 @@ Submap.define({
       { "SHIFT + w", function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) yank("NORMAL")() end },
       { "SHIFT + e", function() motion.send_raw({ "CTRL SHIFT", "RIGHT" }, count.get()) yank("NORMAL")() end },
       { "SHIFT + b", function() motion.send_raw({ "CTRL SHIFT", "LEFT" },  count.get()) yank("NORMAL")() end },
-      { "y",         function() motion.send_sequence({ { "", "HOME" }, { "SHIFT", "End" } }) yank("NORMAL")() send("", "DOWN") end, "Yank line" },
+      { "y",         function() motion.send_sequence({ { "", "HOME" }, { "SHIFT", "End" } }) yank("NORMAL", false)() send("", "DOWN") end, "Yank line" },
       { "SHIFT + 4", function() count.clear() motion.send_raw({ "SHIFT", "End" },  1) yank("NORMAL")() end, "End of line"   },
       { "0",         function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) yank("NORMAL")() end, "Start of line" },
       { "SHIFT + 6", function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) yank("NORMAL")() end, "Start of line" },

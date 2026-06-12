@@ -128,9 +128,13 @@ end
 ---register. Vim semantics: unnamed always fills, `0` only on a register-less yank.
 ---@param mods string modifiers for the copy shortcut (e.g. `"CTRL"`)
 ---@param key string key for the copy shortcut (e.g. `"c"`)
----@param return_mode? string submap to switch to after saving (default `"NORMAL"`)
-function Registers.handle_yank(mods, key, return_mode)
-  return_mode = return_mode or "NORMAL"
+---@param opts? { return_mode?: string, collapse?: boolean } `return_mode`: submap to
+--- switch to after saving (default `"NORMAL"`); `collapse`: send LEFT after the copy
+--- to collapse the selection (vim moves the cursor to the start of the yanked text)
+function Registers.handle_yank(mods, key, opts)
+  opts = opts or {}
+  local return_mode = opts.return_mode or "NORMAL"
+  local collapse = opts.collapse
   local reg = Registers.get_pending()
   Registers.clear_pending()
   require("whichkey").cancel_pending()
@@ -140,6 +144,7 @@ function Registers.handle_yank(mods, key, return_mode)
     -- 200ms (matching the read delay below)
     Clipboard.read_async(50, function(backup)
       Hypr.send(mods, key)
+      if collapse then Hypr.send("", "LEFT") end
       hl.timer(function()
         Clipboard.write(backup)
         Hypr.switch_mode(return_mode)
@@ -149,6 +154,7 @@ function Registers.handle_yank(mods, key, return_mode)
   end
 
   Hypr.send(mods, key)
+  if collapse then Hypr.send("", "LEFT") end
 
   Clipboard.read_async(150, function(content)
     if content ~= "" then

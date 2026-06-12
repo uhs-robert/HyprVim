@@ -24,8 +24,8 @@ local function change_sel()    reg.handle_delete("INSERT") end
 local function delete_sel()    reg.handle_delete("NORMAL") end
 local function backspace_sel() wk.close() reg.handle_delete("NORMAL") end
 local function delete_bol()    send("SHIFT", "HOME") send("", "Delete") normal() end
-local function yank_sel()      reg.handle_yank("CTRL", "c", "NORMAL") end
-local function yank_bol()      motion.send_sequence({ { "", "END" }, { "SHIFT", "HOME" } }) reg.handle_yank("CTRL", "c", "NORMAL") end
+local function yank_sel()      reg.handle_yank("CTRL", "c", { collapse = true }) end
+local function yank_bol()      motion.send_sequence({ { "", "END" }, { "SHIFT", "HOME" } }) reg.handle_yank("CTRL", "c", { collapse = true }) end
 local function paste_sel()     reg.handle_paste("CTRL", "v", "NORMAL") end
 local function sel_bol()       send("SHIFT", "HOME") end
 local function sel_eol()       send("SHIFT", "END") end
