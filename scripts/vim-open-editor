@@ -237,18 +237,19 @@ end
 
 --- Paste the contents of `tmpfile` back to the previously focused window via Ctrl+V.
 --- Saves the current clipboard before pasting and restores it afterwards.
---- Does nothing if the file is empty.
+--- Does nothing if the file is empty or contains only newlines.
 --- @param tmpfile string
 local function paste_content(tmpfile)
   local f = io.open(tmpfile, "r")
   if not f then return end
-  local text = f:read("*a")
+  -- Editors and format-on-save hooks append trailing newlines; so strip them all.
+  local text = f:read("*a"):gsub("\n+$", "")
   f:close()
 
   if text == "" then return end
 
   local before = pread("wl-paste --no-newline")
-  run("wl-copy -n < " .. sq(tmpfile))
+  wl_write(text, "-n")
   run("sleep 0.2")
   run("wtype -M ctrl v -m ctrl")
   run("sleep 0.1")
