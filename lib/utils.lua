@@ -10,15 +10,28 @@ local function is_array(t)
   return n == #t and n > 0
 end
 
---- Deep-merge one or more source tables into target. Arrays are replaced, not merged.
+--- Returns a recursive copy of t (no metatables, assumes no cycles).
+local function deep_copy(t)
+  local copy = {}
+  for k, v in pairs(t) do
+    copy[k] = type(v) == "table" and deep_copy(v) or v
+  end
+  return copy
+end
+
+--- Deep-merge one or more source tables into target. Arrays are replaced, not merged;
+--- an empty table replaces an array but merges (no-op) into a map. Source tables are
+--- copied, never shared, so later writes to target cannot mutate the sources.
 --- @param target table
 --- @param ... table
 --- @return table
 Utils.deep_extend = function(target, ...)
   for _, source in ipairs({ ... }) do
     for k, v in pairs(source) do
-      if type(v) == "table" and type(target[k]) == "table" and not is_array(v) then
+      if type(v) == "table" and type(target[k]) == "table" and not is_array(v) and not is_array(target[k]) then
         Utils.deep_extend(target[k], v)
+      elseif type(v) == "table" then
+        target[k] = deep_copy(v)
       else
         target[k] = v
       end
