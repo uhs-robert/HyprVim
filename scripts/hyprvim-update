@@ -37,6 +37,11 @@ notify_fail() {
   fi
 }
 
+# Single-quote a value for safe embedding in a sh -c command string.
+sq() {
+  printf "'%s'" "$(printf %s "$1" | sed "s/'/'\\\\''/g")"
+}
+
 # Remote default branch name (falls back to main).
 default_branch() {
   b=$(git -C "$repo" symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null | cut -d/ -f2-)
@@ -48,13 +53,13 @@ check/nightly)
   git -C "$repo" fetch -q 2>/dev/null
   LOCAL=$(git -C "$repo" rev-parse HEAD 2>/dev/null)
   REMOTE=$(git -C "$repo" rev-parse '@{u}' 2>/dev/null)
-  PULL="git -C '$repo' pull"
+  PULL="git -C $(sq "$repo") pull"
   if [ -z "$REMOTE" ]; then
     # Detached HEAD (e.g. after a stable-channel tag checkout): compare against
     # the remote default branch and re-attach before pulling.
     BRANCH=$(default_branch)
     REMOTE=$(git -C "$repo" rev-parse "origin/$BRANCH" 2>/dev/null)
-    PULL="git -C '$repo' checkout '$BRANCH' && $PULL"
+    PULL="git -C $(sq "$repo") checkout $(sq "$BRANCH") && $PULL"
   fi
   [ -n "$REMOTE" ] && [ "$LOCAL" != "$REMOTE" ] &&
     notify_action "HyprVim" "Nightly update available." "Update now" \
@@ -64,16 +69,17 @@ check/stable)
   LATEST=$(curl -sf "https://api.github.com/repos/$REPO_API/releases/latest" |
     grep '"tag_name"' | cut -d'"' -f4)
   [ -n "$LATEST" ] || exit 0
+  git -C "$repo" fetch --tags -q 2>/dev/null
   git -C "$repo" merge-base --is-ancestor "$LATEST" HEAD 2>/dev/null && exit 0
   notify_action "HyprVim" "Release $LATEST available." "Update now" \
-    "git -C '$repo' fetch --tags -q && git -C '$repo' checkout '$LATEST' && hyprctl reload"
+    "git -C $(sq "$repo") checkout $(sq "$LATEST") && hyprctl reload"
   ;;
 check/pinned)
   PINNED=$(git -C "$repo" rev-parse "$ref" 2>/dev/null)
   HEAD=$(git -C "$repo" rev-parse HEAD 2>/dev/null)
   [ -n "$PINNED" ] && [ "$HEAD" != "$PINNED" ] &&
     notify_action "HyprVim" "Not at pinned ref $ref." "Restore" \
-      "git -C '$repo' checkout '$ref' && hyprctl reload"
+      "git -C $(sq "$repo") checkout $(sq "$ref") && hyprctl reload"
   ;;
 apply/nightly)
   {
