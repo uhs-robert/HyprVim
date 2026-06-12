@@ -8,9 +8,9 @@ local wk = require("whichkey") ---@class WhichKey
 local config = require("config") ---@class HyprVimConfigModule
 local common = require("keys.submaps.common")
 local Clipboard = require("lib.clipboard") ---@class Clipboard
+local Find = require("vim.features.find") ---@class Find
 
 local reg_dir = config.state_dir .. "/registers"
-local find_state_path = config.state_dir .. "/find-state.json"
 
 local function reg_preview(path)
   local f = io.open(path, "r")
@@ -51,14 +51,7 @@ Submap.define({
     local yank_preview = reg_preview(reg_dir .. "/0")
     local pre_vim_preview = reg_preview(Clipboard.pre_vim_path())
 
-    local term = nil
-    local f = io.open(find_state_path, "r")
-    if f then
-      local data = f:read("*a")
-      f:close()
-      local t = data:match('"find_term"%s*:%s*"([^"]*)"')
-      if t and t ~= "" then term = t end
-    end
+    local term = Find.get_term()
 
     -- stylua: ignore start
     result[#result + 1] = { "SHIFT + APOSTROPHE", function() set('"') end, unnamed_preview  or "Unnamed register (default)" }
@@ -66,7 +59,7 @@ Submap.define({
     result[#result + 1] = { "SHIFT + MINUS",      function() set("_") end, "Black hole register"                        }
     result[#result + 1] = { "SHIFT + EQUAL",      function() set("+") end, pre_vim_preview  or "System clipboard"       }
     result[#result + 1] = { "SHIFT + 8",          function() set("*") end, "Primary selection"                          }
-    result[#result + 1] = { "SLASH",              function() set("/") end, term and ("search: " .. term) or "Search register" }
+    result[#result + 1] = { "SLASH",              function() set("/") end, term ~= "" and ("search: " .. term) or "Search register" }
     result[#result + 1] = { "SHIFT + SLASH",      wk.toggle                                                             }
     for _, row in ipairs(common.exit_rows()) do
       result[#result + 1] = row

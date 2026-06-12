@@ -14,6 +14,7 @@ local sh_escape = Utils.sh_escape
 local Config = require("config") ---@class HyprVimConfigModule
 local Clipboard = require("lib.clipboard") ---@class Clipboard
 local Hyprctl = require("whichkey.lib.hyprctl") ---@class HyprCtl
+local Find = require("vim.features.find") ---@class Find
 
 --- @class Items
 local Items = {}
@@ -149,9 +150,8 @@ function Items.build_register_items(sm)
     add(c, "", reg_dir .. "/" .. c)
   end
 
-  local find_state = Config.state_dir .. "/find-state.json"
-  if file_exists(find_state) then
-    local term = pread("jq -r '.find_term // \"\"' " .. sh_escape(find_state) .. " 2>/dev/null")
+  local term = Find.get_term()
+  if term ~= "" then
     local item = make_item("/", "search", term)
     if item then items[#items + 1] = item end
   end

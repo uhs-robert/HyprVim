@@ -12,6 +12,7 @@
 
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Clipboard = require("lib.clipboard") ---@class Clipboard
+local Find = require("vim.features.find") ---@class Find
 
 --- @class Registers
 --- @field enter_registers fun()  refresh REGISTERS submap binds then enter it
@@ -80,15 +81,7 @@ function Registers.load(name, on_loaded)
     if on_loaded then on_loaded() end
   end
   if name == "/" then
-    -- Read search term from find-state.json.
-    local f = io.open(require("config").state_dir .. "/find-state.json", "r")
-    local term = ""
-    if f then
-      local data = f:read("*a")
-      f:close()
-      term = data:match('"find_term"%s*:%s*"([^"]*)"') or ""
-    end
-    Clipboard.write(term)
+    Clipboard.write(Find.get_term())
     done()
     return
   end

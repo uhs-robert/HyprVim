@@ -183,6 +183,12 @@ function Find.prev_search() repeat_find("find_term", true) end
 function Find.next_char() repeat_find("char_term", false) end
 function Find.prev_char() repeat_find("char_term", true) end
 
+---Return the last document search term, or `""` if none.
+---@return string
+function Find.get_term()
+  return state_read().find_term or ""
+end
+
 ---Dismiss the active find bar and clean up till/active state.
 ---Called when leaving NORMAL mode so the app's find UI is not left open.
 function Find.deactivate()
