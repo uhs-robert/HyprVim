@@ -224,30 +224,37 @@ require("hyprvim").setup({
   keys = {
     leader = "SUPER",
     activate = "ESCAPE",
+    exit = "SHIFT + ESCAPE",
   },
   applications = {
-    terminal = "kitty --class floating-help -e",
+    terminal = "kitty",
+    term_flags = nil,                             -- add entries here for custom terminal launch flags
     lock = "hyprlock",
-    vim_editor = "nvim",                          -- `vim` or `nvim`
+    editor = "nvim",                              -- `vim` or `nvim`
     input_method = "wtype",                       -- "wtype" (default) or "paste" (escape hatch if wtype unavailable; n=1 always uses wtype)
   },
   notifications = {
     all = false,                -- Enable to bypass settings below and just enable all
-    marks = true,
+    marks = false,
+    warnings = true,
+    errors = true,
   },
   updates = {
     channel = "stable",         -- "stable" (latest release), "nightly" (git HEAD), "off", or a tag/commit SHA to pin
   },
   enable_debug = false,
+  max_count = 1000,
   which_key = {
     enabled = true,             -- This requires eww
     delay_ms = 0,               -- 0 = instant, else delayed a bit (200 gives you some breathing room)
+    vim_delay_ms = 300,
     position = "bottom-right",
     auto_show = {
       disabled = {
         "NORMAL",
         "VISUAL",
         "V-LINE",
+        "INSERT",
       },
       enabled = nil, -- nil enables all except those in disabled. You could make disabled = nil and then it would work the opposite.
     },
