@@ -142,7 +142,7 @@ end
 function Config.term_cmd(class)
   local term = Config.applications.terminal
   local user = (Config.applications.term_flags or {})[term]
-  local flags = user or TERM_FLAGS[term] or { class = "--class", exec = "-e" }
+  local flags = Utils.deep_extend({}, TERM_FLAGS[term] or { class = "--class", exec = "-e" }, user or {})
   local parts = { term }
   if flags.pre then parts[#parts + 1] = flags.pre end
   parts[#parts + 1] = flags.class .. " " .. class
