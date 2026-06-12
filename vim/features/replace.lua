@@ -15,7 +15,10 @@ local sq = require("lib.utils").sh_escape
 ---Shell snippet that selects `n` characters to the right via wtype.
 ---@param n integer
 ---@return string
-local function select_n(n) return string.rep("wtype -M shift -P right -p right -m shift; ", n) end
+local function select_n(n)
+  if n < 1 then return "" end
+  return "wtype -M shift " .. string.rep("-P right -p right ", n) .. "-m shift; "
+end
 
 ---Build the shell script that selects `n` chars then inserts `text`.
 ---Uses wtype by default; falls back to clipboard paste only when input_method="paste" and n>1.
