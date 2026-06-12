@@ -6,6 +6,7 @@ local Hypr = require("hypr") ---@class HyprVimHyprland
 local common = require("keys.submaps.common")
 
 local send = Hypr.send
+local NM = vim.motion.shortcuts.NORMAL
 local function normal() Submap.enter("NORMAL") end
 
 Submap.define({
@@ -16,11 +17,11 @@ Submap.define({
   catchall = "stay",
   binds = {
     -- stylua: ignore start
-    { "e",          function() vim.motion.send_sequence({ { "CTRL", "LEFT" }, { "CTRL", "LEFT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } }) normal() end, "Prev end of word" },
+    { "e",          function() vim.motion.send_sequence(NM.ge) normal() end, "Prev end of word" },
     { "SHIFT + t",  function() send("CTRL", "PAGE_UP")   normal() end, "Prev tab"   },
     { "t",          function() send("CTRL", "PAGE_DOWN") normal() end, "Next tab"   },
-    { "g",          function() send("CTRL", "HOME")      normal() end, "Doc start"  },
-    { "SHIFT + g",  function() send("CTRL", "END")       normal() end, "Last line"  },
+    { "g",          function() vim.motion.send_raw(NM.gg) normal() end, "Doc start"  },
+    { "SHIFT + g",  function() vim.motion.send_raw(NM.G)  normal() end, "Last line"  },
     { "m",          function() vim.count.clear() vim.marks.list() normal() end, "Marks list" },
     table.unpack(common.footer()),
     -- stylua: ignore end

@@ -17,21 +17,23 @@ local normal = Submap.switch("NORMAL")
 local va = motion.action_visual
 local vm = motion.action
 local va_seq = motion.action_seq
+local VS = motion.shortcuts.VISUAL
+local SEL = motion.shortcuts.SELECT
 
 -- ── Visual actions ────────────────────────────────────────────────────────────
 -- stylua: ignore start
 local function change_sel()    reg.handle_delete("INSERT") end
 local function delete_sel()    reg.handle_delete("NORMAL") end
 local function backspace_sel() wk.close() reg.handle_delete("NORMAL") end
-local function delete_bol()    send("SHIFT", "HOME") send("", "Delete") normal() end
+local function delete_bol()    motion.send_raw(VS.H) send("", "Delete") normal() end
 local function yank_sel()      reg.handle_yank("CTRL", "c", { collapse = true }) end
-local function yank_bol()      motion.send_sequence({ { "", "END" }, { "SHIFT", "HOME" } }) reg.handle_yank("CTRL", "c", { collapse = true }) end
+local function yank_bol()      motion.send_sequence(SEL.line_from_end) reg.handle_yank("CTRL", "c", { collapse = true }) end
 local function paste_sel()     reg.handle_paste("CTRL", "v", "NORMAL") end
-local function sel_bol()       send("SHIFT", "HOME") end
-local function sel_eol()       send("SHIFT", "END") end
-local function sel_page_down() send("SHIFT", "PAGE_DOWN") end
-local function sel_page_up()   send("SHIFT", "PAGE_UP") end
-local function sel_last_line() send("CTRL SHIFT", "END") end
+local function sel_bol()       motion.send_raw(VS.H) end
+local function sel_eol()       motion.send_raw(VS.L) end
+local function sel_page_down() motion.send_raw(VS["CTRL + e"]) end
+local function sel_page_up()   motion.send_raw(VS["CTRL + y"]) end
+local function sel_last_line() motion.send_raw(VS.G) end
 
 ---Return an action that passes a CTRL+key shortcut through without leaving visual mode.
 ---@param key string
@@ -55,8 +57,7 @@ Submap.define({
   sticky = true,
   on_enter = function() count.clear() end,
   escape = function()
-    send("", "LEFT")
-    send("", "RIGHT")
+    motion.send_sequence(SEL.deselect)
     normal()
   end,
   back = function()
@@ -166,16 +167,13 @@ local function visual_text_object(name, parent_name, objects)
   }).setup()
 end
 
-local INSIDE_WORD = { { "CTRL", "RIGHT" }, { "CTRL SHIFT", "LEFT" } }
-local AROUND_WORD = { { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } }
-local PARA_SEQ = { { "", "END" }, { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } }
-
+-- Around objects reuse the inner recipes, matching the operator submaps.
 visual_text_object("V-INSIDE", "VISUAL", {
-  { "w", INSIDE_WORD, "Word" },
-  { "p", PARA_SEQ, "Paragraph" },
+  { "w", SEL.inner_word, "Word" },
+  { "p", SEL.inner_para, "Paragraph" },
 })
 
 visual_text_object("V-AROUND", "VISUAL", {
-  { "w", AROUND_WORD, "Word" },
-  { "p", PARA_SEQ, "Paragraph" },
+  { "w", SEL.inner_word, "Word" },
+  { "p", SEL.inner_para, "Paragraph" },
 })

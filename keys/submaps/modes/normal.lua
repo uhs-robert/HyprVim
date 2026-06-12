@@ -13,6 +13,7 @@ local send = Hypr.send
 local cc = vim.count.clear_then_fn
 local vm = vim.motion.action
 local vm_seq = vim.motion.action_seq
+local SEL = vim.motion.shortcuts.SELECT
 
 -- ── Marks ─────────────────────────────────────────────────────────────────────
 -- stylua: ignore start
@@ -31,10 +32,10 @@ local function open_below_se() Hypr.send_batch({ { "", "END" }, { "SHIFT", "Retu
 local function open_above_se() Hypr.send_batch({ { "", "HOME" }, { "SHIFT", "Return" }, { "", "Up" } }, nil, function() Submap.enter("INSERT") end) end
 
 -- ── Change / delete / paste / indent ─────────────────────────────────────────
-local function change_eol()    vim.count.clear() vim.motion.send_raw({ "SHIFT", "End" }) vim.registers.handle_delete("INSERT") end
-local function delete_eol()    vim.motion.send_raw({ "SHIFT", "End" }) vim.registers.handle_delete("NORMAL") end
-local function delete_before() vim.motion.send_raw({ "SHIFT", "LEFT" },  vim.count.get()) vim.registers.handle_delete("NORMAL") end
-local function delete_under()  vim.motion.send_raw({ "SHIFT", "RIGHT" }, vim.count.get()) vim.registers.handle_delete("NORMAL") end
+local function change_eol()    vim.count.clear() vim.motion.send_raw(SEL.to_eol) vim.registers.handle_delete("INSERT") end
+local function delete_eol()    vim.motion.send_raw(SEL.to_eol) vim.registers.handle_delete("NORMAL") end
+local function delete_before() vim.motion.send_raw(SEL.prev_char, vim.count.get()) vim.registers.handle_delete("NORMAL") end
+local function delete_under()  vim.motion.send_raw(SEL.next_char, vim.count.get()) vim.registers.handle_delete("NORMAL") end
 local function paste()         vim.registers.handle_paste("CTRL", "v", "NORMAL", vim.count.get()) end
 local function indent_line()   Hypr.send_batch({ { "", "HOME" }, { "", "TAB" } }) end
 local function unindent_line() Hypr.send_batch({ { "", "HOME" }, { "SHIFT", "TAB" } }) end

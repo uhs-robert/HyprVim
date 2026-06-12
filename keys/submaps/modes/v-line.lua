@@ -14,6 +14,8 @@ local common = require("keys.submaps.common")
 local LEADER = common.keys()
 
 local send = Hypr.send
+local VS = motion.shortcuts.VISUAL
+local SEL = motion.shortcuts.SELECT
 local function normal() Submap.enter("NORMAL") end
 local function vline() Submap.enter("V-LINE") end
 
@@ -33,8 +35,7 @@ Submap.define({
   end,
   escape = function()
     lm.reset()
-    send("", "LEFT")
-    send("", "RIGHT")
+    motion.send_sequence(SEL.deselect)
     normal()
   end,
   back = "escape",
@@ -50,8 +51,8 @@ Submap.define({
       { "k",                    function() lm.up(count.get()) end,             "Up",             { repeating = true } },
       { "SHIFT + BRACKETLEFT",  function() lm.paragraph_up(count.get()) end,   "Prev paragraph" },
       { "SHIFT + BRACKETRIGHT", function() lm.paragraph_down(count.get()) end, "Next paragraph" },
-      { "CTRL + e",             function() send("SHIFT", "PAGE_DOWN") end, "Page down", { repeating = true } },
-      { "CTRL + y",             function() send("SHIFT", "PAGE_UP") end,   "Page up",   { repeating = true } },
+      { "CTRL + e",             function() motion.send_raw(VS["CTRL + e"]) end, "Page down", { repeating = true } },
+      { "CTRL + y",             function() motion.send_raw(VS["CTRL + y"]) end, "Page up",   { repeating = true } },
       { "SHIFT + g",            function() lm.goto_end() vline() end, "Last line", { repeating = true } },
       -- Undo
       { "u",       function() motion.send("u") end,          "Undo", { repeating = true } },
@@ -61,7 +62,7 @@ Submap.define({
       { "SHIFT + x", function() wk.close() lm.reset() reg.handle_delete("NORMAL") end, "BackSpace", { repeating = true } },
       { "x",         function() lm.reset() reg.handle_delete("NORMAL") end, nil, { repeating = true } },
       { "d",         function() lm.reset() reg.handle_delete("NORMAL") end, "Delete", { repeating = true } },
-      { "SHIFT + d", function() lm.reset() send("SHIFT", "HOME") send("", "Delete") normal() end, "Delete to line start" },
+      { "SHIFT + d", function() lm.reset() motion.send_raw(VS.H) send("", "Delete") normal() end, "Delete to line start" },
       { "y",         function() lm.reset() reg.handle_yank("CTRL", "c", { collapse = true }) end, "Yank", { repeating = true } },
       { "p",         function() reg.handle_paste("CTRL", "v", "NORMAL") end, "Paste", { repeating = true } },
       -- Normal shortcuts passthrough

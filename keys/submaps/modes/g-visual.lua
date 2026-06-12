@@ -2,10 +2,9 @@
 
 local Submap = require("lib.submap") ---@class HyprVimSubmap
 local vim = require("vim") ---@class Vim
-local Hypr = require("hypr") ---@class HyprVimHyprland
 local common = require("keys.submaps.common")
 
-local send = Hypr.send
+local VS = vim.motion.shortcuts.VISUAL
 local function visual() Submap.enter("VISUAL") end
 
 Submap.define({
@@ -16,9 +15,9 @@ Submap.define({
   catchall = "stay",
   binds = {
     -- stylua: ignore start
-    { "e",         function() vim.motion.send_sequence({ { "CTRL SHIFT", "LEFT" }, { "SHIFT", "LEFT" } }) visual() end, "Prev end of word" },
-    { "g",         function() send("CTRL SHIFT", "HOME") visual() end, "First line" },
-    { "SHIFT + g", function() send("CTRL SHIFT", "END")  visual() end, "Last line"  },
+    { "e",         function() vim.motion.send_sequence(VS.ge) visual() end, "Prev end of word" },
+    { "g",         function() vim.motion.send_raw(VS.gg) visual() end, "First line" },
+    { "SHIFT + g", function() vim.motion.send_raw(VS.G)  visual() end, "Last line"  },
     { "n",         vim.editor.open_from_submap(),                  "Edit in Vim (Normal)" },
     { "i",         vim.editor.open_from_submap({ insert = true }), "Edit in Vim (Insert)" },
     table.unpack(common.footer()),

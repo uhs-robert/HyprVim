@@ -8,6 +8,7 @@ local Config = require("config") ---@class HyprVimConfigModule
 local Prompt = require("lib.prompt") ---@class Prompt
 local Clipboard = require("lib.clipboard") ---@class Clipboard
 local exit_vim = require("vim.exit")
+local SEL = require("vim.lib.motion.shortcuts").SELECT
 
 --- @class Find
 local Find = {}
@@ -149,7 +150,7 @@ end
 ---@param direction string  `"forward"` or `"backward"`
 local function word_under_cursor(direction)
   hl.timer(function()
-    Hypr.send_all({ { "CTRL", "LEFT" }, { "CTRL SHIFT", "RIGHT" } })
+    Hypr.send_all(SEL.inner_word)
     hl.timer(function()
       Clipboard.read_primary_async(150, function(s)
         Hypr.send("", "RIGHT") -- deselect

@@ -27,6 +27,7 @@ local NORMAL = {
   E = { { "", "RIGHT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } },
   b = { "CTRL", "LEFT" },
   B = { "CTRL", "LEFT" },
+  ge = { { "CTRL", "LEFT" }, { "CTRL", "LEFT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } },
   -- Line boundaries
   ["0"] = { "", "HOME" },
   ["_"] = { "", "HOME" },
@@ -69,24 +70,37 @@ local VISUAL = {
   E = { "CTRL SHIFT", "RIGHT" },
   b = { "CTRL SHIFT", "LEFT" },
   B = { "CTRL SHIFT", "LEFT" },
+  ge = { { "CTRL SHIFT", "LEFT" }, { "SHIFT", "LEFT" } },
+  -- Document boundaries
+  gg = { "CTRL SHIFT", "HOME" },
+  G = { "CTRL SHIFT", "END" },
+  -- Page (CTRL+f/b stay app passthroughs in the visual submaps)
+  ["CTRL + e"] = { "SHIFT", "PAGE_DOWN" },
+  ["CTRL + y"] = { "SHIFT", "PAGE_UP" },
 }
 
----Selection recipes for the operator submaps (semantic names, not vim keys).
+---Selection recipes for the operator/visual submaps (semantic names, not vim keys).
 ---inner_word's right-left bounce normalizes the caret to the current word's start
----so failure modes stay forward of the caret, vim's bias.
+---so failure modes stay forward of the caret, vim's bias. inner_para's leading END
+---does the same for paragraphs: CTRL+UP from a paragraph's first line would jump
+---to the previous paragraph.
 ---@type table<string, ShortcutOrSeq>
 -- stylua: ignore
 local SELECT = {
-  next_word  = VISUAL.w,
-  prev_word  = VISUAL.b,
-  word_end   = { { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" } },
-  to_eol     = { "SHIFT", "End" },
-  to_bol     = { "SHIFT", "Home" },
-  first_line = { "CTRL SHIFT", "HOME" },
-  last_line  = { "CTRL SHIFT", "END" },
-  line       = { { "", "HOME" }, { "SHIFT", "End" } },
-  inner_word = { { "CTRL", "RIGHT" }, { "CTRL", "LEFT" }, VISUAL.w },
-  inner_para = { { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } },
+  next_word     = VISUAL.w,
+  prev_word     = VISUAL.b,
+  next_char     = { "SHIFT", "RIGHT" },
+  prev_char     = { "SHIFT", "LEFT" },
+  word_end      = { { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" } },
+  to_eol        = { "SHIFT", "End" },
+  to_bol        = { "SHIFT", "Home" },
+  first_line    = VISUAL.gg,
+  last_line     = VISUAL.G,
+  line          = { { "", "HOME" }, { "SHIFT", "End" } },
+  line_from_end = { { "", "END" }, { "SHIFT", "HOME" } },
+  inner_word    = { { "CTRL", "RIGHT" }, { "CTRL", "LEFT" }, VISUAL.w },
+  inner_para    = { { "", "END" }, { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } },
+  deselect      = { { "", "LEFT" }, { "", "RIGHT" } },
 }
 
 return { NORMAL = NORMAL, VISUAL = VISUAL, TERM_KEYSYMS = TERM_KEYSYMS, SELECT = SELECT }
