@@ -2,7 +2,7 @@
 -- Internal dispatch primitives. Required by vim/init.lua; not called directly from submaps.
 
 --- @class VimLib
-VimLib = {}
+local VimLib = {}
 
 VimLib.count = require("vim.lib.count")
 VimLib.hypr = require("hypr")
