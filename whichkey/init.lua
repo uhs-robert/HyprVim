@@ -16,9 +16,9 @@ local WhichKey = {}
 --- @type fun(submap: string, screen?: string)
 WhichKey.show = Render.show
 
---- Hide the HUD.
+--- Hide the HUD (no-op when already hidden, to avoid a shell fork).
 --- @type fun()
-WhichKey.close = Render.close
+WhichKey.close = Render.close_if_visible
 
 --- Write a one-shot skip flag consumed by the listener on the next submap entry.
 --- @type fun(target?: string)

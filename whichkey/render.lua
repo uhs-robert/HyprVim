@@ -64,6 +64,11 @@ function Render.close()
   os.execute("(" .. table.concat(parts, "; ") .. ") &")
 end
 
+--- Close the HUD only when it is visible, avoiding a shell fork when hidden.
+function Render.close_if_visible()
+  if file_exists(Render.state_dir .. "/whichkey-visible") then Render.close() end
+end
+
 --- Toggle the HUD: close if visible, otherwise show the current submap (or GLOBAL).
 function Render.toggle()
   if file_exists(Render.state_dir .. "/whichkey-visible") then
