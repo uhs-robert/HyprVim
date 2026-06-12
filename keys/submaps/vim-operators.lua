@@ -126,7 +126,7 @@ Submap.define({
       { "SHIFT + 4", function() count.clear() motion.send_raw(SEL.to_eol) del("NORMAL")() end, "End of line"   },
       { "SHIFT + 6", function() count.clear() motion.send_raw(SEL.to_bol) del("NORMAL")() end, "Start of line" },
       { "0",         function() count.clear() motion.send_raw(SEL.to_bol) del("NORMAL")() end, "Start of line" },
-      { "m",         function() count.clear() vim.marks.enter_delete() end, "+Delete Mark" },
+      { "m",         function() count.clear() vim.marks.set_after("NORMAL") vim.marks.enter_delete() end, "+Delete Mark" },
       { "i",         function() Submap.enter("DELETE-INSIDE") end, "+Inner" },
       { "SHIFT + i", function() Submap.enter("DELETE-INSIDE") end },
       { "a",         function() Submap.enter("DELETE-AROUND") end, "+Around" },

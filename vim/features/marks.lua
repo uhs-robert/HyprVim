@@ -8,6 +8,7 @@ local Config = require("config") ---@class HyprVimConfigModule
 local Utils = require("lib.utils") ---@class HyprVimUtils
 
 --- @class Marks
+--- @field enter_set    fun()  enter the SET-MARK submap
 --- @field enter_jump   fun()  refresh MARKS submap binds then enter it
 --- @field enter_delete fun()  refresh DELETE-MARK submap binds then enter it
 local Marks = {}
@@ -87,9 +88,10 @@ end
 
 ---Read the stored after-submap, remove the state file, and switch to that mode.
 ---A `"reset"` target means a full vim exit (clipboard restore + submap reset).
+---Missing file (submap entered from a global bind, outside vim) defaults to `"reset"`.
 function Marks.dispatch_after()
   local f = io.open(after_path(), "r")
-  local target = "NORMAL"
+  local target = "reset"
   if f then
     target = f:read("*a"):gsub("%s+$", "")
     f:close()

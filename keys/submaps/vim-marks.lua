@@ -107,6 +107,7 @@ mark_submap("SET-MARK", function(c) marks.set(c) end, "marks.exit", false)
 local refresh_jump = mark_submap("MARKS", function(c) marks.jump(c) end, "marks.exit", true)
 local refresh_delete = mark_submap("DELETE-MARK", function(c) marks.delete(c) end, "marks.exit", true)
 
+marks.enter_set = function() Submap.enter("SET-MARK") end
 marks.enter_jump = function()
   if refresh_jump then refresh_jump() end
   Submap.enter("MARKS")

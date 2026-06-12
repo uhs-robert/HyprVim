@@ -7,15 +7,16 @@ local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
 local common = require("keys.submaps.common")
 
+-- Return to origin: NORMAL in the vim flow, reset when entered from a global bind.
 local function set(name)
   reg.set_pending(name)
-  Submap.enter("NORMAL")
+  Submap.back()
 end
 
 Submap.define({
   name = "REGISTERS",
   on_enter = function() vim.count.clear() end,
-  escape = "NORMAL",
+  escape = "previous",
   catchall = "stay",
   binds = function()
     local result = {}
