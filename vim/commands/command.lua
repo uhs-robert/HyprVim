@@ -5,14 +5,9 @@ local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
 local Updater = require("lib.updater") ---@class Updater
 local Prompt = require("lib.prompt") ---@class Prompt
+local Callback = require("lib.callback") ---@class Callback
 
 local Command = {} --- @class Command
-
-local _cb_id = 0
-local function next_cb_name()
-  _cb_id = _cb_id + 1
-  return "_hv_cmd_cb_" .. _cb_id
-end
 
 local sq = require("lib.utils").sh_escape
 
@@ -38,14 +33,9 @@ end
 ---@return true
 local function show_help()
   local help_file = Config.install_dir .. "/docs/command-help.md"
-  local cb_name = next_cb_name()
-  _G[cb_name] = function()
-    _G[cb_name] = nil
-    restore_submap()
-  end
   Hypr.cmd_then_dispatch(
     Config.term_cmd("hyprvim-help") .. " bash -c " .. sq(Config.applications.editor .. " -RM " .. help_file),
-    cb_name .. "()"
+    Callback.register(restore_submap)
   )()
   return true
 end
@@ -234,11 +224,6 @@ local function execute(cmd)
 
   local shell_cmd = cmd:match("^!(.+)$")
   if shell_cmd then
-    local cb_name = next_cb_name()
-    _G[cb_name] = function()
-      _G[cb_name] = nil
-      restore_submap()
-    end
     Hypr.cmd_then_dispatch(
       Config.term_cmd("hyprvim-shell")
         .. " bash -c "
@@ -249,7 +234,7 @@ local function execute(cmd)
             .. " [ -s \"$_hv_tmp\" ] && { echo; read -rsn1 -p '[done] press any key...'; };"
             .. ' rm -f "$_hv_tmp"'
         ),
-      cb_name .. "()"
+      Callback.register(restore_submap)
     )()
     return true
   end

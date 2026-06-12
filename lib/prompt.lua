@@ -6,11 +6,10 @@
 
 local Config = require("config") ---@class HyprVimConfigModule
 local Hypr = require("hypr") ---@class HyprVimHyprland
+local Callback = require("lib.callback") ---@class Callback
 
 --- @class Prompt
 local Prompt = {}
-
-local _cb_id = 0
 
 local sq = require("lib.utils").sh_escape
 
@@ -80,22 +79,19 @@ end
 ---@param opts     {wm_class?: string, completions?: string[]}
 ---@param callback fun(result: string|nil)
 function Prompt.async(label, opts, callback)
-  _cb_id = _cb_id + 1
-  local cb_name = "_hv_prompt_cb_" .. _cb_id
   local state_file = os.tmpname()
 
-  _G[cb_name] = function()
+  local dispatch = Callback.register(function()
     local f = io.open(state_file, "r")
     local result = f and f:read("*a"):gsub("%s+$", "") or ""
     if f then
       f:close()
       os.remove(state_file)
     end
-    _G[cb_name] = nil
     callback(result ~= "" and result or nil)
-  end
+  end)
 
-  Hypr.cmd_then_dispatch(build_cmd(label, opts, state_file), cb_name .. "()")()
+  Hypr.cmd_then_dispatch(build_cmd(label, opts, state_file), dispatch)()
 end
 
 return Prompt
