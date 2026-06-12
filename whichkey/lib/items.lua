@@ -154,7 +154,7 @@ function Items.resolve(submap)
   local function fetch()
     return Items.build_mark_items(submap) or Items.build_register_items(submap) or Hyprctl.build_items(submap) or "[]"
   end
-  local tmp = Config.state_dir .. "/whichkey-items." .. tostring(math.random(1e9))
+  local tmp = os.tmpname()
   local items = fetch()
   write_file(tmp, items)
   local count = tonumber(pread("jq -c 'length' " .. sh_escape(tmp) .. " 2>/dev/null")) or 0

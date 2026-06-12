@@ -6,8 +6,6 @@ local dir = script_path:match("(.*/)") or "./"
 local root = dir .. "../"
 package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
 
-math.randomseed(os.time())
-
 local Utils = require("lib.utils") ---@class HyprVimUtils
 local read_file = Utils.read_file
 local write_file = Utils.write_file
