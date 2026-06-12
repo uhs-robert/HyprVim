@@ -64,19 +64,13 @@ function Clipboard.write_primary(text) write_selection("--primary ", text) end
 ---Save the current clipboard so it can be restored when vim mode exits.
 ---Called once when entering NORMAL from the reset (non-vim) state.
 function Clipboard.save_pre_vim()
-  local path = os.tmpname()
-  Hypr.exec("wl-paste --no-newline 2>/dev/null >'" .. path .. "' || true")
-  hl.timer(function()
-    local f = io.open(path, "r")
-    local content = f and (f:read("*a") or "") or ""
-    if f then f:close() end
-    os.remove(path)
+  read_selection("", 50, function(content)
     local out = io.open(Clipboard.pre_vim_path(), "w")
     if out then
       out:write(content)
       out:close()
     end
-  end, { timeout = 100, type = "oneshot" })
+  end)
 end
 
 ---Restore the clipboard saved by save_pre_vim(). Called on vim exit.
