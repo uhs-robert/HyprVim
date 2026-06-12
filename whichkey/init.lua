@@ -31,22 +31,6 @@ WhichKey.set_delay = Render.set_delay
 --- Toggle the HUD for the current submap.
 --- Spawns render.lua as a subprocess to avoid blocking Hyprland's Lua event loop.
 function WhichKey.toggle()
-  local state_dir = Render.state_dir
-  local vf = io.open(state_dir .. "/whichkey-visible", "r")
-  if vf then
-    vf:close()
-    Render.close()
-    return
-  end
-
-  local f = io.open(state_dir .. "/current-submap", "r")
-  local current = f and f:read("*a"):gsub("%s+$", "") or ""
-  if f then f:close() end
-  local target = (current ~= "" and current ~= "reset") and current or "GLOBAL"
-
-  local mon = hl.get_active_monitor and hl.get_active_monitor()
-  local screen = (mon and mon.name) or ""
-
   local cfg = require("config")
   local position = (cfg.which_key and cfg.which_key.position) or "bottom-right"
 
@@ -55,11 +39,7 @@ function WhichKey.toggle()
       .. sh_escape(position)
       .. " lua "
       .. sh_escape(dir .. "render.lua")
-      .. " "
-      .. sh_escape(target)
-      .. " "
-      .. sh_escape(screen)
-      .. ") &"
+      .. " info) &"
   )
 end
 
