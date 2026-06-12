@@ -23,25 +23,20 @@ local function close_workspace_windows(kill)
   end
 end
 
----Switch back to the active submap after an async operation suspends vim mode.
-local function restore_submap()
-  local current = require("lib.submap").current
-  if current and current ~= "reset" then require("hypr").switch_mode(current) end
-end
-
 ---Show a formatted command reference in a floating terminal.
+---@param restore fun()  re-enters the originating submap when the terminal closes
 ---@return true
-local function show_help()
+local function show_help(restore)
   local help_file = Config.install_dir .. "/docs/command-help.md"
   Hypr.cmd_then_dispatch(
     Config.term_cmd("hyprvim-help") .. " bash -c " .. sq(Config.applications.editor .. " -RM " .. help_file),
-    Callback.register(restore_submap)
+    Callback.register(restore)
   )()
   return true
 end
 
----Exact-match dispatch table: command string -> handler.
----@type table<string, fun()>
+---Exact-match dispatch table: command string -> handler(restore).
+---@type table<string, fun(restore: fun()): true?>
 -- stylua: ignore start
 local commands = {
   w      = function() Hypr.send("CTRL", "S") end,
@@ -204,12 +199,13 @@ end
 
 ---Look up and run a command string against the dispatch tables and special prefixes.
 ---@param cmd string  raw input from the prompt (may have leading/trailing whitespace)
+---@param restore fun()  re-enters the originating submap (passed to async commands)
 ---@return true|nil  true if the command dispatched an async operation
-local function execute(cmd)
+local function execute(cmd, restore)
   cmd = cmd:gsub("^%s+", ""):gsub("%s+$", "")
 
   local fn = commands[cmd]
-  if fn then return fn() end
+  if fn then return fn(restore) end
 
   local name, args = cmd:match("^(%S+)%s+(.*)")
   if name then
@@ -234,7 +230,7 @@ local function execute(cmd)
             .. " [ -s \"$_hv_tmp\" ] && { echo; read -rsn1 -p '[done] press any key...'; };"
             .. ' rm -f "$_hv_tmp"'
         ),
-      Callback.register(restore_submap)
+      Callback.register(restore)
     )()
     return true
   end
@@ -254,7 +250,7 @@ function Command.prompt()
         return
       end
       hl.timer(function()
-        if not execute(cmd) then restore() end
+        if not execute(cmd, restore) then restore() end
       end, { timeout = 50, type = "oneshot" })
     end)
   end, { timeout = 100, type = "oneshot" })
