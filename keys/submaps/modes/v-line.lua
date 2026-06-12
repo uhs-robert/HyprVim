@@ -18,6 +18,7 @@ local VS = motion.shortcuts.VISUAL
 local SEL = motion.shortcuts.SELECT
 local function normal() Submap.enter("NORMAL") end
 local function vline() Submap.enter("V-LINE") end
+local function visual() Submap.enter("VISUAL") end
 
 local footer = common.footer()
 
@@ -46,6 +47,8 @@ Submap.define({
       -- Editor
       { LEADER .. " + n", vim.editor.open_from_submap(),                  "Edit in Vim (Normal)" },
       { LEADER .. " + i", vim.editor.open_from_submap({ insert = true }), "Edit in Vim (Insert)" },
+      -- Mode switches
+      { "v", function() lm.reset() send("SHIFT", "HOME") visual() end, "Visual mode" },
       -- Motions
       { "j",                    function() lm.down(count.get()) end,           "Down",           { repeating = true } },
       { "k",                    function() lm.up(count.get()) end,             "Up",             { repeating = true } },
