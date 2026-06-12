@@ -88,26 +88,63 @@ If you'd like an extra config added, raise a feature request or put one together
 
 ### Prerequisites
 
-| Name                                           | Description                                                           |
-| ---------------------------------------------- | --------------------------------------------------------------------- |
-| [Hyprland](https://github.com/hyprwm/Hyprland) | Wayland compositor                                                    |
-| Bash                                           | For shell scripts                                                     |
-| `wl-clipboard`                                 | Wayland clipboard utilities (`wl-copy`, `wl-paste`)                   |
-| `wtype`                                        | Wayland keyboard input emulation (used by open-editor copy/paste)     |
-| `jq`                                           | JSON processor for parsing hyprctl output                             |
-| A terminal emulator                            | For the `command-mode`, `replace-mode`, `find-mode`, and `help`       |
-| `eww` _(optional)_                             | Widget system for the which-key HUD                                   |
-| `socat` _(optional)_                           | Required by the which-key daemon to listen on Hyprland's event socket |
+| Name                                           | Description                                                       |
+| ---------------------------------------------- | ----------------------------------------------------------------- |
+| [Hyprland](https://github.com/hyprwm/Hyprland) | Wayland compositor                                                |
+| `wl-clipboard`                                 | Wayland clipboard utilities (`wl-copy`, `wl-paste`)               |
+| `wtype`                                        | Wayland keyboard input emulation (used by open-editor copy/paste) |
+| A terminal emulator                            | For the `command-mode`, `replace-mode`, `find-mode`, and `help`   |
+| `eww` _(optional)_                             | Widget system for the which-key HUD                               |
+| `jq` _(optional)_                              | Required by the which-key HUD                                     |
+| `socat` _(optional)_                           | Required by the which-key HUD daemon                              |
 
-### Quick Install
+### AUR Install (Recommended)
 
-#### 1. Install HyprVim to `~/.local/share` and create a shim in your Hyprland plugins directory
+> [!WARNING]
+> HyprVim is currently installed manually.
+>
+> AUR package is planned. Arch users who prefer package-manager ownership should wait.
+>
+> You won't wait long, this is something that will be released in the next 24 hours if you're reading this.
+
+Install `hyprvim` from the AUR with your preferred helper:
+
+```bash
+paru -S hyprvim
+# or
+yay -S hyprvim
+```
+
+Create a shim in your Hyprland lua plugins directory:
+
+```bash
+mkdir -p ~/.config/hypr/lua/plugins/hyprvim
+
+cat > ~/.config/hypr/lua/plugins/hyprvim/init.lua <<'EOF'
+-- Hyprvim bootstrap
+local chunk, err = loadfile('/usr/share/hyprvim/init.lua')
+
+if not chunk then
+  error(err)
+end
+
+return chunk()
+EOF
+```
+
+Then continue with [Load HyprVim](#load-hyprvim).
+
+### Manual Install
+
+Manual git-checkout installs also need `git`, `curl`, and `jq` for the built-in updater. Update notifications use `notify-send` when available and fall back to a passive Hyprland notification.
+
+Install HyprVim to `~/.local/share` and create a shim in your Hyprland lua plugins directory:
 
 ```bash
 git clone https://github.com/uhs-robert/hyprvim \
   ~/.local/share/hyprland/lua/plugins/hyprvim
 
-mkdir -p ~/.config/hypr/lua/plugins
+mkdir -p ~/.config/hypr/lua/plugins/hyprvim
 
 cat > ~/.config/hypr/lua/plugins/hyprvim/init.lua <<'EOF'
 -- Hyprvim bootstrap
@@ -124,27 +161,31 @@ return chunk()
 EOF
 ```
 
-#### 2. Load HyprVim in your `~/.config/hypr/hyprland.lua`
+### Load HyprVim
 
-```bash
+Add HyprVim to your `~/.config/hypr/hyprland.lua`:
+
+```lua
 require("lua/plugins/hyprvim").setup()
 ```
 
 > [!TIP]
 > You may also pass a table of [configuration settings](#️-configuration) to customize your experience.
 
-#### 3. Save and reload your Hyprland config
+Save and reload your Hyprland config:
 
 ```bash
 hyprctl reload
 ```
 
 > [!TIP]
-> **Verify installation**: Press `SUPER + ESC` and you should enter **NORMAL** mode. Press `gh` to view help.
+> **Verify installation**: Press `SUPER + ESC` and you should enter **NORMAL** mode.
 
 ## 🔄 Staying Updated
 
-HyprVim checks for updates on every Hyprland reload and notifies you via your desktop notification daemon. Clicking the notification applies the update and reloads automatically.
+Package-managed installs handle updates through pacman or your AUR helper, you may update HyprVim as you would any package in your package manager.
+
+For git-checkout installs, HyprVim checks for updates on every Hyprland reload and notifies you via your desktop notification daemon. Clicking the notification applies the update and reloads automatically.
 
 You can also run `:update` at any time from NORMAL mode to apply manually.
 
