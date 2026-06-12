@@ -58,6 +58,7 @@ local function last_line()      vim.count.clear() send("CTRL", "END") end
 local function backspace_move() wk.close() vim.motion.send("h") end
 local function escape_gui()     vim.count.clear() send("", "ESCAPE") end
 local function escape_normal()  vim.count.clear() wk.close() vim.find.deactivate() Hypr.send("", "Escape", "activewindow") end
+local function alt_passthrough(key) return function() send("ALT", key) end end
 -- stylua: ignore end
 
 Submap.define({
@@ -192,10 +193,10 @@ Submap.define({
       { "q",           escape_gui },
       { "CTRL + q",    Submap.switch("NORMAL") },
       { "CTRL + c",    escape_gui },
-      { "ALT + h",     vm("ALT + h") },
-      { "ALT + j",     vm("ALT + j") },
-      { "ALT + k",     vm("ALT + k") },
-      { "ALT + l",     vm("ALT + l") },
+      { "ALT + h",     alt_passthrough("h") },
+      { "ALT + j",     alt_passthrough("j") },
+      { "ALT + k",     alt_passthrough("k") },
+      { "ALT + l",     alt_passthrough("l") },
 
       -- Escape (non-consuming: sends Escape to the active window)
       { "ESCAPE", escape_normal, "Escape", { non_consuming = true } },
