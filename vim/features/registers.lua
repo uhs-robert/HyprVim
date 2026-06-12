@@ -93,8 +93,7 @@ function Registers.load(name, on_loaded)
     return
   end
   if name == "+" then
-    local path = require("config").state_dir .. "/clipboard_pre_vim"
-    local f = io.open(path, "r")
+    local f = io.open(Clipboard.pre_vim_path(), "r")
     local content = f and (f:read("*a") or "") or ""
     if f then f:close() end
     if content ~= "" then Clipboard.write(content) end
@@ -149,7 +148,7 @@ function Registers.handle_yank(mods, key, return_mode)
       if reg ~= "0" then reg_write("0", content) end
       if reg == "+" then
         -- Persist to pre-vim file so content survives vim exit via restore_pre_vim.
-        local f2 = io.open(require("config").state_dir .. "/clipboard_pre_vim", "w")
+        local f2 = io.open(Clipboard.pre_vim_path(), "w")
         if f2 then
           f2:write(content)
           f2:close()
@@ -196,7 +195,7 @@ function Registers.handle_delete(return_mode)
       reg_write("1", content)
       reg_write(reg, content)
       if reg == "+" then
-        local f2 = io.open(require("config").state_dir .. "/clipboard_pre_vim", "w")
+        local f2 = io.open(Clipboard.pre_vim_path(), "w")
         if f2 then
           f2:write(content)
           f2:close()

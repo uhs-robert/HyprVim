@@ -7,6 +7,7 @@ local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
 local config = require("config") ---@class HyprVimConfigModule
 local common = require("keys.submaps.common")
+local Clipboard = require("lib.clipboard") ---@class Clipboard
 
 local reg_dir = config.state_dir .. "/registers"
 local find_state_path = config.state_dir .. "/find-state.json"
@@ -48,7 +49,7 @@ Submap.define({
 
     local unnamed_preview = reg_preview(reg_dir .. '/"')
     local yank_preview = reg_preview(reg_dir .. "/0")
-    local pre_vim_preview = reg_preview(config.state_dir .. "/clipboard_pre_vim")
+    local pre_vim_preview = reg_preview(Clipboard.pre_vim_path())
 
     local term = nil
     local f = io.open(find_state_path, "r")

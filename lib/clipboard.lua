@@ -7,7 +7,7 @@ local Hypr = require("hypr") ---@class HyprVimHyprland
 
 local Clipboard = {} ---@class Clipboard
 
-local function pre_vim_path() return require("config").state_dir .. "/clipboard_pre_vim" end
+function Clipboard.pre_vim_path() return require("config").state_dir .. "/clipboard_pre_vim" end
 
 -- Time for a spawned wl-paste to finish writing its tmpfile.
 local SETTLE_MS = 50
@@ -71,7 +71,7 @@ function Clipboard.save_pre_vim()
     local content = f and (f:read("*a") or "") or ""
     if f then f:close() end
     os.remove(path)
-    local out = io.open(pre_vim_path(), "w")
+    local out = io.open(Clipboard.pre_vim_path(), "w")
     if out then
       out:write(content)
       out:close()
@@ -81,11 +81,11 @@ end
 
 ---Restore the clipboard saved by save_pre_vim(). Called on vim exit.
 function Clipboard.restore_pre_vim()
-  local f = io.open(pre_vim_path(), "r")
+  local f = io.open(Clipboard.pre_vim_path(), "r")
   if not f then return end
   local content = f:read("*a") or ""
   f:close()
-  os.remove(pre_vim_path())
+  os.remove(Clipboard.pre_vim_path())
   if content ~= "" then Clipboard.write(content) end
 end
 

@@ -12,6 +12,7 @@ local pread = Utils.pread
 local sh_escape = Utils.sh_escape
 
 local Config = require("config") ---@class HyprVimConfigModule
+local Clipboard = require("lib.clipboard") ---@class Clipboard
 local Hyprctl = require("whichkey.lib.hyprctl") ---@class HyprCtl
 
 --- @class Items
@@ -126,7 +127,7 @@ function Items.build_register_items(sm)
 
   local function trim(s) return s:gsub("[\n\t\r]", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "") end
 
-  local pre_vim_path = Config.state_dir .. "/clipboard_pre_vim"
+  local pre_vim_path = Clipboard.pre_vim_path()
   if file_exists(pre_vim_path) then
     local f = io.open(pre_vim_path, "r")
     local content = trim(f and (f:read(50) or "") or "")
