@@ -1,4 +1,5 @@
 local Submap = require("lib.submap") ---@class HyprVimSubmap
+local sh_escape = require("lib.utils").sh_escape
 
 local DEFAULT_DELAY_MS = 20
 
@@ -152,7 +153,9 @@ function Hyprland.notify(msg, icon, time_ms, color)
   local icon_id = NOTIFY_ICONS[icon or "info"] or NOTIFY_ICONS.info
   time_ms = time_ms or 3000
   color = color or "0"
-  hl.dispatch(hl.dsp.exec_cmd(string.format("hyprctl notify %d %d %s %q", icon_id, time_ms, color, "HyprVim: " .. msg)))
+  hl.dispatch(
+    hl.dsp.exec_cmd(string.format("hyprctl notify %d %d %s %s", icon_id, time_ms, color, sh_escape("HyprVim: " .. msg)))
+  )
 end
 
 --- Reload Hyprland config.
