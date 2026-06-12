@@ -109,40 +109,43 @@ function Items.build_register_items(sm)
     return s
   end
 
-  local function make_item(key, prefix, content)
-    if content == "" then return nil end
-    local desc = prefix ~= "" and ("[" .. prefix .. "] " .. content) or content
-    if #desc > 45 then
-      desc = trim_partial_utf8(desc:sub(1, 42)) .. "..."
+  local function make_item(key, prefix, content, fallback)
+    local desc
+    if content ~= "" then
+      desc = prefix ~= "" and ("[" .. prefix .. "] " .. content) or content
+      if #desc > 45 then
+        desc = trim_partial_utf8(desc:sub(1, 42)) .. "..."
+      else
+        desc = trim_partial_utf8(desc)
+      end
+    elseif fallback then
+      desc = fallback
     else
-      desc = trim_partial_utf8(desc)
+      return nil
     end
     return '{"key":"' .. json_escape(key) .. '","desc":"' .. json_escape(desc) .. '","class":""}'
   end
 
   local items = {}
-  local function add(k, p, path)
-    local item = make_item(k, p, reg_read(path))
+  local function add(k, p, path, fallback)
+    local item = make_item(k, p, reg_read(path), fallback)
     if item then items[#items + 1] = item end
   end
 
   local function trim(s) return s:gsub("[\n\t\r]", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "") end
 
   local pre_vim_path = Clipboard.pre_vim_path()
-  if file_exists(pre_vim_path) then
-    local f = io.open(pre_vim_path, "r")
-    local content = trim(f and (f:read(50) or "") or "")
-    if f then f:close() end
-    local item = make_item("PLUS", "system", content)
-    if item then items[#items + 1] = item end
-  end
+  local pre_vim_f = io.open(pre_vim_path, "r")
+  local pre_vim = trim(pre_vim_f and (pre_vim_f:read(50) or "") or "")
+  if pre_vim_f then pre_vim_f:close() end
+  items[#items + 1] = make_item("PLUS", "system", pre_vim, "System clipboard")
 
   local primary = trim(pread("wl-paste --primary --no-newline 2>/dev/null"))
-  local primary_item = make_item("ASTERISK", "primary", primary)
-  if primary_item then items[#items + 1] = primary_item end
+  items[#items + 1] = make_item("ASTERISK", "primary", primary, "Primary selection")
 
-  add('"', "default", reg_dir .. '/"')
-  add("0", "yank", reg_dir .. "/0")
+  add('"', "default", reg_dir .. '/"', "Unnamed register (default)")
+  add("0", "yank", reg_dir .. "/0", "Yank register (last yank)")
+  items[#items + 1] = make_item("_", "", "", "Black hole register")
   for _, n in ipairs({ "1", "2", "3", "4", "5", "6", "7", "8", "9" }) do
     add(n, "del", reg_dir .. "/" .. n)
   end
@@ -150,11 +153,7 @@ function Items.build_register_items(sm)
     add(c, "", reg_dir .. "/" .. c)
   end
 
-  local term = Find.get_term()
-  if term ~= "" then
-    local item = make_item("/", "search", term)
-    if item then items[#items + 1] = item end
-  end
+  items[#items + 1] = make_item("/", "search", Find.get_term(), "Search register")
 
   if #items == 0 then return nil end
   return "[" .. table.concat(items, ",") .. "]"
