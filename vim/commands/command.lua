@@ -14,9 +14,7 @@ local function next_cb_name()
   return "_hv_cmd_cb_" .. _cb_id
 end
 
----@param s string
----@return string
-local function sq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
+local sq = require("lib.utils").sh_escape
 
 ---Close or kill every window in the active workspace.
 ---@param kill boolean  true -> kill (SIGKILL), false -> graceful close

@@ -4,6 +4,23 @@
 
 local TERM_CLASS = "hyprvim-open-vim"
 
+-- Bootstrap package.path from this script's real location so lib/ modules resolve.
+do
+  local p = io.popen("readlink -f '" .. (arg[0] or ""):gsub("'", "'\\''") .. "' 2>/dev/null")
+  local path = p and p:read("*a"):gsub("%s+$", "") or ""
+  if p then p:close() end
+  local root = path:match("^(.*)/scripts/[^/]+$")
+  if root then package.path = root .. "/?.lua;" .. package.path end
+end
+
+local ok_utils, Utils = pcall(require, "lib.utils")
+if not ok_utils then
+  io.stderr:write("Error: cannot locate hyprvim lib/ modules\n")
+  os.exit(1)
+end
+
+local sq = Utils.sh_escape
+
 --- Runtime configuration populated by CLI argument parsing.
 --- @class Cfg
 --- @field copy_sel boolean Pre-fill the scratch file with the current selection
@@ -24,11 +41,6 @@ local cfg = {
   editor = os.getenv("EDITOR") or "nvim",
   tmpdir = (os.getenv("XDG_CACHE_HOME") or (os.getenv("HOME") .. "/.cache")) .. "/hyprvim/open-vim",
 }
-
---- Single-quote a string for safe shell interpolation.
---- @param s string|number
---- @return string
-local function sq(s) return "'" .. tostring(s):gsub("'", "'\\''") .. "'" end
 
 --- Run a shell command and return its stdout with trailing whitespace stripped.
 --- Stderr is suppressed.
@@ -201,9 +213,6 @@ end
 --- @return string  e.g. "kitty --class hyprvim-open-vim -e"
 local function build_term_cmd()
   if cfg.terminal == "" then die("No terminal specified. Set $TERMINAL or use --term") end
-  local script_path = pread("readlink -f " .. sq(arg[0] or ""))
-  local root = script_path:match("^(.*)/scripts/[^/]+$")
-  if root then package.path = root .. "/?.lua;" .. package.path end
   local ok, Config = pcall(require, "config")
   if ok then
     Config.setup({ applications = { terminal = cfg.terminal } })

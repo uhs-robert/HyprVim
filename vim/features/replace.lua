@@ -9,10 +9,7 @@ local Prompt = require("lib.prompt") ---@class Prompt
 --- @class ReplaceModule
 local Replace = {}
 
----Shell-escape `s` for use in a single-quoted argument.
----@param s string
----@return string
-local function sq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
+local sq = require("lib.utils").sh_escape
 
 ---Shell snippet that selects `n` characters to the right via wtype.
 ---@param n integer

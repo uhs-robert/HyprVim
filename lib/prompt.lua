@@ -12,10 +12,7 @@ local Prompt = {}
 
 local _cb_id = 0
 
----Shell-escape `s` for use in a single-quoted argument.
----@param s string
----@return string
-local function sq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
+local sq = require("lib.utils").sh_escape
 
 ---Build the terminal command that displays a prompt and writes input to state_file.
 ---@param label      string    prompt label shown to the user
