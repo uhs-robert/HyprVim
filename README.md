@@ -90,10 +90,10 @@ If you'd like an extra config added, raise a feature request or put one together
 | `wtype`                                        | Wayland keyboard input emulation (used by open-editor copy/paste) |
 | A terminal emulator                            | For the `command-mode`, `replace-mode`, `find-mode`, and `help`   |
 | `eww` _(optional)_                             | Widget system for the which-key HUD                               |
-| `jq` _(optional)_                              | Required by the which-key HUD                                     |
+| `jq` _(optional)_                              | Required by the which-key HUD and manual-install updater          |
 | `socat` _(optional)_                           | Required by the which-key HUD daemon                              |
 
-### AUR Install (Recommended)
+### AUR Install (Coming Soon)
 
 > [!WARNING]
 > HyprVim is currently installed manually.
@@ -102,7 +102,7 @@ If you'd like an extra config added, raise a feature request or put one together
 >
 > You won't wait long, this is something that will be released in the next 24 hours if you're reading this.
 
-Install `hyprvim` from the AUR with your preferred helper:
+Once the package is published, install `hyprvim` from the AUR with your preferred helper:
 
 ```bash
 paru -S hyprvim
@@ -178,11 +178,11 @@ hyprctl reload
 
 ## 🔄 Staying Updated
 
-Package-managed installs handle updates through pacman or your AUR helper, you may update HyprVim as you would any package in your package manager.
+Package-managed installs handle updates through pacman or your AUR helper. Update HyprVim as you would any package in your package manager.
 
 For git-checkout installs, HyprVim checks for updates on every Hyprland reload and notifies you via your desktop notification daemon. Clicking the notification applies the update and reloads automatically.
 
-You can also run `:update` at any time from NORMAL mode to apply manually.
+Manual git-checkout users can also run `:update` at any time from NORMAL mode to apply manually. Package-managed installs should use pacman or an AUR helper instead.
 
 The default channel is `"stable"` (latest GitHub release). Configure it in your `setup()` call:
 
@@ -199,7 +199,7 @@ updates = {
 > [!NOTE]
 > Update notifications require `notify-send` (libnotify) and a compatible notification daemon (dunst, mako, or swaync).
 >
-> Without one of those, a passive Hyprland notification is shown instead and you must use `:update` to apply.
+> Without one of those, manual git-checkout installs show a passive Hyprland notification instead and you must use `:update` to apply.
 
 ## 🚀 Usage
 
@@ -315,10 +315,21 @@ require("hyprvim").setup({
 
 ## 🗑️ Uninstalling
 
-Removing HyprVim from your system is a three step process:
+For AUR installs, remove the package and the Hyprland plugin shim:
 
 ```bash
-rm -rf ~/.config/hypr/plugins/lua/hyprvim
+paru -R hyprvim
+# or
+yay -R hyprvim
+
+rm -rf ~/.config/hypr/lua/plugins/hyprvim
+hyprctl reload
+```
+
+For manual git-checkout installs, remove the shim and cloned plugin directory:
+
+```bash
+rm -rf ~/.config/hypr/lua/plugins/hyprvim
 rm -rf ~/.local/share/hyprland/lua/plugins/hyprvim
 hyprctl reload
 ```
@@ -387,7 +398,7 @@ require("hyprvim").setup({
 })
 ```
 
-Because `keymaps` are evaluated at `setup()` call time, inside your own Hyprland config, any functions that you have defined there are in scope.
+Because `keymaps` are evaluated at `setup()` call time, inside your `hyprland.lua`, any functions that you have defined there are in scope.
 
 Built-in submap names: `"NORMAL"`, `"VISUAL"`, `"V-LINE"`, `"INSERT"`, `"G-MOTION"`, `"G-VISUAL"`.
 
