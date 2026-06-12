@@ -5,6 +5,7 @@ local VimCount = require("vim.lib.count") ---@class VimCount
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
 local Prompt = require("lib.prompt") ---@class Prompt
+local exit_vim = require("vim.exit")
 
 --- @class ReplaceModule
 local Replace = {}
@@ -54,7 +55,7 @@ end
 ---`R`: prompt for a replacement string and overwrite the next `#string` characters with it.
 function Replace.string()
   VimCount.get() -- clear
-  Hypr.exit_vim()
+  exit_vim()
   hl.timer(function()
     Prompt.async("Replace with: ", { wm_class = "hyprvim-replace" }, function(str)
       if not str then

@@ -45,13 +45,6 @@ function Hyprland.switch_mode(name) Submap.enter(name) end
 --- Return to NORMAL mode.
 function Hyprland.normal() Submap.enter("NORMAL") end
 
---- Exit vim mode entirely (back to plain Hyprland binds).
-function Hyprland.exit_vim()
-  require("lib.clipboard").restore_pre_vim()
-  Submap.reset()
-  Submap.previous = nil
-end
-
 --- Temporarily suspend vim mode for a prompt; preserves submap state so it can be restored.
 function Hyprland.suspend_vim() Submap.reset({ is_temporary = true }) end
 

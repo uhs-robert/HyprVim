@@ -13,6 +13,7 @@ package.path = root .. "?.lua;" .. root .. "?/init.lua;" .. package.path
 
 -- stylua: ignore
 local lib      = require("vim.lib") ---@class VimLib
+local exit     = require("vim.exit")
 local features = require("vim.features") ---@class VimFeatures
 local commands = require("vim.commands") ---@class VimCommands
 local Window   = require("hypr.window") ---@class HyprVimWindow
@@ -23,6 +24,7 @@ local function setup(Config) Window.init(Config) end
 --- @class Vim
 local Vim = {
   setup       = setup,
+  exit        = exit,
   -- lib
   count       = lib.count,
   motion      = lib.motion,

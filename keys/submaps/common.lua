@@ -2,7 +2,7 @@
 -- Shared LEADER/ACT/EXIT keys and footer rows for submap specs
 
 local wk = require("whichkey") ---@class WhichKey
-local Hypr = require("hypr") ---@class HyprVimHyprland
+local vim = require("vim") ---@class Vim
 local config = require("config") ---@class HyprVimConfigModule
 
 local Common = {}
@@ -17,8 +17,8 @@ end
 function Common.exit_rows()
   local LEADER, ACT, EXIT = Common.keys()
   return {
-    { LEADER .. " + " .. ACT, Hypr.exit_vim, { release = true } },
-    { LEADER .. " + " .. EXIT, Hypr.exit_vim, { release = true } },
+    { LEADER .. " + " .. ACT, vim.exit, { release = true } },
+    { LEADER .. " + " .. EXIT, vim.exit, { release = true } },
   }
 end
 

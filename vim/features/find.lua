@@ -7,6 +7,7 @@ local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
 local Prompt = require("lib.prompt") ---@class Prompt
 local Clipboard = require("lib.clipboard") ---@class Clipboard
+local exit_vim = require("vim.exit")
 
 --- @class Find
 local Find = {}
@@ -99,7 +100,7 @@ end
 ---@param is_till   boolean
 local function prompt_and_find(term_type, direction, is_till)
   local label = (term_type == "char_term") and "Find: " or "Search: "
-  Hypr.exit_vim()
+  exit_vim()
   hl.timer(function()
     Prompt.async(label, { wm_class = "hyprvim-find" }, function(term)
       if not term then
