@@ -9,14 +9,12 @@ local config = require("config") ---@class HyprVimConfigModule
 local common = require("keys.submaps.common")
 local Clipboard = require("lib.clipboard") ---@class Clipboard
 local Find = require("vim.features.find") ---@class Find
+local Utils = require("lib.utils") ---@class HyprVimUtils
 
 local reg_dir = config.state_dir .. "/registers"
 
 local function reg_preview(path)
-  local f = io.open(path, "r")
-  if not f then return nil end
-  local s = (f:read(50) or ""):gsub("[\n\t\r]", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
-  f:close()
+  local s = Utils.read_head(path, 50)
   if s == "" then return nil end
   return #s > 45 and (s:sub(1, 42) .. "...") or s
 end

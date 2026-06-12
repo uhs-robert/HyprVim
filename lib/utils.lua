@@ -50,6 +50,20 @@ Utils.read_file = function(path)
   return s
 end
 
+--- Reads a file's raw content, or "" when unreadable. With limit, reads only the
+--- first limit bytes and collapses whitespace runs to single spaces (one-line preview).
+--- @param path string
+--- @param limit? integer
+--- @return string
+Utils.read_head = function(path, limit)
+  local f = io.open(path, "r")
+  if not f then return "" end
+  local s = f:read(limit or "*a") or ""
+  f:close()
+  if limit then s = s:gsub("%s+", " "):gsub("^ ", ""):gsub(" $", "") end
+  return s
+end
+
 --- Returns true if the file at path exists and is readable.
 --- @param path string
 --- @return boolean

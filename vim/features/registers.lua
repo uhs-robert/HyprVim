@@ -13,6 +13,7 @@
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Clipboard = require("lib.clipboard") ---@class Clipboard
 local Find = require("vim.features.find") ---@class Find
+local Utils = require("lib.utils") ---@class HyprVimUtils
 
 --- @class Registers
 --- @field enter_registers fun()  refresh REGISTERS submap binds then enter it
@@ -25,13 +26,7 @@ local function reg_path(name) return state_dir() .. "/" .. name end
 local function pending_path() return state_dir() .. "/pending-register" end
 
 -- Register file I/O.
-local function reg_read(name)
-  local f = io.open(reg_path(name), "r")
-  if not f then return "" end
-  local s = f:read("*a") or ""
-  f:close()
-  return s
-end
+local function reg_read(name) return Utils.read_head(reg_path(name)) end
 
 local function reg_write(name, content)
   local f = io.open(reg_path(name), "w")
@@ -86,9 +81,7 @@ function Registers.load(name, on_loaded)
     return
   end
   if name == "+" then
-    local f = io.open(Clipboard.pre_vim_path(), "r")
-    local content = f and (f:read("*a") or "") or ""
-    if f then f:close() end
+    local content = Utils.read_head(Clipboard.pre_vim_path())
     if content ~= "" then Clipboard.write(content) end
     done()
     return

@@ -101,14 +101,6 @@ function Items.build_register_items(sm)
   local reg_dir = Config.state_dir .. "/registers"
   if not file_exists(reg_dir) then return nil end
 
-  local function reg_read(path)
-    local f = io.open(path, "r")
-    if not f then return "" end
-    local s = (f:read(40) or ""):gsub("[\n\t]", " "):gsub("%s+$", "")
-    f:close()
-    return s
-  end
-
   local function make_item(key, prefix, content, fallback)
     local desc
     if content ~= "" then
@@ -128,19 +120,14 @@ function Items.build_register_items(sm)
 
   local items = {}
   local function add(k, p, path, fallback)
-    local item = make_item(k, p, reg_read(path), fallback)
+    local item = make_item(k, p, Utils.read_head(path, 50), fallback)
     if item then items[#items + 1] = item end
   end
 
-  local function trim(s) return s:gsub("[\n\t\r]", " "):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "") end
-
-  local pre_vim_path = Clipboard.pre_vim_path()
-  local pre_vim_f = io.open(pre_vim_path, "r")
-  local pre_vim = trim(pre_vim_f and (pre_vim_f:read(50) or "") or "")
-  if pre_vim_f then pre_vim_f:close() end
+  local pre_vim = Utils.read_head(Clipboard.pre_vim_path(), 50)
   items[#items + 1] = make_item("PLUS", "system", pre_vim, "System clipboard")
 
-  local primary = trim(pread("wl-paste --primary --no-newline 2>/dev/null"))
+  local primary = pread("wl-paste --primary --no-newline 2>/dev/null"):gsub("%s+", " "):gsub("^ ", "")
   items[#items + 1] = make_item("ASTERISK", "primary", primary, "Primary selection")
 
   add('"', "default", reg_dir .. '/"', "Unnamed register (default)")
