@@ -26,7 +26,7 @@ Render.position = os.getenv("HYPRVIM_WHICH_KEY_POSITION")
   or (Config.which_key and Config.which_key.position)
   or "bottom-right"
 
-os.execute("mkdir -p '" .. Render.state_dir .. "'")
+os.execute("mkdir -p " .. sh_escape(Render.state_dir))
 
 --- Returns true if submap is still the active one (or is GLOBAL).
 --- Reads current-submap state file; used to abort stale HUD renders.

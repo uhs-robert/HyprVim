@@ -56,8 +56,9 @@ API.setup = function(overrides)
   local cfg = require("config").setup(overrides)
   require("lib.updater").check_async()
 
-  os.execute("mkdir -p " .. cfg.state_dir .. "/registers")
-  os.execute("mkdir -p " .. cfg.state_dir .. "/marks")
+  local sh_escape = require("lib.utils").sh_escape
+  os.execute("mkdir -p " .. sh_escape(cfg.state_dir .. "/registers"))
+  os.execute("mkdir -p " .. sh_escape(cfg.state_dir .. "/marks"))
 
   require("hypr.rules").setup()
   local Vim = require("vim") ---@class Vim

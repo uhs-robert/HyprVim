@@ -40,7 +40,7 @@ local function write_selection(flag, text)
   if not f then return end
   f:write(text)
   f:close()
-  Hypr.exec("wl-copy " .. flag .. "<'" .. path .. "' && rm -f '" .. path .. "'")
+  Hypr.exec("wl-copy " .. flag .. "<'" .. path .. "'; rm -f '" .. path .. "'")
 end
 
 ---Read the clipboard after delay_ms.

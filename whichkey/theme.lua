@@ -82,7 +82,7 @@ end
 --- Reads theme.conf and writes _vars.scss.
 function Theme.apply()
   local cfg_dir = Config.config_dir
-  os.execute("mkdir -p " .. cfg_dir)
+  os.execute("mkdir -p " .. Utils.sh_escape(cfg_dir))
   local theme_file = cfg_dir .. "/theme.conf"
   local vars_file = root .. "eww/whichkey/_vars.scss"
   local user_scss = cfg_dir .. "/whichkey.scss"
