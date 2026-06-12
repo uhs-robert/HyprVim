@@ -157,10 +157,10 @@ local function create_tmpfile()
   return path
 end
 
---- Return the Unix mtime of `path`, or 0 on failure.
+--- Return the Unix mtime of `path` with sub-second precision, or 0 on failure.
 --- @param path string
---- @return integer
-local function get_mtime(path) return tonumber(pread("stat -c %Y " .. sq(path))) or 0 end
+--- @return number
+local function get_mtime(path) return tonumber(pread("stat -c %.Y " .. sq(path))) or 0 end
 
 --- Write `content` to wl-copy's stdin with optional extra flags (e.g. "-n").
 --- @param content string
@@ -237,7 +237,7 @@ end
 
 --- Paste the contents of `tmpfile` back to the previously focused window via Ctrl+V.
 --- Saves the current clipboard before pasting and restores it afterwards.
---- Exits with code 1 if the file is empty.
+--- Does nothing if the file is empty.
 --- @param tmpfile string
 local function paste_content(tmpfile)
   local f = io.open(tmpfile, "r")
@@ -245,7 +245,7 @@ local function paste_content(tmpfile)
   local text = f:read("*a")
   f:close()
 
-  if text == "" then os.exit(1) end
+  if text == "" then return end
 
   local before = pread("wl-paste --no-newline")
   run("wl-copy -n < " .. sq(tmpfile))
