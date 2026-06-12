@@ -167,8 +167,6 @@ local arg_commands = {
     if v then Hypr.set_opacity(v) end
   end,
   dim                = function(a)
-    local win = hl.get_active_window()
-    if not win then return end
     local enable = a == "on"
     hl.dispatch(hl.dsp.window.set_prop({ prop = "no_dim", value = enable and "0" or "1" }))
   end,
