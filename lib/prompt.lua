@@ -63,6 +63,8 @@ local function build_cmd(label, opts, state_file)
       .. sq(script)
       .. "' EXIT\n"
       .. comp_block
+      -- clear kernel-echoed typeahead so readline redraws it after the prompt
+      .. "printf '\\033[2J\\033[H'\n"
       .. "read -e -r -p "
       .. sq(label)
       .. " __hv_in\n"
