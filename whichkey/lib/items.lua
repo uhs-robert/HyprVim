@@ -147,7 +147,7 @@ function Items.build_register_items(sm)
   add("0", "yank", reg_dir .. "/0", "Yank register (last yank)")
   items[#items + 1] = make_item("_", "", "", "Black hole register")
   for _, n in ipairs({ "1", "2", "3", "4", "5", "6", "7", "8", "9" }) do
-    add(n, "del", reg_dir .. "/" .. n)
+    add(n, "hist", reg_dir .. "/" .. n)
   end
   for c in ("abcdefghijklmnopqrstuvwxyz"):gmatch(".") do
     add(c, "", reg_dir .. "/" .. c)

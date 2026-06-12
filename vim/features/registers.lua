@@ -6,7 +6,7 @@
 --   "  unnamed (syncs with system clipboard)
 --   +  system clipboard (explicit opt-in; yank/delete write snapshot file, paste reads it. Pre-vim clipboard or latest + yank)
 --   0  yank register (last yank, not overwritten by deletes)
---   1-9 numbered delete history (newest->1, cycles on each delete)
+--   1-9 numbered history (newest->1, cycles on each yank or delete)
 --   _  black hole (delete without affecting clipboard)
 --   /  search register (read-only, mirrors find-state.json)
 
@@ -121,7 +121,15 @@ local function cycle_numbered()
   end
 end
 
----Handle yank: send the copy shortcut, then async-save the clipboard to the pending register.
+-- Push content onto the numbered 1-9 ring; skips empty and consecutive-duplicate content.
+local function push_numbered(content)
+  if content == "" or content == reg_read("1") then return end
+  cycle_numbered()
+  reg_write("1", content)
+end
+
+---Handle yank: send the copy shortcut, then async-save the clipboard to the pending
+---register and cycle the numbered history (1-9).
 ---@param mods string modifiers for the copy shortcut (e.g. `"CTRL"`)
 ---@param key string key for the copy shortcut (e.g. `"c"`)
 ---@param return_mode? string submap to switch to after saving (default `"NORMAL"`)
@@ -137,6 +145,7 @@ function Registers.handle_yank(mods, key, return_mode)
     if reg == "*" then
       Clipboard.write_primary(content)
     else
+      push_numbered(content)
       reg_write(reg, content)
       if reg ~= "0" then reg_write("0", content) end
       if reg == "+" then
@@ -184,8 +193,7 @@ function Registers.handle_delete(return_mode)
     if reg == "*" then
       Clipboard.write_primary(content)
     else
-      cycle_numbered()
-      reg_write("1", content)
+      push_numbered(content)
       reg_write(reg, content)
       if reg == "+" then
         local f2 = io.open(Clipboard.pre_vim_path(), "w")
