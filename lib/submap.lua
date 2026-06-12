@@ -22,7 +22,7 @@ local Submap = {
 --- @field desc?     string
 --- @field enter?    string|string[]
 --- @field escape?   "reset"|"previous"|string|false|fun(ctx: SubmapContext)  Exit on ESCAPE; defaults to "reset"
---- @field back?     "escape"|string|false|fun(ctx: SubmapContext)  BackSpace target; default mirrors escape; false = no bind
+--- @field back?     "escape"|"previous"|string|false|fun(ctx: SubmapContext)  BackSpace target; default mirrors escape; "previous" = history via Submap.back(); false = no bind
 --- @field catchall? "stay"|"reset"|false|fun(ctx: SubmapContext)   Unbound-key policy; defaults to false
 --- @field on_enter? fun(ctx: SubmapContext)
 --- @field on_exit?  fun(ctx: SubmapContext)
@@ -54,10 +54,18 @@ local function fire_exit(spec, from, to)
 end
 
 --- Activate a named submap, firing exit/enter hooks.
+--- Re-entering the current submap only re-dispatches (no hooks, no state change).
 --- @param name string
 function Submap.enter(name)
+  if name == "reset" then return Submap.reset() end
+
   local next_spec = Submap.registry[name]
   if not next_spec then return end
+
+  if name == Submap.current then
+    hl.dispatch(hl.dsp.submap(name))
+    return
+  end
 
   local prev_name = Submap.current
   fire_exit(Submap.registry[prev_name], prev_name, name)
@@ -119,6 +127,16 @@ function Submap.back()
     return
   end
   return Submap.reset()
+end
+
+--- Reconcile tracked state with a keybinds.submap event (covers raw/async dispatches).
+--- State only, hooks never fire.
+--- @param name string|nil  event payload ("" = reset)
+function Submap.sync(name)
+  if name == nil or name == "" or name == "reset" then return end
+  if name == Submap.current then return end
+  Submap.previous = Submap.current
+  Submap.current = name
 end
 
 --- Resolve catchall policy, defaulting to false.
@@ -266,6 +284,7 @@ function Submap.define(spec)
     if back == nil then return M.exit() end
     if back == false then return end
     if back == "escape" then return M.exit() end
+    if back == "previous" then return Submap.back() end
     if type(back) == "string" then return Submap.enter(back) end
     if type(back) == "function" then return back(context({ spec = spec })) end
     M.exit()

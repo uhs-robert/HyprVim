@@ -2,20 +2,16 @@
 
 local Submap = require("lib.submap") ---@class HyprVimSubmap
 local vim = require("vim") ---@class Vim
-local wk = require("whichkey") ---@class WhichKey
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local common = require("keys.submaps.common")
 
 local send = Hypr.send
-local function visual() hl.dispatch(hl.dsp.submap("VISUAL")) end
+local function visual() Submap.enter("VISUAL") end
 
 Submap.define({
   name = "G-VISUAL",
   escape = "VISUAL",
-  back = function()
-    wk.close()
-    visual()
-  end,
+  back = "previous",
   catchall = "stay",
   binds = {
     -- stylua: ignore start

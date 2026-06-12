@@ -16,9 +16,8 @@ local LEADER = common.keys()
 
 local send = Hypr.send
 local function normal() Submap.enter("NORMAL") end
-local function visual() hl.dispatch(hl.dsp.submap("VISUAL")) end
-local function reset() hl.dispatch(hl.dsp.submap("reset")) end
-local function vline() hl.dispatch(hl.dsp.submap("V-LINE")) end
+local function reset() Submap.reset() end
+local function vline() Submap.enter("V-LINE") end
 
 local footer = common.footer()
 
@@ -28,7 +27,8 @@ local footer = common.footer()
 
 Submap.define({
   name = "V-LINE",
-  on_enter = function()
+  on_enter = function(ctx)
+    if ctx.from == "G-VLINE" then return end -- keep the line-selection anchor on return from G-VLINE
     count.clear()
     lm.setup()
   end,
@@ -38,10 +38,7 @@ Submap.define({
     send("", "RIGHT")
     normal()
   end,
-  back = function()
-    wk.close()
-    visual()
-  end,
+  back = "escape",
   catchall = "stay",
   binds = function()
     local rows = {
@@ -77,7 +74,7 @@ Submap.define({
       { "CTRL + u", function() send("CTRL", "u") end, nil, { repeating = true } },
       { "CTRL + s", function() send("CTRL", "s") end, nil, { repeating = true } },
       -- G-VLINE
-      { "g",         function() hl.dispatch(hl.dsp.submap("G-VLINE")) end, "+Go Line" },
+      { "g",         Submap.switch("G-VLINE"), "+Go Line" },
       -- stylua: ignore end
     }
     for i = 0, 9 do
@@ -97,10 +94,7 @@ Submap.define({
 Submap.define({
   name = "G-VLINE",
   escape = "NORMAL",
-  back = function()
-    wk.close()
-    visual()
-  end,
+  back = "previous",
   catchall = "stay",
   binds = function()
     local rows = {

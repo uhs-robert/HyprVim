@@ -1,9 +1,7 @@
 -- keys/submaps/modes/g-motion.lua
 
 local Submap = require("lib.submap") ---@class HyprVimSubmap
-local Bind = require("lib.bind") ---@class HyprVimBindLib
 local vim = require("vim") ---@class Vim
-local wk = require("whichkey") ---@class WhichKey
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local common = require("keys.submaps.common")
 
@@ -13,10 +11,7 @@ local function normal() Submap.enter("NORMAL") end
 Submap.define({
   name = "GOTO",
   escape = "NORMAL",
-  back = function()
-    wk.close()
-    normal()
-  end,
+  back = "previous",
   catchall = "stay",
   binds = {
     -- stylua: ignore start

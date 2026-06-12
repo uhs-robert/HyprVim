@@ -67,6 +67,10 @@ API.setup = function(overrides)
 
   require("keys")
 
+  -- Keep Submap.current/previous truthful for transitions dispatched outside Submap.enter
+  -- (async editor/replace callbacks via hyprctl).
+  hl.on("keybinds.submap", require("lib.submap").sync)
+
   return public_api(cfg, Vim)
 end
 

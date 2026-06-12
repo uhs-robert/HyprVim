@@ -34,7 +34,6 @@ Submap.define({
     vim.count.clear()
     Submap.enter("NORMAL")
   end,
-  back = false,
   catchall = "stay",
   binds = function()
     local rows = common.exit_rows()

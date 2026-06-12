@@ -165,10 +165,7 @@ local function visual_text_object(name, parent_name, objects)
   Submap.define({
     name = name,
     escape = "NORMAL",
-    back = function()
-      wk.close()
-      parent()
-    end,
+    back = "previous",
     catchall = "stay",
     binds = binds,
   }).setup()

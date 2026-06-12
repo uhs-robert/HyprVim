@@ -92,7 +92,7 @@ end
 Submap.define({
   name = "DELETE",
   escape = "NORMAL",
-  back = false,
+  back = "previous",
   catchall = "stay",
   binds = function()
     local rows = {
@@ -108,11 +108,11 @@ Submap.define({
       { "SHIFT + 6", function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) del("NORMAL")() end, "Start of line" },
       { "0",         function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) del("NORMAL")() end, "Start of line" },
       { "m",         function() count.clear() vim.marks.enter_delete() end, "+Delete Mark" },
-      { "i",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-INSIDE")) end, "+Inner" },
-      { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("DELETE-INSIDE")) end },
-      { "a",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-AROUND")) end, "+Around" },
-      { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("DELETE-AROUND")) end },
-      { "g",         function() count.clear() hl.dispatch(hl.dsp.submap("DELETE-GOTO")) end, "+Go" },
+      { "i",         function() count.clear() Submap.enter("DELETE-INSIDE") end, "+Inner" },
+      { "SHIFT + i", function() Submap.enter("DELETE-INSIDE") end },
+      { "a",         function() count.clear() Submap.enter("DELETE-AROUND") end, "+Around" },
+      { "SHIFT + a", function() Submap.enter("DELETE-AROUND") end },
+      { "g",         function() count.clear() Submap.enter("DELETE-GOTO") end, "+Go" },
       -- stylua: ignore end
     }
     for _, row in ipairs(footer) do
@@ -137,7 +137,7 @@ make_sub_submaps(
 Submap.define({
   name = "CHANGE",
   escape = "NORMAL",
-  back = false,
+  back = "previous",
   catchall = "stay",
   binds = function()
     local rows = {
@@ -152,11 +152,11 @@ Submap.define({
       { "SHIFT + 6", function() count.clear() motion.send_sequence({ { "SHIFT", "Home" } }) reg.handle_delete("INSERT") end, "Start of line" },
       { "0",         function() count.clear() motion.send_sequence({ { "SHIFT", "Home" } }) reg.handle_delete("INSERT") end, "Start of line" },
       { "SHIFT + g", function() count.clear() motion.send_raw({ "CTRL SHIFT", "END" }, 1) reg.handle_delete("INSERT") end, "Last line" },
-      { "i",         function() count.clear() hl.dispatch(hl.dsp.submap("CHANGE-INSIDE")) end, "+Inner" },
-      { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("CHANGE-INSIDE")) end },
-      { "a",         function() count.clear() hl.dispatch(hl.dsp.submap("CHANGE-AROUND")) end, "+Around" },
-      { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("CHANGE-AROUND")) end },
-      { "g",         function() count.clear() hl.dispatch(hl.dsp.submap("CHANGE-GOTO")) end, "+Go" },
+      { "i",         function() count.clear() Submap.enter("CHANGE-INSIDE") end, "+Inner" },
+      { "SHIFT + i", function() Submap.enter("CHANGE-INSIDE") end },
+      { "a",         function() count.clear() Submap.enter("CHANGE-AROUND") end, "+Around" },
+      { "SHIFT + a", function() Submap.enter("CHANGE-AROUND") end },
+      { "g",         function() count.clear() Submap.enter("CHANGE-GOTO") end, "+Go" },
       -- stylua: ignore end
     }
     for _, row in ipairs(footer) do
@@ -191,7 +191,7 @@ end
 Submap.define({
   name = "YANK",
   escape = "NORMAL",
-  back = false,
+  back = "previous",
   catchall = "stay",
   binds = function()
     -- stylua: ignore start
@@ -207,11 +207,11 @@ Submap.define({
       { "0",         function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) yank("NORMAL")() end, "Start of line" },
       { "SHIFT + 6", function() count.clear() motion.send_raw({ "SHIFT", "Home" }, 1) yank("NORMAL")() end, "Start of line" },
       { "SHIFT + g", function() motion.send_raw({ "CTRL SHIFT", "END" }, 1) yank("NORMAL")() end, "Last line" },
-      { "i",         function() count.clear() hl.dispatch(hl.dsp.submap("YANK-INSIDE")) end, "+Inner" },
-      { "SHIFT + i", function() hl.dispatch(hl.dsp.submap("YANK-INSIDE")) end },
-      { "a",         function() count.clear() hl.dispatch(hl.dsp.submap("YANK-AROUND")) end, "+Around" },
-      { "SHIFT + a", function() hl.dispatch(hl.dsp.submap("YANK-AROUND")) end },
-      { "g",         function() count.clear() hl.dispatch(hl.dsp.submap("YANK-GOTO")) end, "+Go" },
+      { "i",         function() count.clear() Submap.enter("YANK-INSIDE") end, "+Inner" },
+      { "SHIFT + i", function() Submap.enter("YANK-INSIDE") end },
+      { "a",         function() count.clear() Submap.enter("YANK-AROUND") end, "+Around" },
+      { "SHIFT + a", function() Submap.enter("YANK-AROUND") end },
+      { "g",         function() count.clear() Submap.enter("YANK-GOTO") end, "+Go" },
       -- stylua: ignore end
     }
     for _, row in ipairs(footer) do
