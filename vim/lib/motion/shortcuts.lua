@@ -1,6 +1,6 @@
 -- vim/lib/motion/shortcuts.lua
--- Vim key -> {mods, key} translation tables, one per mode.
--- Sequence-based motions (e.g. visual paragraph) are handled inline in their submap.
+-- Vim key -> {mods, key} translation tables, one per mode, plus the SELECT
+-- recipes shared by the operator (d/c/y) submaps.
 
 ---@type table<string, {[1]: string, [2]: string}>
 local TERM_KEYSYMS = {
@@ -71,4 +71,22 @@ local VISUAL = {
   B = { "CTRL SHIFT", "LEFT" },
 }
 
-return { NORMAL = NORMAL, VISUAL = VISUAL, TERM_KEYSYMS = TERM_KEYSYMS }
+---Selection recipes for the operator submaps (semantic names, not vim keys).
+---inner_word's right-left bounce normalizes the caret to the current word's start
+---so failure modes stay forward of the caret, vim's bias.
+---@type table<string, ShortcutOrSeq>
+-- stylua: ignore
+local SELECT = {
+  next_word  = VISUAL.w,
+  prev_word  = VISUAL.b,
+  word_end   = { { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" } },
+  to_eol     = { "SHIFT", "End" },
+  to_bol     = { "SHIFT", "Home" },
+  first_line = { "CTRL SHIFT", "HOME" },
+  last_line  = { "CTRL SHIFT", "END" },
+  line       = { { "", "HOME" }, { "SHIFT", "End" } },
+  inner_word = { { "CTRL", "RIGHT" }, { "CTRL", "LEFT" }, VISUAL.w },
+  inner_para = { { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } },
+}
+
+return { NORMAL = NORMAL, VISUAL = VISUAL, TERM_KEYSYMS = TERM_KEYSYMS, SELECT = SELECT }

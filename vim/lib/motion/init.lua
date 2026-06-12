@@ -9,6 +9,9 @@ local sc = require("vim.lib.motion.shortcuts")
 --- @class VimMotion
 local VimMotion = {}
 
+--- Vim key -> shortcut tables (NORMAL/VISUAL/SELECT), for submaps that dispatch raw.
+VimMotion.shortcuts = sc
+
 ---Split a key string into `{mods, key}` for terminal dispatch.
 ---TERM_KEYSYMS takes priority (e.g. `{` -> CTRL+UP).
 ---`"CTRL + r"` -> `"CTRL"`, `"r"`. `"u"` -> `""`, `"u"`.
@@ -29,11 +32,11 @@ local function split_key(key)
   return "", key
 end
 
----Send a raw `{mods, key}` shortcut `n` times, consuming the count accumulator.
+---Send a raw `{mods, key}` shortcut `n` times.
 ---@param shortcut {[1]: string, [2]: string}
----@param n        integer|nil  defaults to current count
+---@param n        integer|nil  defaults to 1; pass `count.get()` for count support
 function VimMotion.send_raw(shortcut, n)
-  n = n or VimCount.get()
+  n = n or 1
   for _ = 1, n do
     Hypr.send(shortcut[1], shortcut[2])
   end
