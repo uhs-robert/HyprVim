@@ -104,10 +104,12 @@ end
 --- @param s string
 --- @return string
 Utils.json_unescape = function(s)
-  return (s:gsub("\\u(%x%x%x%x)", function(h)
-    local n = tonumber(h, 16)
-    return n < 256 and string.char(n) or nil
-  end))
+  return (
+    s:gsub("\\u(%x%x%x%x)", function(h)
+      local n = tonumber(h, 16)
+      return n < 256 and string.char(n) or nil
+    end)
+  )
 end
 
 return Utils

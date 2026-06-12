@@ -186,13 +186,20 @@ local function make_spawner(eww_dir, state_dir, render, position)
     local csm = state_dir .. "/current-submap"
     os.execute(
       sh_escape(script)
-        .. " " .. sh_escape(eww_dir)
-        .. " " .. sh_escape(csm)
-        .. " " .. sh_escape(sm)
-        .. " " .. sh_escape(position)
-        .. " " .. sh_escape(render)
-        .. " " .. sh_escape(screen)
-        .. " " .. sh_escape(geometry)
+        .. " "
+        .. sh_escape(eww_dir)
+        .. " "
+        .. sh_escape(csm)
+        .. " "
+        .. sh_escape(sm)
+        .. " "
+        .. sh_escape(position)
+        .. " "
+        .. sh_escape(render)
+        .. " "
+        .. sh_escape(screen)
+        .. " "
+        .. sh_escape(geometry)
         .. " &"
     )
   end
@@ -220,7 +227,10 @@ local function make_submap_handler(config, state_dir, spawn_render)
   local function write_current_submap(sm)
     if sm ~= "" then
       local f = io.open(state_dir .. "/current-submap", "w")
-      if f then f:write(sm .. "\n"); f:close() end
+      if f then
+        f:write(sm .. "\n")
+        f:close()
+      end
     else
       os.remove(state_dir .. "/current-submap")
     end
@@ -236,7 +246,10 @@ local function make_submap_handler(config, state_dir, spawn_render)
 
   local function teardown(sm)
     cancel_timer()
-    if stale_check_timer then stale_check_timer:set_enabled(false); stale_check_timer = nil end
+    if stale_check_timer then
+      stale_check_timer:set_enabled(false)
+      stale_check_timer = nil
+    end
     close_hud(state_dir)
     write_current_submap(sm)
   end
@@ -279,21 +292,27 @@ local function make_submap_handler(config, state_dir, spawn_render)
     teardown(sm)
 
     local skip_next, skip_target, next_delay = read_oneshot_flags(state_dir)
-    if sm == "" then clear_skip_files(state_dir); return end
+    if sm == "" then
+      clear_skip_files(state_dir)
+      return
+    end
     if sm == "NORMAL" then clear_skip_files(state_dir) end
     if resolve_skip(skip_next, skip_target, sm, state_dir) then return end
     if not should_auto_show(sm, config) then return end
 
     local spec = Submap.registry[sm]
-    schedule_hud(sm, compute_delay({
-      sm              = sm,
-      prev_sm         = prev_sm,
-      next_delay      = next_delay,
-      delay_ms        = config.delay_ms,
-      vim_delay_ms    = config.vim_delay_ms,
-      submap_delay_ms = spec and spec.delay_ms,
-      hud_visible     = file_exists(state_dir .. "/whichkey-visible"),
-    }))
+    schedule_hud(
+      sm,
+      compute_delay({
+        sm = sm,
+        prev_sm = prev_sm,
+        next_delay = next_delay,
+        delay_ms = config.delay_ms,
+        vim_delay_ms = config.vim_delay_ms,
+        submap_delay_ms = spec and spec.delay_ms,
+        hud_visible = file_exists(state_dir .. "/whichkey-visible"),
+      })
+    )
   end
 end
 

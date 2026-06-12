@@ -35,11 +35,7 @@ function WhichKey.toggle()
   local position = (cfg.which_key and cfg.which_key.position) or "bottom-right"
 
   os.execute(
-    "(HYPRVIM_WHICH_KEY_POSITION="
-      .. sh_escape(position)
-      .. " lua "
-      .. sh_escape(dir .. "render.lua")
-      .. " info) &"
+    "(HYPRVIM_WHICH_KEY_POSITION=" .. sh_escape(position) .. " lua " .. sh_escape(dir .. "render.lua") .. " info) &"
   )
 end
 
