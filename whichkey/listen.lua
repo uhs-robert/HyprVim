@@ -182,6 +182,7 @@ local function make_spawner(eww_dir, state_dir, render, position)
   return function(sm)
     local mon = hl.get_active_monitor()
     local screen = (mon and mon.name) or ""
+    local geometry = mon and string.format("%dx%dx%s", mon.width, mon.height, mon.scale) or ""
     local csm = state_dir .. "/current-submap"
     os.execute(
       sh_escape(script)
@@ -191,6 +192,7 @@ local function make_spawner(eww_dir, state_dir, render, position)
         .. " " .. sh_escape(position)
         .. " " .. sh_escape(render)
         .. " " .. sh_escape(screen)
+        .. " " .. sh_escape(geometry)
         .. " &"
     )
   end

@@ -96,9 +96,11 @@ function Render.set_delay(ms) write_file(Render.state_dir .. "/whichkey-next-del
 --- Render the HUD for the given submap.
 --- @param submap string
 --- @param screen string|nil  monitor name; queries focused monitor if omitted
-function Render.show(submap, screen)
+--- @param geometry string|nil  "WxHxS" monitor geometry; queries hyprctl if omitted
+function Render.show(submap, screen, geometry)
   submap = submap or ""
   screen = screen or ""
+  geometry = geometry or ""
 
   if submap == "reset" or submap == "hide" then submap = "" end
 
@@ -122,12 +124,15 @@ function Render.show(submap, screen)
     return pread("jq -c " .. sh_escape(expr) .. " " .. sh_escape(items_tmp) .. " 2>/dev/null")
   end
 
-  -- Monitor geometry
-  local info = pread(
-    "hyprctl -j monitors 2>/dev/null | jq -r --arg n "
-      .. sh_escape(screen)
-      .. " '.[] | select(.name == $n) | \"\\(.width)x\\(.height)x\\(.scale)\"' 2>/dev/null"
-  )
+  -- Monitor geometry: passed in by the listener; hyprctl query is the fallback
+  local info = geometry
+  if info == "" then
+    info = pread(
+      "hyprctl -j monitors 2>/dev/null | jq -r --arg n "
+        .. sh_escape(screen)
+        .. " '.[] | select(.name == $n) | \"\\(.width)x\\(.height)x\\(.scale)\"' 2>/dev/null"
+    )
+  end
   if info == "" then info = "1920x1080x1.0" end
   local pw, ph, ps = info:match("^(%d+)x(%d+)x([%d%.]+)")
   local lw = math.floor((tonumber(pw) or 1920) / (tonumber(ps) or 1))
@@ -198,7 +203,7 @@ if arg and arg[0] and arg[0]:match("render%.lua$") then
   elseif cmd == "info" or cmd == "--info" then
     Render.toggle()
   else
-    Render.show(cmd, argv[2])
+    Render.show(cmd, argv[2], argv[3])
   end
 end
 
