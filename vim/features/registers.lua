@@ -16,7 +16,7 @@ local Find = require("vim.features.find") ---@class Find
 local Utils = require("lib.utils") ---@class HyprVimUtils
 
 --- @class Registers
---- @field enter_registers fun()  refresh REGISTERS submap binds then enter it
+--- @field enter_registers fun()  enter the REGISTERS submap
 local Registers = {}
 
 local DEFAULT_REG = '"'

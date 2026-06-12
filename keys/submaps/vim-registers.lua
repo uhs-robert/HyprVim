@@ -5,19 +5,7 @@ local Submap = require("lib.submap") ---@class HyprVimSubmap
 local vim = require("vim") ---@class Vim
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
-local config = require("config") ---@class HyprVimConfigModule
 local common = require("keys.submaps.common")
-local Clipboard = require("lib.clipboard") ---@class Clipboard
-local Find = require("vim.features.find") ---@class Find
-local Utils = require("lib.utils") ---@class HyprVimUtils
-
-local reg_dir = config.state_dir .. "/registers"
-
-local function reg_preview(path)
-  local s = Utils.read_head(path, 50)
-  if s == "" then return nil end
-  return #s > 45 and (s:sub(1, 42) .. "...") or s
-end
 
 local function set(name)
   reg.set_pending(name)
@@ -35,30 +23,23 @@ Submap.define({
     local letters = "abcdefghijklmnopqrstuvwxyz"
     for i = 1, #letters do
       local c = letters:sub(i, i)
-      local preview = reg_preview(reg_dir .. "/" .. c)
-      result[#result + 1] = { c:upper(), function() set(c) end, preview }
+      result[#result + 1] = { c:upper(), function() set(c) end }
     end
 
     for i = 1, 9 do
       local s = tostring(i)
-      local preview = reg_preview(reg_dir .. "/" .. s)
-      result[#result + 1] = { s, function() set(s) end, preview }
+      result[#result + 1] = { s, function() set(s) end }
     end
 
-    local unnamed_preview = reg_preview(reg_dir .. '/"')
-    local yank_preview = reg_preview(reg_dir .. "/0")
-    local pre_vim_preview = reg_preview(Clipboard.pre_vim_path())
-
-    local term = Find.get_term()
-
+    -- Content previews come live from whichkey (Items.build_register_items), not these descs.
     -- stylua: ignore start
-    result[#result + 1] = { "SHIFT + APOSTROPHE", function() set('"') end, unnamed_preview  or "Unnamed register (default)" }
-    result[#result + 1] = { "0",                  function() set("0") end, yank_preview and ("yank: " .. yank_preview) or "Yank register (last yank)" }
-    result[#result + 1] = { "SHIFT + MINUS",      function() set("_") end, "Black hole register"                        }
-    result[#result + 1] = { "SHIFT + EQUAL",      function() set("+") end, pre_vim_preview  or "System clipboard"       }
-    result[#result + 1] = { "SHIFT + 8",          function() set("*") end, "Primary selection"                          }
-    result[#result + 1] = { "SLASH",              function() set("/") end, term ~= "" and ("search: " .. term) or "Search register" }
-    result[#result + 1] = { "SHIFT + SLASH",      wk.toggle                                                             }
+    result[#result + 1] = { "SHIFT + APOSTROPHE", function() set('"') end, "Unnamed register (default)" }
+    result[#result + 1] = { "0",                  function() set("0") end, "Yank register (last yank)"  }
+    result[#result + 1] = { "SHIFT + MINUS",      function() set("_") end, "Black hole register"        }
+    result[#result + 1] = { "SHIFT + EQUAL",      function() set("+") end, "System clipboard"           }
+    result[#result + 1] = { "SHIFT + 8",          function() set("*") end, "Primary selection"          }
+    result[#result + 1] = { "SLASH",              function() set("/") end, "Search register"            }
+    result[#result + 1] = { "SHIFT + SLASH",      wk.toggle                                             }
     for _, row in ipairs(common.exit_rows()) do
       result[#result + 1] = row
     end
