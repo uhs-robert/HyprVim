@@ -86,6 +86,7 @@ function Marks.set_after(submap)
 end
 
 ---Read the stored after-submap, remove the state file, and switch to that mode.
+---A `"reset"` target means a full vim exit (clipboard restore + submap reset).
 function Marks.dispatch_after()
   local f = io.open(after_path(), "r")
   local target = "NORMAL"
@@ -94,6 +95,7 @@ function Marks.dispatch_after()
     f:close()
     os.remove(after_path())
   end
+  if target == "reset" then return require("vim.exit")() end
   Hypr.switch_mode(target ~= "" and target or "NORMAL")
 end
 
