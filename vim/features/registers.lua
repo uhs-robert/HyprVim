@@ -141,6 +141,7 @@ function Registers.handle_yank(mods, key, return_mode)
       push_numbered(content)
       reg_write(reg, content)
       if reg ~= "0" then reg_write("0", content) end
+      if reg ~= DEFAULT_REG then reg_write(DEFAULT_REG, content) end
       if reg == "+" then
         -- Persist to pre-vim file so content survives vim exit via restore_pre_vim.
         local f2 = io.open(Clipboard.pre_vim_path(), "w")
@@ -148,10 +149,6 @@ function Registers.handle_yank(mods, key, return_mode)
           f2:write(content)
           f2:close()
         end
-      elseif reg ~= DEFAULT_REG then
-        -- Named register: restore unnamed register to clipboard.
-        local unnamed = reg_read(DEFAULT_REG)
-        if unnamed ~= "" then Clipboard.write(unnamed) end
       end
     end
     Hypr.switch_mode(return_mode)
@@ -188,6 +185,7 @@ function Registers.handle_delete(return_mode)
     else
       push_numbered(content)
       reg_write(reg, content)
+      if reg ~= DEFAULT_REG then reg_write(DEFAULT_REG, content) end
       if reg == "+" then
         local f2 = io.open(Clipboard.pre_vim_path(), "w")
         if f2 then
