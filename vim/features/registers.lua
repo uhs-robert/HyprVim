@@ -5,9 +5,9 @@
 -- Special registers:
 --   "  unnamed (syncs with system clipboard)
 --   +  system clipboard (explicit opt-in; yank/delete write snapshot file, paste reads it. Pre-vim clipboard or latest + yank)
---   0  yank register (last yank, not overwritten by deletes)
---   1-9 numbered history (newest->1, cycles on each yank or delete)
---   _  black hole (delete without affecting clipboard)
+--   0  yank register (last register-less yank)
+--   1-9 delete history (register-less deletes, newest->1)
+--   _  black hole (yank/delete without affecting any register)
 --   /  search register (read-only, mirrors find-state.json)
 
 local Hypr = require("hypr") ---@class HyprVimHyprland
@@ -66,35 +66,38 @@ function Registers.save(name, content)
   reg_write(name, content)
 end
 
----Load a register's content to the clipboard.
+---Load a register's content to the clipboard. Empty registers don't touch clipboard.
 ---@param name string register name (e.g. `"a"`, `"*"`)
----@param on_loaded? fun() called once the clipboard write has been dispatched.
+---@param on_loaded? fun(content: string) called with the register content (empty
+--- string when the register is empty) once the clipboard write has been dispatched.
 --- For `"*"` this fires only after the async primary-selection read completes,
 --- so callers can safely chain a paste without racing the clipboard write.
 function Registers.load(name, on_loaded)
-  local function done()
-    if on_loaded then on_loaded() end
+  local function done(content)
+    if on_loaded then on_loaded(content) end
   end
   if name == "/" then
-    Clipboard.write(Find.get_term())
-    done()
+    local term = Find.get_term()
+    if term ~= "" then Clipboard.write(term) end
+    done(term)
     return
   end
   if name == "+" then
     local content = Utils.read_head(Clipboard.pre_vim_path())
     if content ~= "" then Clipboard.write(content) end
-    done()
+    done(content)
     return
   end
   if name == "*" then
     Clipboard.read_primary_async(150, function(content)
       if content ~= "" then Clipboard.write(content) end
-      done()
+      done(content)
     end)
     return
   end
-  Clipboard.write(reg_read(name))
-  done()
+  local content = reg_read(name)
+  if content ~= "" then Clipboard.write(content) end
+  done(content)
 end
 
 -- Cycle numbered registers 1->9 (oldest drops off, newest->1).
@@ -122,7 +125,7 @@ local function push_numbered(content)
 end
 
 ---Handle yank: send the copy shortcut, then async-save the clipboard to the pending
----register and cycle the numbered history (1-9).
+---register. Vim semantics: unnamed always fills, `0` only on a register-less yank.
 ---@param mods string modifiers for the copy shortcut (e.g. `"CTRL"`)
 ---@param key string key for the copy shortcut (e.g. `"c"`)
 ---@param return_mode? string submap to switch to after saving (default `"NORMAL"`)
@@ -132,16 +135,33 @@ function Registers.handle_yank(mods, key, return_mode)
   Registers.clear_pending()
   require("whichkey").cancel_pending()
 
+  -- Black hole: capture clipboard before copy, copy, restore clipboard.
+  if reg == "_" then
+    -- 200ms (matching the read delay below)
+    Clipboard.read_async(50, function(backup)
+      Hypr.send(mods, key)
+      hl.timer(function()
+        Clipboard.write(backup)
+        Hypr.switch_mode(return_mode)
+      end, { timeout = 200, type = "oneshot" })
+    end)
+    return
+  end
+
   Hypr.send(mods, key)
 
   Clipboard.read_async(150, function(content)
-    if reg == "*" then
-      Clipboard.write_primary(content)
-    else
-      push_numbered(content)
-      reg_write(reg, content)
-      if reg ~= "0" then reg_write("0", content) end
-      if reg ~= DEFAULT_REG then reg_write(DEFAULT_REG, content) end
+    if content ~= "" then
+      if reg == "*" then
+        Clipboard.write_primary(content)
+      else
+        reg_write(reg, content)
+      end
+      if reg == DEFAULT_REG then
+        reg_write("0", content)
+      else
+        reg_write(DEFAULT_REG, content)
+      end
       if reg == "+" then
         -- Persist to pre-vim file so content survives vim exit via restore_pre_vim.
         local f2 = io.open(Clipboard.pre_vim_path(), "w")
@@ -155,8 +175,10 @@ function Registers.handle_yank(mods, key, return_mode)
   end)
 end
 
----Handle delete: send Ctrl+X, async-save the clipboard to the pending register
----and cycle the numbered delete history (1-9).
+---Handle delete: send Ctrl+X, then async-save the clipboard to the pending register.
+---Vim semantics: unnamed always fills; register-less deletes also cycle the numbered
+---history (1-9). Unlike Vim, small deletes go to the ring too (`-` register would need
+---motion info that the clipboard cannot provide).
 ---@param return_mode? string submap to switch to after saving (default `"NORMAL"`)
 function Registers.handle_delete(return_mode)
   return_mode = return_mode or "NORMAL"
@@ -164,11 +186,11 @@ function Registers.handle_delete(return_mode)
   Registers.clear_pending()
   require("whichkey").cancel_pending()
 
+  -- Black hole: capture clipboard before delete, delete, restore clipboard.
   if reg == "_" then
-    -- Black hole: capture clipboard before delete, delete, restore clipboard.
     Clipboard.read_async(50, function(backup)
       Hypr.send("CTRL", "x")
-      -- 200ms (matching the read delay below) so the cut lands before the restore.
+      -- 200ms (matching the read delay below)
       hl.timer(function()
         Clipboard.write(backup)
         Hypr.switch_mode(return_mode)
@@ -180,12 +202,17 @@ function Registers.handle_delete(return_mode)
   Hypr.send("CTRL", "x")
 
   Clipboard.read_async(200, function(content)
-    if reg == "*" then
-      Clipboard.write_primary(content)
-    else
-      push_numbered(content)
-      reg_write(reg, content)
-      if reg ~= DEFAULT_REG then reg_write(DEFAULT_REG, content) end
+    if content ~= "" then
+      if reg == "*" then
+        Clipboard.write_primary(content)
+      else
+        reg_write(reg, content)
+      end
+      if reg == DEFAULT_REG then
+        push_numbered(content)
+      else
+        reg_write(DEFAULT_REG, content)
+      end
       if reg == "+" then
         local f2 = io.open(Clipboard.pre_vim_path(), "w")
         if f2 then
@@ -214,7 +241,11 @@ function Registers.handle_paste(mods, key, return_mode, count)
     shortcuts[#shortcuts + 1] = { mods, key }
   end
 
-  Registers.load(reg, function()
+  Registers.load(reg, function(content)
+    if content == "" then
+      Hypr.switch_mode(return_mode)
+      return
+    end
     -- 150ms lets wl-copy settle before the paste lands.
     hl.timer(function()
       Hypr.send_batch(shortcuts, 20, function() Hypr.switch_mode(return_mode) end)
