@@ -9,7 +9,7 @@ local VimCount = {}
 
 ---@type integer  current accumulated running count value (0 = no count entered yet)
 local RUNNING_COUNT = 0
-local MAX_COUNT = Config.max_count
+local MAX_COUNT = Config.max_count or 1000
 
 ---Append a digit to the count accumulator. Capped at `config.max_count`; warns if clamped.
 ---@param digit integer|string
@@ -20,6 +20,7 @@ function VimCount.append(digit)
   local cap = MAX_COUNT
   local next = RUNNING_COUNT * 10 + n
   if next > cap then
+    RUNNING_COUNT = cap
     local notifications = Config.notifications or {}
     if notifications.all or notifications.warnings then
       Hypr.notify(string.format("VimCount clamped to %d", cap), "hint", 2000)
