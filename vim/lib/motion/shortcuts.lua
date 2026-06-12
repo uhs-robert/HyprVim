@@ -13,6 +13,10 @@ local TERM_KEYSYMS = {
 ---@alias Shortcut {[1]: string, [2]: string}
 ---@alias ShortcutOrSeq Shortcut | Shortcut[]
 
+-- Select to word end: the SHIFT+Left backstep undoes CTRL+RIGHT overshooting
+-- to the next word start (same convention NORMAL.e compensates for).
+local WORD_END = { { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" } }
+
 ---@type table<string, ShortcutOrSeq>
 local NORMAL = {
   -- Basic movement
@@ -66,6 +70,7 @@ local VISUAL = {
   -- Word motions (extends selection)
   w = { "CTRL SHIFT", "RIGHT" },
   W = { "CTRL SHIFT", "RIGHT" },
+  -- e aliases w: otherwise makes no progress when re-extending from a word end
   e = { "CTRL SHIFT", "RIGHT" },
   E = { "CTRL SHIFT", "RIGHT" },
   b = { "CTRL SHIFT", "LEFT" },
@@ -89,9 +94,10 @@ local VISUAL = {
 local SELECT = {
   next_word     = VISUAL.w,
   prev_word     = VISUAL.b,
+  next_para     = VISUAL.J,
   next_char     = { "SHIFT", "RIGHT" },
   prev_char     = { "SHIFT", "LEFT" },
-  word_end      = { { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" } },
+  word_end      = WORD_END,
   to_eol        = { "SHIFT", "End" },
   to_bol        = { "SHIFT", "Home" },
   first_line    = VISUAL.gg,

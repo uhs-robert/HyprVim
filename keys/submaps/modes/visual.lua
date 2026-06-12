@@ -145,14 +145,16 @@ Submap.define({
 
 ---@param name        string   submap name
 ---@param parent_name string   submap to return to after selection
----@param objects     { [1]: string, [2]: Shortcut[], [3]?: string }[]  { key, seq, label? }
+---@param objects     { [1]: string, [2]: Shortcut[], [3]?: string, [4]?: Shortcut }[]  { key, seq, label?, ext? }
 local function visual_text_object(name, parent_name, objects)
   local parent = Submap.switch(parent_name)
   local binds = { table.unpack(footer) }
   for _, obj in ipairs(objects) do
-    local key, seq, label = obj[1], obj[2], obj[3]
+    local key, seq, label, ext = obj[1], obj[2], obj[3], obj[4]
     local act = function()
+      local n = count.get()
       motion.send_sequence(seq)
+      if ext and n > 1 then motion.send_raw(ext, n - 1) end
       parent()
     end
     table.insert(binds, { key, act, label })
@@ -169,11 +171,11 @@ end
 
 -- Around objects reuse the inner recipes, matching the operator submaps.
 visual_text_object("V-INSIDE", "VISUAL", {
-  { "w", SEL.inner_word, "Word" },
-  { "p", SEL.inner_para, "Paragraph" },
+  { "w", SEL.inner_word, "Word", SEL.next_word },
+  { "p", SEL.inner_para, "Paragraph", SEL.next_para },
 })
 
 visual_text_object("V-AROUND", "VISUAL", {
-  { "w", SEL.inner_word, "Word" },
-  { "p", SEL.inner_para, "Paragraph" },
+  { "w", SEL.inner_word, "Word", SEL.next_word },
+  { "p", SEL.inner_para, "Paragraph", SEL.next_para },
 })
