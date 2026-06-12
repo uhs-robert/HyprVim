@@ -7,7 +7,6 @@ local motion = vim.motion
 local count = vim.count
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
-local oe = vim.editor
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local common = require("keys.submaps.common")
 local LEADER = common.keys()
@@ -15,17 +14,12 @@ local LEADER = common.keys()
 local send = Hypr.send
 
 local normal = Submap.switch("NORMAL")
-local reset = Submap.reset
 local va = motion.action_visual
 local vm = motion.action
 local va_seq = motion.action_seq
 
 -- ── Visual actions ────────────────────────────────────────────────────────────
 -- stylua: ignore start
-local function open_editor(insert)
-  return function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = insert or false, after_submap = "NORMAL" }) end
-end
-
 local function change_sel()    reg.handle_delete("INSERT") end
 local function delete_sel()    reg.handle_delete("NORMAL") end
 local function backspace_sel() wk.close() reg.handle_delete("NORMAL") end
@@ -77,8 +71,8 @@ Submap.define({
       -- Mode switches
       { "g", Submap.switch("G-VISUAL"), "+Goto" },
       -- Editor
-      { LEADER .. " + n", open_editor(false), "Edit in Vim (Normal)" },
-      { LEADER .. " + i", open_editor(true),  "Edit in Vim (Insert)" },
+      { LEADER .. " + n", vim.editor.open_from_submap(),                  "Edit in Vim (Normal)" },
+      { LEADER .. " + i", vim.editor.open_from_submap({ insert = true }), "Edit in Vim (Insert)" },
       -- Char motions
       { "h",         va("h"), "Left",          { repeating = true } },
       { "j",         va("j"), "Down",          { repeating = true } },

@@ -18,8 +18,8 @@ Submap.define({
     { "e",         function() vim.motion.send_sequence({ { "CTRL SHIFT", "LEFT" }, { "SHIFT", "LEFT" } }) visual() end, "Prev end of word" },
     { "g",         function() send("CTRL SHIFT", "HOME") visual() end, "First line" },
     { "SHIFT + g", function() send("CTRL SHIFT", "END")  visual() end, "Last line"  },
-    { "n",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, after_submap = "NORMAL" }) end,                     "Edit in Vim (Normal)" },
-    { "i",         function() vim.count.clear() Submap.reset() vim.editor.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
+    { "n",         vim.editor.open_from_submap(),                  "Edit in Vim (Normal)" },
+    { "i",         vim.editor.open_from_submap({ insert = true }), "Edit in Vim (Insert)" },
     table.unpack(common.footer()),
     -- stylua: ignore end
   },

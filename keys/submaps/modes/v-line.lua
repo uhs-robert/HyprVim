@@ -8,7 +8,6 @@ local count = vim.count
 local lm = vim.line_motion
 local reg = vim.registers
 local wk = require("whichkey") ---@class WhichKey
-local oe = vim.editor
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local common = require("keys.submaps.common")
 
@@ -16,7 +15,6 @@ local LEADER = common.keys()
 
 local send = Hypr.send
 local function normal() Submap.enter("NORMAL") end
-local function reset() Submap.reset() end
 local function vline() Submap.enter("V-LINE") end
 
 local footer = common.footer()
@@ -44,8 +42,8 @@ Submap.define({
     local rows = {
       -- stylua: ignore start
       -- Editor
-      { LEADER .. " + n", function() count.clear() reset() oe.open({ copy_selected = true, after_submap = "NORMAL" }) end,                    "Edit in Vim (Normal)" },
-      { LEADER .. " + i", function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
+      { LEADER .. " + n", vim.editor.open_from_submap(),                  "Edit in Vim (Normal)" },
+      { LEADER .. " + i", vim.editor.open_from_submap({ insert = true }), "Edit in Vim (Insert)" },
       -- Motions
       { "j",                    function() lm.down(count.get()) end,           "Down",           { repeating = true } },
       { "k",                    function() lm.up(count.get()) end,             "Up",             { repeating = true } },
@@ -101,8 +99,8 @@ Submap.define({
     -- stylua: ignore start
     { "g",         function() lm.goto_start() vline() end, "First line" },
     { "SHIFT + g", function() lm.goto_end()   vline() end, "Last line"  },
-    { "n",         function() count.clear() reset() oe.open({ copy_selected = true, after_submap = "NORMAL" }) end,                    "Edit in Vim (Normal)" },
-    { "i",         function() count.clear() reset() oe.open({ copy_selected = true, insert_mode = true, after_submap = "NORMAL" }) end, "Edit in Vim (Insert)" },
+    { "n",         vim.editor.open_from_submap(),                  "Edit in Vim (Normal)" },
+    { "i",         vim.editor.open_from_submap({ insert = true }), "Edit in Vim (Insert)" },
       -- stylua: ignore end
     }
     for _, row in ipairs(footer) do

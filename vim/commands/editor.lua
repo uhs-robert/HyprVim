@@ -6,6 +6,8 @@
 local Hypr = require("hypr") ---@class HyprVimHyprland
 local Config = require("config") ---@class HyprVimConfigModule
 local Window = require("hypr.window") ---@class HyprVimWindow
+local Submap = require("lib.submap") ---@class HyprVimSubmap
+local Count = require("vim.lib.count") ---@class VimCount
 
 --- @class EditorModule
 local Editor = {}
@@ -40,6 +42,18 @@ function Editor.open(opts)
     Hypr.cmd_then_dispatch(cmd, string.format('hl.dsp.submap("%s")', opts.after_submap))()
   else
     Hypr.exec(cmd)
+  end
+end
+
+---Build a bind action that resets the submap and opens the editor on the
+---current selection, returning to NORMAL when it exits.
+---@param opts { insert?: boolean }|nil
+---@return fun()
+function Editor.open_from_submap(opts)
+  return function()
+    Count.clear()
+    Submap.reset()
+    Editor.open({ copy_selected = true, insert_mode = (opts and opts.insert) or false, after_submap = "NORMAL" })
   end
 end
 

@@ -14,15 +14,6 @@ local cc = vim.count.clear_then_fn
 local vm = vim.motion.action
 local vm_seq = vim.motion.action_seq
 
----@param opts { insert?: boolean }|nil
----@return fun()
-local function open_vim_editor(opts)
-  return function()
-    Submap.reset()
-    vim.editor.open({ copy_selected = true, insert_mode = (opts and opts.insert) or false, after_submap = "NORMAL" })
-  end
-end
-
 -- ── Marks ─────────────────────────────────────────────────────────────────────
 -- stylua: ignore start
 local function set_mark()  vim.marks.set_after("NORMAL") Submap.enter("SET-MARK") end
@@ -141,8 +132,8 @@ Submap.define({
       { "SHIFT + SEMICOLON", cc(vim.command.prompt), "Command mode (:)" },
 
       -- Vim editor
-      { LEADER .. " + N", open_vim_editor(),               "Edit in Vim (Normal)" },
-      { LEADER .. " + I", open_vim_editor({ insert = true }), "Edit in Vim (Insert)" },
+      { LEADER .. " + N", vim.editor.open_from_submap(),                  "Edit in Vim (Normal)" },
+      { LEADER .. " + I", vim.editor.open_from_submap({ insert = true }), "Edit in Vim (Insert)" },
 
       -- Count: 0 is special (start-of-line vs digit)
       { "0", vim.count.handle_zero, "Start of line" },
