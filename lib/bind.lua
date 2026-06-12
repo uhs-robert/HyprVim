@@ -34,7 +34,9 @@ function Bind.key(keys, action, desc, opts)
 
   opts = opts or {}
 
-  if desc then opts.desc = desc --[[@as string]] end
+  if desc then
+    opts.desc = desc --[[@as string]]
+  end
 
   for _, key in ipairs(as_list(keys)) do
     hl.bind(key, action, opts)
@@ -51,36 +53,6 @@ function Bind.leader_key(keys, action, desc, opts)
     table.insert(prefixed, with_prefix(Bind.leader, k))
   end
   Bind.key(prefixed, action, desc, opts)
-end
-
---- @param keys string|string[]
---- @param cmd  string
---- @param desc string|HL.BindOptions|nil
---- @param opts HL.BindOptions|nil
-function Bind.cmd(keys, cmd, desc, opts) Bind.key(keys, hl.dsp.exec_cmd(cmd), desc, opts) end
-
---- @param keys string|string[]
---- @param cmd  string
---- @param desc string|HL.BindOptions|nil
---- @param opts HL.BindOptions|nil
-function Bind.leader_cmd(keys, cmd, desc, opts) Bind.leader_key(keys, hl.dsp.exec_cmd(cmd), desc, opts) end
-
---- @param keys   string|string[]
---- @param f      function
---- @param desc   string|HL.BindOptions|nil
---- @param opts   HL.BindOptions|nil
-function Bind.fn(keys, f, desc, opts, ...)
-  local args = { ... }
-  Bind.key(keys, function() f(table.unpack(args)) end, desc, opts)
-end
-
---- @param keys   string|string[]
---- @param f      function
---- @param desc   string|HL.BindOptions|nil
---- @param opts   HL.BindOptions|nil
-function Bind.leader_fn(keys, f, desc, opts, ...)
-  local args = { ... }
-  Bind.leader_key(keys, function() f(table.unpack(args)) end, desc, opts)
 end
 
 --- @param rows     { [1]: string|string[], [2]: any, [3]: string|HL.BindOptions|nil, [4]: HL.BindOptions|nil }[]
