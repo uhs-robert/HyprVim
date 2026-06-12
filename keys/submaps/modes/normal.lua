@@ -15,6 +15,17 @@ local vm = vim.motion.action
 local vm_seq = vim.motion.action_seq
 local SEL = vim.motion.shortcuts.SELECT
 
+---Send a `{mods, key}` pair [count] times in one dispatch burst.
+---@param pair {[1]: {[1]: string, [2]: string}, [2]: {[1]: string, [2]: string}}
+local function send_all_n(pair)
+  local cmds = {}
+  for _ = 1, vim.count.get() do
+    cmds[#cmds + 1] = pair[1]
+    cmds[#cmds + 1] = pair[2]
+  end
+  Hypr.send_all(cmds)
+end
+
 -- ── Marks ─────────────────────────────────────────────────────────────────────
 -- stylua: ignore start
 local function set_mark()  vim.marks.set_after("NORMAL") Submap.enter("SET-MARK") end
@@ -68,8 +79,8 @@ Submap.define({
     Bind.key("k",          vm("k"),                          "Up")
     Bind.key("l",          vm("l"),                          "Right")
     Bind.key("SHIFT + h",  vm("0", { clear_count = true }),  "Start of line")
-    Bind.key("SHIFT + j",  function() Hypr.send_batch({ { "", "HOME" }, { "", "DOWN" } }) end, "Down to next line start", { repeating = true })
-    Bind.key("SHIFT + k",  function() Hypr.send_batch({ { "CTRL", "UP" },   { "", "HOME" } }) end, "Up to prev line start",   { repeating = true })
+    Bind.key("SHIFT + j",  function() send_all_n({ { "", "HOME" }, { "", "DOWN" } }) end, "Down to next line start", { repeating = true })
+    Bind.key("SHIFT + k",  function() send_all_n({ { "CTRL", "UP" },   { "", "HOME" } }) end, "Up to prev line start",   { repeating = true })
     Bind.key("SHIFT + l",  vm("$", { clear_count = true }),  "End of line")
     Bind.key("CTRL + h",   vm_seq({ { "CTRL", "LEFT" } }), "Ctrl left", { repeating = true })
     Bind.key("CTRL + j",   vm_seq({ { "CTRL", "DOWN" } }), "Ctrl down", { repeating = true })
