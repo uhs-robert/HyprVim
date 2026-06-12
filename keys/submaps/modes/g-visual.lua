@@ -10,6 +10,7 @@ local function visual() Submap.enter("VISUAL") end
 
 Submap.define({
   name = "G-VISUAL",
+  operator = true,
   escape = "VISUAL",
   back = "previous",
   catchall = "stay",

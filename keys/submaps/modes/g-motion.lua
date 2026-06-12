@@ -10,6 +10,7 @@ local function normal() Submap.enter("NORMAL") end
 
 Submap.define({
   name = "GOTO",
+  operator = true,
   escape = "NORMAL",
   back = "previous",
   catchall = "stay",

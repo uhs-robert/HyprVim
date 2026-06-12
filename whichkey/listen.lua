@@ -29,26 +29,21 @@ function Listen.cancel_pending()
   end
 end
 
--- stylua: ignore
-local DELAY_SMs = {
-  ["DELETE"] = 1, ["DELETE-INSIDE"] = 1, ["DELETE-AROUND"] = 1, ["DELETE-GOTO"] = 1,
-  ["CHANGE"] = 1, ["CHANGE-INSIDE"] = 1, ["CHANGE-AROUND"] = 1, ["CHANGE-GOTO"] = 1,
-  ["YANK"]   = 1, ["YANK-INSIDE"]   = 1, ["YANK-AROUND"]   = 1, ["YANK-GOTO"]   = 1,
-  ["GOTO"] = 1, ["G-VISUAL"] = 1, ["R-CHAR"] = 1,
-}
-
 --- Returns true if sm is a persistent mode that should not auto-show the HUD.
 --- @param sm string
 --- @return boolean
 local function is_sticky(sm)
-  local l = sm:lower()
-  return l == "normal" or l == "visual" or l == "v-line"
+  local spec = Submap.registry[sm]
+  return spec ~= nil and spec.sticky == true
 end
 
 --- Returns true if sm is an operator-pending mode that needs a show delay.
 --- @param sm string
 --- @return boolean
-local function requires_delay(sm) return DELAY_SMs[sm] ~= nil end
+local function requires_delay(sm)
+  local spec = Submap.registry[sm]
+  return spec ~= nil and spec.operator == true
+end
 
 --- Extracts and normalises which-key config from the top-level Config table.
 --- @param Config table

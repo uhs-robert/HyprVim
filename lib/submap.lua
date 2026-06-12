@@ -28,6 +28,8 @@ local Submap = {
 --- @field on_exit?  fun(ctx: SubmapContext)
 --- @field binds?    table[]|fun(): table[]
 --- @field delay_ms? integer  Per-submap which-key HUD delay override; overrides global which_key.delay_ms
+--- @field operator? boolean  Operator-pending mode; which-key HUD waits vim_delay_ms and chains delays
+--- @field sticky?   boolean  Persistent mode; which-key HUD never auto-shows
 
 --- @class SubmapHandle
 --- @field enter fun()

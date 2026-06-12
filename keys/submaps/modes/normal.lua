@@ -50,6 +50,7 @@ local function escape_normal()  vim.count.clear() wk.close() vim.find.deactivate
 
 Submap.define({
   name = "NORMAL",
+  sticky = true,
   escape = false,
   catchall = "stay",
   on_enter = function(ctx)

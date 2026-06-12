@@ -37,6 +37,7 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
 
   Submap.define({
     name = op_name .. "-INSIDE",
+    operator = true,
     escape = "NORMAL",
     back = op_name,
     catchall = "stay",
@@ -50,6 +51,7 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
 
   Submap.define({
     name = op_name .. "-AROUND",
+    operator = true,
     escape = "NORMAL",
     back = op_name,
     catchall = "stay",
@@ -63,6 +65,7 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
 
   Submap.define({
     name = op_name .. "-GOTO",
+    operator = true,
     escape = "NORMAL",
     back = op_name,
     catchall = "stay",
@@ -91,6 +94,7 @@ end
 
 Submap.define({
   name = "DELETE",
+  operator = true,
   escape = "NORMAL",
   back = "previous",
   catchall = "stay",
@@ -136,6 +140,7 @@ make_sub_submaps(
 
 Submap.define({
   name = "CHANGE",
+  operator = true,
   escape = "NORMAL",
   back = "previous",
   catchall = "stay",
@@ -190,6 +195,7 @@ end
 
 Submap.define({
   name = "YANK",
+  operator = true,
   escape = "NORMAL",
   back = "previous",
   catchall = "stay",

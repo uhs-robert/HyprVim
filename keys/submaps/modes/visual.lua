@@ -52,6 +52,7 @@ local footer = common.footer()
 
 Submap.define({
   name = "VISUAL",
+  sticky = true,
   on_enter = function() count.clear() end,
   escape = function()
     send("", "LEFT")

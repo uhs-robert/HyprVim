@@ -25,6 +25,7 @@ local footer = common.footer()
 
 Submap.define({
   name = "V-LINE",
+  sticky = true,
   on_enter = function(ctx)
     if ctx.from == "G-VLINE" then return end -- keep the line-selection anchor on return from G-VLINE
     count.clear()

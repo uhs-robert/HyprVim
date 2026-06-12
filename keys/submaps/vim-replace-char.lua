@@ -30,6 +30,7 @@ local PUNCT = {
 
 Submap.define({
   name = "R-CHAR",
+  operator = true,
   escape = function()
     vim.count.clear()
     Submap.enter("NORMAL")
