@@ -41,17 +41,17 @@ function VLineMotion.reset() clear_first_motion() end
 ---@param n integer|nil  defaults to current count
 function VLineMotion.down(n)
   n = n or VimCount.get()
-  local batch = {}
+  local cmds = {}
   if first_motion() then
-    batch[#batch + 1] = { "", "HOME" }
-    batch[#batch + 1] = { "SHIFT", "END" }
+    cmds[#cmds + 1] = { "", "HOME" }
+    cmds[#cmds + 1] = { "SHIFT", "END" }
     clear_first_motion()
   end
   for _ = 1, n do
-    batch[#batch + 1] = { "SHIFT", "DOWN" }
-    batch[#batch + 1] = { "SHIFT", "END" }
+    cmds[#cmds + 1] = { "SHIFT", "DOWN" }
   end
-  Hypr.send_batch(batch)
+  cmds[#cmds + 1] = { "SHIFT", "END" }
+  Hypr.send_all(cmds)
 end
 
 ---Extend the V-LINE selection upward by `n` lines.
@@ -59,17 +59,17 @@ end
 ---@param n integer|nil
 function VLineMotion.up(n)
   n = n or VimCount.get()
-  local batch = {}
+  local cmds = {}
   if first_motion() then
-    batch[#batch + 1] = { "", "END" }
-    batch[#batch + 1] = { "SHIFT", "HOME" }
+    cmds[#cmds + 1] = { "", "END" }
+    cmds[#cmds + 1] = { "SHIFT", "HOME" }
     clear_first_motion()
   end
   for _ = 1, n do
-    batch[#batch + 1] = { "SHIFT", "UP" }
-    batch[#batch + 1] = { "SHIFT", "HOME" }
+    cmds[#cmds + 1] = { "SHIFT", "UP" }
   end
-  Hypr.send_batch(batch)
+  cmds[#cmds + 1] = { "SHIFT", "HOME" }
+  Hypr.send_all(cmds)
 end
 
 ---Extend the V-LINE selection up by `n` paragraphs (`{`).
