@@ -72,6 +72,7 @@ Submap.define({
       { "0", count.handle_zero_visual },
       -- Mode switches
       { "g", Submap.switch("G-VISUAL"), "+Goto" },
+      { "SHIFT + v", function() Hypr.send_burst({ { "SHIFT", "HOME" }, { "SHIFT", "END" } }, Submap.switch("V-LINE")) end, "V-Line mode" },
       -- Editor
       { LEADER .. " + n", vim.editor.open_from_submap(),                  "Edit in Vim (Normal)" },
       { LEADER .. " + i", vim.editor.open_from_submap({ insert = true }), "Edit in Vim (Insert)" },

@@ -32,6 +32,10 @@ Submap.define({
   on_enter = function(ctx)
     if ctx.from == "G-VLINE" then return end -- keep the line-selection anchor on return from G-VLINE
     count.clear()
+    if ctx.from == "VISUAL" then
+      lm.reset()
+      return
+    end
     lm.setup()
   end,
   escape = function()
