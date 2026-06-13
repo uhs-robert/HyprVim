@@ -78,6 +78,16 @@ function Hyprland.close_window() hl.dispatch(hl.dsp.window.close()) end
 --- Force-kill the active window.
 function Hyprland.kill_window() hl.dispatch(hl.dsp.window.kill()) end
 
+--- Close or kill the given windows, each targeted by address.
+--- @param addresses string[]  window addresses (e.g. "0x1234abcd"); blanks are skipped
+--- @param kill      boolean    true -> kill (SIGKILL), false -> graceful close
+function Hyprland.close_windows(addresses, kill)
+  local action = kill and hl.dsp.window.kill or hl.dsp.window.close
+  for _, addr in ipairs(addresses) do
+    if addr and addr ~= "" then hl.dispatch(action({ window = "address:" .. addr })) end
+  end
+end
+
 --- Toggle floating on the active window.
 function Hyprland.toggle_floating() hl.dispatch(hl.dsp.window.float()) end
 

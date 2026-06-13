@@ -16,11 +16,11 @@ local sq = require("lib.utils").sh_escape
 local function close_workspace_windows(kill)
   local ws = hl.get_active_workspace()
   if not ws then return end
-  local action = kill and hl.dsp.window.kill or hl.dsp.window.close
-  local windows = hl.get_workspace_windows(ws) or {}
-  for i, w in ipairs(windows) do
-    hl.timer(function() hl.dispatch(action("address:" .. w.address)) end, { timeout = 50 * i, type = "oneshot" })
+  local addresses = {}
+  for _, w in ipairs(hl.get_workspace_windows(ws) or {}) do
+    addresses[#addresses + 1] = w.address
   end
+  Hypr.close_windows(addresses, kill)
 end
 
 ---Show a formatted command reference in a floating terminal.
@@ -52,13 +52,11 @@ local commands = {
     local win = hl.get_active_window()
     local ws = hl.get_active_workspace()
     if not (win and ws) then return end
-    local to_close = {}
+    local addresses = {}
     for _, w in ipairs(hl.get_workspace_windows(ws) or {}) do
-      if w.address ~= win.address then to_close[#to_close + 1] = w end
+      if w.address ~= win.address then addresses[#addresses + 1] = w.address end
     end
-    for i, w in ipairs(to_close) do
-      hl.timer(function() hl.dispatch(hl.dsp.window.close("address:" .. w.address)) end, { timeout = 50 * i, type = "oneshot" })
-    end
+    Hypr.close_windows(addresses, false)
   end,
   split      = function() hl.dispatch(hl.dsp.layout("preselect d")) end,
   vsplit     = function() hl.dispatch(hl.dsp.layout("preselect r")) end,
