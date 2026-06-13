@@ -25,7 +25,7 @@ local NORMAL = {
   k = { "", "UP" },
   l = { "", "RIGHT" },
   -- Word motions
-  w = { { "CTRL", "RIGHT" }, { "", "RIGHT" } },
+  w = { "CTRL", "RIGHT" },
   W = { { "CTRL", "RIGHT" }, { "", "RIGHT" } },
   e = { { "", "RIGHT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } },
   E = { { "", "RIGHT" }, { "CTRL", "RIGHT" }, { "", "LEFT" } },
