@@ -88,10 +88,11 @@ end
 
 ---Read the stored after-submap, remove the state file, and switch to that mode.
 ---A `"reset"` target means a full vim exit (clipboard restore + submap reset).
----Missing file (submap entered from a global bind, outside vim) defaults to `"reset"`.
+---Missing file defaults to `"NORMAL"`: every mark entry point writes the file first,
+---so an absent file means a lost write, not an intentional exit; stay in vim.
 function Marks.dispatch_after()
   local f = io.open(after_path(), "r")
-  local target = "reset"
+  local target = "NORMAL"
   if f then
     target = f:read("*a"):gsub("%s+$", "")
     f:close()
