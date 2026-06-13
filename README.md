@@ -100,7 +100,7 @@ If you'd like an extra config added, raise a feature request or put one together
 >
 > AUR package is planned. Arch users who prefer package-manager ownership should wait.
 >
-> You won't wait long, this is something that will be released in the next 24 hours if you're reading this.
+> Due to the ongoing malware issue on the AUR, this is delayed till the AUR allows registrations once again.
 
 Once the package is published, install `hyprvim` from the AUR with your preferred helper:
 
