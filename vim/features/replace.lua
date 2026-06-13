@@ -67,7 +67,8 @@ function Replace.string()
       end
       Hypr.cmd_then_dispatch(replace_script(str, #str), 'hl.dsp.submap("NORMAL")')()
     end)
-  end, { timeout = 100, type = "oneshot" })
+    -- TODO: stopgap: shrinks (does not close) the unguarded reset terminal-focus leak window
+  end, { timeout = 20, type = "oneshot" })
 end
 
 return Replace

@@ -253,7 +253,8 @@ function Command.prompt()
         if not execute(cmd, restore) then restore() end
       end, { timeout = 50, type = "oneshot" })
     end)
-  end, { timeout = 100, type = "oneshot" })
+    -- stopgap: shrinks (does not close) the unguarded reset→terminal-focus leak window
+  end, { timeout = 20, type = "oneshot" })
 end
 
 return Command

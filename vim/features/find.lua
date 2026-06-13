@@ -115,7 +115,8 @@ local function prompt_and_find(term_type, direction, is_till)
       end
       hl.timer(function() do_find(term, direction, term_type, is_till) end, { timeout = 50, type = "oneshot" })
     end)
-  end, { timeout = 100, type = "oneshot" })
+    -- TODO: stopgap: shrinks (does not close) the unguarded reset terminal-focus leak window
+  end, { timeout = 20, type = "oneshot" })
 end
 
 ---Repeat the last find: F3/Shift+F3 while the find bar is open, else re-run `do_find`.
