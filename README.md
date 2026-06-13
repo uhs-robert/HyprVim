@@ -16,7 +16,7 @@
 
 **HyprVim** brings the power of Vim keybindings and motions to your Hyprland desktop environment.
 
-<https://github.com/user-attachments/assets/1a9c9459-2bfa-4d1d-bf05-24d5174431a9>
+<https://github.com/user-attachments/assets/fe3abc89-bc03-4748-925b-341bbe4686e6>
 
 <p align=center><i>Think of it as a lightweight, system-wide Vim mode for all of your applications.</i></p>
 
