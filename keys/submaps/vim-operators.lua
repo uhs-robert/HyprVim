@@ -27,6 +27,17 @@ local function sel_word_end()
   motion.send_sequence(SEL.word_end)
 end
 
+-- Select [count]× sel via send_burst, then run the operator action.
+local function sel_then(sel, action)
+  return function()
+    local keys = {}
+    for _ = 1, count.get() do
+      keys[#keys + 1] = sel
+    end
+    Hypr.send_burst(keys, action)
+  end
+end
+
 --- Build and register the I/A/G sub-submaps for one operator.
 --- @param op_name  string  parent submap name (e.g. "DELETE")
 --- @param on_word  fun()   action for word text objects
@@ -39,9 +50,14 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
     local function obj(seq, ext, action)
       return function()
         local n = count.get()
-        motion.send_sequence(seq)
-        if n > 1 then motion.send_raw(ext, n - 1) end
-        action()
+        local keys = {}
+        for _, s in ipairs(seq) do
+          keys[#keys + 1] = s
+        end
+        for _ = 2, n do
+          keys[#keys + 1] = ext
+        end
+        Hypr.send_burst(keys, action)
       end
     end
     local word = obj(SEL.inner_word, SEL.next_word, on_word)
@@ -116,8 +132,8 @@ Submap.define({
   binds = function()
     local rows = {
       -- stylua: ignore start
-      { "w",         function() motion.send_raw(SEL.next_word, count.get()) del("NORMAL")() end, "Next word" },
-      { "SHIFT + w", function() motion.send_raw(SEL.next_word, count.get()) del("NORMAL")() end },
+      { "w",         sel_then(SEL.next_word, del("NORMAL")), "Next word" },
+      { "SHIFT + w", sel_then(SEL.next_word, del("NORMAL")) },
       { "e",         function() sel_word_end() del("NORMAL")() end, "Next end of word" },
       { "SHIFT + e", function() sel_word_end() del("NORMAL")() end },
       { "b",         function() motion.send_raw(SEL.prev_word, count.get()) del("NORMAL")() end, "Prev word" },
@@ -201,10 +217,10 @@ Submap.define({
   binds = function()
     -- stylua: ignore start
     local rows = {
-      { "w",         function() motion.send_raw(SEL.next_word, count.get()) yank("NORMAL")() end, "Next word" },
+      { "w",         sel_then(SEL.next_word, yank("NORMAL")), "Next word" },
       { "e",         function() sel_word_end() yank("NORMAL")() end, "Next end of word" },
       { "b",         function() motion.send_raw(SEL.prev_word, count.get()) yank("NORMAL")() end, "Prev word" },
-      { "SHIFT + w", function() motion.send_raw(SEL.next_word, count.get()) yank("NORMAL")() end },
+      { "SHIFT + w", sel_then(SEL.next_word, yank("NORMAL")) },
       { "SHIFT + e", function() sel_word_end() yank("NORMAL")() end },
       { "SHIFT + b", function() motion.send_raw(SEL.prev_word, count.get()) yank("NORMAL")() end },
       { "y",         function() motion.send_sequence(SEL.line) yank("NORMAL", false)() send("", "DOWN") end, "Yank line" },

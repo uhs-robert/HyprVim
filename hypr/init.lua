@@ -40,6 +40,25 @@ function Hyprland.send_batch(shortcuts, delay_ms, cb)
   if cb then hl.timer(cb, { timeout = (delay_ms or DEFAULT_DELAY_MS) * #shortcuts, type = "oneshot" }) end
 end
 
+--- Send shortcuts in one hyprctl --batch (single IPC round, no inter-key delay).
+--- IPC dispatch escapes the bind handler's input-processing context, avoiding the
+--- stuck-key race with the physical key release (LibreOffice autorepeat runaway).
+--- @param shortcuts {[1]: string, [2]: string, [3]?: string}[] entries as {mods, key[, window]}
+--- @param cb        fun()|nil called shortly after the batch fires
+function Hyprland.send_burst(shortcuts, cb)
+  local parts = {}
+  for _, s in ipairs(shortcuts) do
+    parts[#parts + 1] = string.format(
+      "dispatch hl.dsp.send_shortcut({mods=[[%s]],key=[[%s]],window=[[%s]]})",
+      s[1] or "",
+      s[2],
+      s[3] or "activewindow"
+    )
+  end
+  hl.dispatch(hl.dsp.exec_cmd("hyprctl --batch " .. sh_escape(table.concat(parts, " ; "))))
+  if cb then hl.timer(cb, { timeout = 50, type = "oneshot" }) end
+end
+
 --- @param name string submap name
 function Hyprland.switch_mode(name) Submap.enter(name) end
 
