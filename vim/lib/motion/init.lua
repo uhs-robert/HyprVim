@@ -64,13 +64,19 @@ function VimMotion.send(key, opts)
 
   if type(shortcut[1]) == "table" then
     ---@cast shortcut {[1]:string,[2]:string}[]
+    local seq = {}
     for _ = 1, n do
-      Hypr.send_all(shortcut)
+      for _, s in ipairs(shortcut) do seq[#seq + 1] = s end
     end
+    Hypr.send_burst(seq)
   else
     ---@cast shortcut {[1]:string,[2]:string}
-    for _ = 1, n do
+    if n == 1 then
       Hypr.send(shortcut[1], shortcut[2])
+    else
+      local seq = {}
+      for _ = 1, n do seq[#seq + 1] = shortcut end
+      Hypr.send_burst(seq)
     end
   end
 end
@@ -84,13 +90,19 @@ function VimMotion.send_visual(key, n)
   if not shortcut then return end
   if type(shortcut[1]) == "table" then
     ---@cast shortcut {[1]:string,[2]:string}[]
+    local seq = {}
     for _ = 1, n do
-      Hypr.send_all(shortcut)
+      for _, s in ipairs(shortcut) do seq[#seq + 1] = s end
     end
+    Hypr.send_burst(seq)
   else
     ---@cast shortcut {[1]:string,[2]:string}
-    for _ = 1, n do
+    if n == 1 then
       Hypr.send(shortcut[1], shortcut[2])
+    else
+      local seq = {}
+      for _ = 1, n do seq[#seq + 1] = shortcut end
+      Hypr.send_burst(seq)
     end
   end
 end
@@ -108,7 +120,7 @@ end
 
 ---Send multiple `{mods, key}` pairs in order, each exactly once.
 ---@param shortcuts {[1]: string, [2]: string}[]
-function VimMotion.send_sequence(shortcuts) Hypr.send_all(shortcuts) end
+function VimMotion.send_sequence(shortcuts) Hypr.send_burst(shortcuts) end
 
 ---Return a bind action that sends a visual-mode motion key (always GUI, extends selection).
 ---@param key string
