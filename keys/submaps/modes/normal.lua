@@ -15,7 +15,7 @@ local vm = vim.motion.action
 local vm_seq = vim.motion.action_seq
 local SEL = vim.motion.shortcuts.SELECT
 
----Send a `{mods, key}` pair [count] times in one dispatch burst.
+---Send a `{mods, key}` pair [count] times via send_batch (20ms spacing).
 ---@param pair {[1]: {[1]: string, [2]: string}, [2]: {[1]: string, [2]: string}}
 local function send_all_n(pair)
   local cmds = {}
@@ -23,7 +23,7 @@ local function send_all_n(pair)
     cmds[#cmds + 1] = pair[1]
     cmds[#cmds + 1] = pair[2]
   end
-  Hypr.send_all(cmds)
+  Hypr.send_batch(cmds)
 end
 
 -- ── Marks ─────────────────────────────────────────────────────────────────────
@@ -43,10 +43,25 @@ local function open_below_se() Hypr.send_batch({ { "", "END" }, { "SHIFT", "Retu
 local function open_above_se() Hypr.send_batch({ { "", "HOME" }, { "SHIFT", "Return" }, { "", "Up" } }, nil, function() Submap.enter("INSERT") end) end
 
 -- ── Change / delete / paste / indent ─────────────────────────────────────────
-local function change_eol()    vim.count.clear() vim.motion.send_raw(SEL.to_eol) vim.registers.handle_delete("INSERT") end
-local function delete_eol()    vim.motion.send_raw(SEL.to_eol) vim.registers.handle_delete("NORMAL") end
-local function delete_before() vim.motion.send_raw(SEL.prev_char, vim.count.get()) vim.registers.handle_delete("NORMAL") end
-local function delete_under()  vim.motion.send_raw(SEL.next_char, vim.count.get()) vim.registers.handle_delete("NORMAL") end
+local function change_eol()
+  vim.count.clear()
+  Hypr.send_batch({ SEL.to_eol }, nil, function() vim.registers.handle_delete("INSERT") end)
+end
+local function delete_eol()
+  Hypr.send_batch({ SEL.to_eol }, nil, function() vim.registers.handle_delete("NORMAL") end)
+end
+local function delete_before()
+  local n = vim.count.get()
+  local cmds = {}
+  for _ = 1, n do cmds[#cmds + 1] = SEL.prev_char end
+  Hypr.send_batch(cmds, nil, function() vim.registers.handle_delete("NORMAL") end)
+end
+local function delete_under()
+  local n = vim.count.get()
+  local cmds = {}
+  for _ = 1, n do cmds[#cmds + 1] = SEL.next_char end
+  Hypr.send_batch(cmds, nil, function() vim.registers.handle_delete("NORMAL") end)
+end
 local function paste()         vim.registers.handle_paste("CTRL", "v", "NORMAL", vim.count.get()) end
 local function indent_line()   Hypr.send_batch({ { "", "HOME" }, { "", "TAB" } }) end
 local function unindent_line() Hypr.send_batch({ { "", "HOME" }, { "SHIFT", "TAB" } }) end
