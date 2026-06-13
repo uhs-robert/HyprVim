@@ -18,21 +18,41 @@ local footer = common.footer()
 -- iw/ip; true around-objects would need trailing-whitespace handling.
 local SEL = motion.shortcuts.SELECT
 
--- Select to the count-th word end: extend past n-1 words, then the one-shot
--- word_end recipe (VISUAL.e can't serve here: its repeat-friendly alias of w
--- would eat the trailing space).
-local function sel_word_end()
-  local n = count.get()
-  if n > 1 then motion.send_raw(SEL.next_word, n - 1) end
-  motion.send_sequence(SEL.word_end)
-end
-
 -- Select [count]× sel via send_burst, then run the operator action.
 local function sel_then(sel, action)
   return function()
     local keys = {}
     for _ = 1, count.get() do
       keys[#keys + 1] = sel
+    end
+    Hypr.send_burst(keys, action)
+  end
+end
+
+-- Count-insensitive: clear count, select once, then act.
+local function sel1_then(sel, action)
+  return function()
+    count.clear()
+    Hypr.send_burst({ sel }, action)
+  end
+end
+
+-- Send a fixed selection sequence, then act.
+local function seq_then(seq, action)
+  return function() Hypr.send_burst(seq, action) end
+end
+
+-- Select to the count-th word end: n-1 next_word extensions, then the one-shot
+-- word_end recipe (VISUAL.e can't serve here: its repeat-friendly alias of w
+-- would eat the trailing space).
+local function word_end_then(action)
+  return function()
+    local keys = {}
+    for _ = 2, count.get() do
+      keys[#keys + 1] = SEL.next_word
+    end
+    for _, s in ipairs(SEL.word_end) do
+      keys[#keys + 1] = s
     end
     Hypr.send_burst(keys, action)
   end
@@ -103,8 +123,8 @@ local function make_sub_submaps(op_name, on_word, on_para, on_first, on_last)
     binds = function()
       local rows = {
         -- stylua: ignore start
-        { "g",         function() motion.send_raw(SEL.first_line) on_first() end, "First line" },
-        { "SHIFT + g", function() motion.send_raw(SEL.last_line) on_last()  end, "Last line"  },
+        { "g",         seq_then({ SEL.first_line }, on_first), "First line" },
+        { "SHIFT + g", seq_then({ SEL.last_line }, on_last),  "Last line"  },
         -- stylua: ignore end
       }
       for _, row in ipairs(footer) do
@@ -134,14 +154,15 @@ Submap.define({
       -- stylua: ignore start
       { "w",         sel_then(SEL.next_word, del("NORMAL")), "Next word" },
       { "SHIFT + w", sel_then(SEL.next_word, del("NORMAL")) },
-      { "e",         function() sel_word_end() del("NORMAL")() end, "Next end of word" },
-      { "SHIFT + e", function() sel_word_end() del("NORMAL")() end },
-      { "b",         function() motion.send_raw(SEL.prev_word, count.get()) del("NORMAL")() end, "Prev word" },
-      { "SHIFT + b", function() motion.send_raw(SEL.prev_word, count.get()) del("NORMAL")() end },
-      { "d",         function() motion.send_sequence(SEL.line) del("NORMAL")() send("", "BackSpace") send("", "DOWN") end, "Delete line" },
-      { "SHIFT + 4", function() count.clear() motion.send_raw(SEL.to_eol) del("NORMAL")() end, "End of line"   },
-      { "SHIFT + 6", function() count.clear() motion.send_raw(SEL.to_bol) del("NORMAL")() end, "Start of line" },
-      { "0",         function() count.clear() motion.send_raw(SEL.to_bol) del("NORMAL")() end, "Start of line" },
+      { "e",         word_end_then(del("NORMAL")), "Next end of word" },
+      { "SHIFT + e", word_end_then(del("NORMAL")) },
+      { "b",         sel_then(SEL.prev_word, del("NORMAL")), "Prev word" },
+      { "SHIFT + b", sel_then(SEL.prev_word, del("NORMAL")) },
+      { "d",         seq_then(SEL.line, function() del("NORMAL")() send("", "BackSpace") send("", "DOWN") end), "Delete line" },
+      { "SHIFT + 4", sel1_then(SEL.to_eol, del("NORMAL")), "End of line"   },
+      { "SHIFT + 6", sel1_then(SEL.to_bol, del("NORMAL")), "Start of line" },
+      { "0",         sel1_then(SEL.to_bol, del("NORMAL")), "Start of line" },
+      { "SHIFT + g", sel1_then(SEL.last_line, del("NORMAL")), "Last line" },
       { "m",         function() count.clear() vim.marks.set_after("NORMAL") vim.marks.enter_delete() end, "+Delete Mark" },
       { "i",         function() Submap.enter("DELETE-INSIDE") end, "+Inner" },
       { "SHIFT + i", function() Submap.enter("DELETE-INSIDE") end },
@@ -172,16 +193,16 @@ Submap.define({
   binds = function()
     local rows = {
       -- stylua: ignore start
-      { "w",         function() motion.send_raw(SEL.next_word, count.get()) reg.handle_delete("INSERT") end, "Next word" },
-      { "SHIFT + w", function() sel_word_end() reg.handle_delete("INSERT") end },
-      { "e",         function() sel_word_end() reg.handle_delete("INSERT") end, "End of next word" },
-      { "b",         function() motion.send_raw(SEL.prev_word, count.get()) reg.handle_delete("INSERT") end, "Prev word" },
-      { "SHIFT + b", function() motion.send_raw(SEL.prev_word) reg.handle_delete("INSERT") end },
-      { "c",         function() motion.send_sequence(SEL.line) reg.handle_delete("INSERT") end, "Change line" },
-      { "SHIFT + 4", function() count.clear() motion.send_raw(SEL.to_eol) reg.handle_delete("INSERT") end, "End of line"   },
-      { "SHIFT + 6", function() count.clear() motion.send_raw(SEL.to_bol) reg.handle_delete("INSERT") end, "Start of line" },
-      { "0",         function() count.clear() motion.send_raw(SEL.to_bol) reg.handle_delete("INSERT") end, "Start of line" },
-      { "SHIFT + g", function() count.clear() motion.send_raw(SEL.last_line) reg.handle_delete("INSERT") end, "Last line" },
+      { "w",         sel_then(SEL.next_word, del("INSERT")), "Next word" },
+      { "SHIFT + w", word_end_then(del("INSERT")) },
+      { "e",         word_end_then(del("INSERT")), "End of next word" },
+      { "b",         sel_then(SEL.prev_word, del("INSERT")), "Prev word" },
+      { "SHIFT + b", sel_then(SEL.prev_word, del("INSERT")) },
+      { "c",         seq_then(SEL.line, del("INSERT")), "Change line" },
+      { "SHIFT + 4", sel1_then(SEL.to_eol, del("INSERT")), "End of line"   },
+      { "SHIFT + 6", sel1_then(SEL.to_bol, del("INSERT")), "Start of line" },
+      { "0",         sel1_then(SEL.to_bol, del("INSERT")), "Start of line" },
+      { "SHIFT + g", sel1_then(SEL.last_line, del("INSERT")), "Last line" },
       { "i",         function() Submap.enter("CHANGE-INSIDE") end, "+Inner" },
       { "SHIFT + i", function() Submap.enter("CHANGE-INSIDE") end },
       { "a",         function() Submap.enter("CHANGE-AROUND") end, "+Around" },
@@ -218,16 +239,16 @@ Submap.define({
     -- stylua: ignore start
     local rows = {
       { "w",         sel_then(SEL.next_word, yank("NORMAL")), "Next word" },
-      { "e",         function() sel_word_end() yank("NORMAL")() end, "Next end of word" },
-      { "b",         function() motion.send_raw(SEL.prev_word, count.get()) yank("NORMAL")() end, "Prev word" },
+      { "e",         word_end_then(yank("NORMAL")), "Next end of word" },
+      { "b",         sel_then(SEL.prev_word, yank("NORMAL")), "Prev word" },
       { "SHIFT + w", sel_then(SEL.next_word, yank("NORMAL")) },
-      { "SHIFT + e", function() sel_word_end() yank("NORMAL")() end },
-      { "SHIFT + b", function() motion.send_raw(SEL.prev_word, count.get()) yank("NORMAL")() end },
-      { "y",         function() motion.send_sequence(SEL.line) yank("NORMAL", false)() send("", "DOWN") end, "Yank line" },
-      { "SHIFT + 4", function() count.clear() motion.send_raw(SEL.to_eol) yank("NORMAL")() end, "End of line"   },
-      { "0",         function() count.clear() motion.send_raw(SEL.to_bol) yank("NORMAL")() end, "Start of line" },
-      { "SHIFT + 6", function() count.clear() motion.send_raw(SEL.to_bol) yank("NORMAL")() end, "Start of line" },
-      { "SHIFT + g", function() motion.send_raw(SEL.last_line) yank("NORMAL")() end, "Last line" },
+      { "SHIFT + e", word_end_then(yank("NORMAL")) },
+      { "SHIFT + b", sel_then(SEL.prev_word, yank("NORMAL")) },
+      { "y",         seq_then(SEL.line, function() yank("NORMAL", false)() send("", "DOWN") end), "Yank line" },
+      { "SHIFT + 4", sel1_then(SEL.to_eol, yank("NORMAL")), "End of line"   },
+      { "0",         sel1_then(SEL.to_bol, yank("NORMAL")), "Start of line" },
+      { "SHIFT + 6", sel1_then(SEL.to_bol, yank("NORMAL")), "Start of line" },
+      { "SHIFT + g", sel1_then(SEL.last_line, yank("NORMAL")), "Last line" },
       { "i",         function() Submap.enter("YANK-INSIDE") end, "+Inner" },
       { "SHIFT + i", function() Submap.enter("YANK-INSIDE") end },
       { "a",         function() Submap.enter("YANK-AROUND") end, "+Around" },
