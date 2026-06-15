@@ -15,7 +15,7 @@ local TERM_KEYSYMS = {
 
 -- Select to word end: the SHIFT+Left backstep undoes CTRL+RIGHT overshooting
 -- to the next word start (same convention NORMAL.e compensates for).
-local WORD_END = { { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "Left" } }
+local WORD_END = { { "CTRL SHIFT", "RIGHT" }, { "SHIFT", "LEFT" } }
 
 ---@type table<string, ShortcutOrSeq>
 local NORMAL = {
@@ -98,11 +98,11 @@ local SELECT = {
   next_char     = { "SHIFT", "RIGHT" },
   prev_char     = { "SHIFT", "LEFT" },
   word_end      = WORD_END,
-  to_eol        = { "SHIFT", "End" },
-  to_bol        = { "SHIFT", "Home" },
+  to_eol        = { "SHIFT", "END" },
+  to_bol        = { "SHIFT", "HOME" },
   first_line    = VISUAL.gg,
   last_line     = VISUAL.G,
-  line          = { { "", "HOME" }, { "SHIFT", "End" } },
+  line          = { { "", "HOME" }, { "SHIFT", "END" } },
   line_from_end = { { "", "END" }, { "SHIFT", "HOME" } },
   inner_word    = { { "CTRL", "RIGHT" }, { "CTRL", "LEFT" }, VISUAL.w },
   inner_para    = { { "", "END" }, { "CTRL", "UP" }, { "CTRL SHIFT", "DOWN" } },
