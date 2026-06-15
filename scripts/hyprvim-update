@@ -121,8 +121,9 @@ apply/nightly)
   ;;
 apply/stable)
   LATEST=$(latest_release)
-  [ -n "$LATEST" ] &&
-    git -C "$repo" fetch --tags -q &&
+  [ -n "$LATEST" ] || exit 0
+  git -C "$repo" merge-base --is-ancestor "$LATEST" HEAD 2>/dev/null && exit 0
+  git -C "$repo" fetch --tags -q &&
     git -C "$repo" checkout "$LATEST" &&
     hyprctl reload ||
     notify_fail "Stable update failed (network or dirty tree?)."
