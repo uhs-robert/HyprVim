@@ -21,6 +21,13 @@ end
 
 local function enter_submap() hl.dispatch(hl.dsp.submap("Cursor")) end
 local function exit_submap() hl.dispatch(hl.dsp.submap("reset")) end
+local function oneshot(fn_or_dsp)
+  local fn = type(fn_or_dsp) == "function" and fn_or_dsp or function() hl.dispatch(fn_or_dsp) end
+  return function()
+    fn()
+    exit_submap()
+  end
+end
 
 hl.bind(LEADER .. " + X", enter_submap, { desc = "+Cursor" })
 
@@ -82,23 +89,17 @@ hl.define_submap("Cursor", function()
     )
   end
 
-  -- Clicks
+  -- Space Clicks
   hl.bind("SPACE", exec("wlrctl pointer click left"), { desc = "Left Click" })
+  hl.bind("SHIFT + SPACE", exec("wlrctl pointer click right"), { desc = "Right Click" })
+  hl.bind("CTRL + SPACE", exec("wlrctl pointer click middle"), { desc = "Middle Click" })
+
+  -- A,D,S Clicks
   hl.bind("A", exec("wlrctl pointer click left"), { desc = "Left Click" })
   hl.bind("D", exec("wlrctl pointer click right"), { desc = "Right Click" })
   hl.bind("S", exec("wlrctl pointer click middle"), { desc = "Middle Click" })
-  hl.bind("CTRL + SPACE", exec("wlrctl pointer click right"), { desc = "Right Click" })
-  hl.bind("SHIFT + SPACE", exec("wlrctl pointer click middle"), { desc = "Middle Click" })
-
-  -- Click then exit submap
-  hl.bind("CTRL + A", function()
-    hl.dispatch(hl.dsp.exec_cmd("wlrctl pointer click left"))
-    exit_submap()
-  end, { desc = "Left Click (Exit)" })
-  hl.bind("CTRL + S", function()
-    hl.dispatch(hl.dsp.exec_cmd("wlrctl pointer click middle"))
-    exit_submap()
-  end, { desc = "Middle Click (Exit)" })
+  hl.bind("CTRL + A", oneshot(hl.dsp.exec_cmd("wlrctl pointer click left")), { desc = "Left Click (Exit)" })
+  hl.bind("CTRL + S", oneshot(hl.dsp.exec_cmd("wlrctl pointer click middle")), { desc = "Middle Click (Exit)" })
 
   -- Page Up/Down
   hl.bind("CTRL + U", send_key("prior"), { desc = "Page Up" })
@@ -114,8 +115,10 @@ hl.define_submap("Cursor", function()
   local KBPTR = {
     floating_click = "wl-kbptr -o modes=floating,click -o mode_floating.source=detect",
     floating_move = "wl-kbptr -o modes=floating -o mode_floating.source=detect",
+    floating_r_click = "wl-kbptr -o modes=floating -o mode_floating.source=detect ; wlrctl pointer click right",
     tile_click = "wl-kbptr -o modes=tile,click",
     tile_move = "wl-kbptr -o modes=tile",
+    tile_r_click = "wl-kbptr -o modes=tile ; wlrctl pointer click right",
   }
 
   -- Stay in Cursor after wl-kbptr completes
@@ -136,12 +139,20 @@ hl.define_submap("Cursor", function()
     end
   end
 
+  -- Quick Clicks
+  hl.bind("SUPER + SEMICOLON", kbptr_exit("floating_click"))
+  hl.bind("SEMICOLON", kbptr_exit("floating_click"), { desc = "Floating Click (Exit)" })
+  hl.bind("SHIFT + SEMICOLON", kbptr_exit("floating_r_click"), { desc = "Tiling Click (Exit)" })
+  hl.bind("APOSTROPHE", kbptr("floating_r_click"), { desc = "Floating Right Click" })
+  hl.bind("SHIFT + APOSTROPHE", kbptr("tile_r_click"), { desc = "Tiling Right Click" })
+
+  -- Modes (bare=left, SHIFT=right, CTRL=move)
   hl.bind("F", kbptr("floating_click"), { desc = "Floating Click" })
-  hl.bind("CTRL + F", kbptr_exit("floating_click"), { desc = "Floating Click (Exit)" })
-  hl.bind("SHIFT + F", kbptr("floating_move"), { desc = "Floating Move" })
+  hl.bind("SHIFT + F", kbptr("floating_r_click"), { desc = "Floating Right Click" })
+  hl.bind("CTRL + F", kbptr("floating_move"), { desc = "Floating Move" })
   hl.bind("T", kbptr("tile_click"), { desc = "Tile Click" })
-  hl.bind("CTRL + T", kbptr_exit("tile_click"), { desc = "Tile Click (Exit)" })
-  hl.bind("SHIFT + T", kbptr("tile_move"), { desc = "Tile Move" })
+  hl.bind("SHIFT + T", kbptr("tile_r_click"), { desc = "Tile Right Click" })
+  hl.bind("CTRL + T", kbptr("tile_move"), { desc = "Tile Move" })
 
   hl.bind("catchall", hl.dsp.no_op(), { release = true, ignore_mods = true })
 end)
