@@ -26,9 +26,6 @@ Controls the external programs HyprVim launches.
 - `term_flags` lets you override terminal launch flags (useful for terminals not covered by the built-in table)
 - `lock` is the command run by `:lock`
 - `editor` is the editor launched by the open-editor feature
-- `input_method` controls how replace mode inserts text
-
-Use `input_method = "paste"` only as an escape hatch when `wtype` is not available.
 
 ### `notifications`
 

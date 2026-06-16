@@ -3,47 +3,39 @@
 
 local VimCount = require("vim.lib.count") ---@class VimCount
 local Hypr = require("hypr") ---@class HyprVimHyprland
-local Config = require("config") ---@class HyprVimConfigModule
+local Clipboard = require("lib.clipboard") ---@class Clipboard
 local Prompt = require("lib.prompt") ---@class Prompt
 local exit_vim = require("vim.exit")
 
 --- @class ReplaceModule
 local Replace = {}
 
-local sq = require("lib.utils").sh_escape
+-- wl-copy needs a moment to start serving the new clipboard before we paste.
+local CLIP_SETTLE_MS = 60
+local RESTORE_BASE_MS = 200 -- fixed clipboard read window + margin
+local RESTORE_PER_KEY_MS = 3.0 -- per-char selection processing; > 2.29 measured slope
+local function restore_delay(n) return math.ceil(RESTORE_BASE_MS + n * RESTORE_PER_KEY_MS) end
 
----Shell snippet that selects `n` characters to the right via wtype.
----@param n integer
----@return string
-local function select_n(n)
-  if n < 1 then return "" end
-  return "wtype -M shift " .. string.rep("-P right -p right ", n) .. "-m shift; "
-end
-
----Build the shell script that selects `n` chars then inserts `text`.
----Uses wtype by default; falls back to clipboard paste only when input_method="paste" and n>1.
+---Select `n` chars right, replace `text` via clipboard paste, then return to NORMAL.
 ---@param text string  replacement text
----@param n    integer number of chars to select
----@return string
-local function replace_script(text, n)
-  local select = select_n(n)
-  if (Config.applications or {}).input_method == "paste" and n > 1 then
-    local tmp = os.tmpname()
-    local f = io.open(tmp, "w")
-    if not f then
-      Hypr.notify("replace: failed to open tmp file " .. tmp, "error", 3000)
-      return ""
+---@param n    integer number of chars to overwrite
+local function run_replace(text, n)
+  Clipboard.read_async(1, function(backup)
+    Clipboard.write(text)
+    local sel = {}
+    for _ = 1, n do
+      sel[#sel + 1] = { "SHIFT", "RIGHT" }
     end
-    f:write(text)
-    f:close()
-    return string.format(
-      "sleep 0.1; %swl-copy -n < %s; sleep 0.2; wtype -M ctrl -k v -m ctrl; sleep 0.3; rm %s",
-      select,
-      tmp,
-      tmp
-    )
-  end
-  return "sleep 0.1; " .. select .. "wtype -- " .. sq(text)
+    hl.timer(function()
+      Hypr.send_burst(sel, function()
+        Hypr.send("CTRL", "V")
+        hl.timer(function()
+          Clipboard.write(backup)
+          Hypr.normal()
+        end, { timeout = restore_delay(n), type = "oneshot" })
+      end)
+    end, { timeout = CLIP_SETTLE_MS, type = "oneshot" })
+  end)
 end
 
 ---`r` (called from the R-CHAR submap): overwrite the next [count] characters with `char`.
@@ -52,7 +44,7 @@ end
 function Replace.character(char)
   local n = VimCount.get()
   Hypr.suspend_vim()
-  Hypr.cmd_then_dispatch(replace_script(string.rep(char, n), n), 'hl.dsp.submap("NORMAL")')()
+  run_replace(string.rep(char, n), n)
 end
 
 ---`R`: prompt for a replacement string and overwrite the next `#string` characters with it.
@@ -65,7 +57,7 @@ function Replace.string()
         Hypr.normal()
         return
       end
-      Hypr.cmd_then_dispatch(replace_script(str, #str), 'hl.dsp.submap("NORMAL")')()
+      run_replace(str, #str)
     end)
     -- TODO: stopgap: shrinks (does not close) the unguarded reset terminal-focus leak window
   end, { timeout = 20, type = "oneshot" })

@@ -45,22 +45,22 @@ local function open_above_se() Hypr.send_batch({ { "", "HOME" }, { "SHIFT", "Ret
 -- ── Change / delete / paste / indent ─────────────────────────────────────────
 local function change_eol()
   vim.count.clear()
-  Hypr.send_batch({ SEL.to_eol }, nil, function() vim.registers.handle_delete("INSERT") end)
+  Hypr.send_burst({ SEL.to_eol }, function() vim.registers.handle_delete("INSERT") end)
 end
 local function delete_eol()
-  Hypr.send_batch({ SEL.to_eol }, nil, function() vim.registers.handle_delete("NORMAL") end)
+  Hypr.send_burst({ SEL.to_eol }, function() vim.registers.handle_delete("NORMAL") end)
 end
 local function delete_before()
   local n = vim.count.get()
   local cmds = {}
   for _ = 1, n do cmds[#cmds + 1] = SEL.prev_char end
-  Hypr.send_batch(cmds, nil, function() vim.registers.handle_delete("NORMAL") end)
+  Hypr.send_burst(cmds, function() vim.registers.handle_delete("NORMAL") end)
 end
 local function delete_under()
   local n = vim.count.get()
   local cmds = {}
   for _ = 1, n do cmds[#cmds + 1] = SEL.next_char end
-  Hypr.send_batch(cmds, nil, function() vim.registers.handle_delete("NORMAL") end)
+  Hypr.send_burst(cmds, function() vim.registers.handle_delete("NORMAL") end)
 end
 local function paste()         vim.registers.handle_paste("CTRL", "v", "NORMAL", vim.count.get()) end
 local function indent_line()   Hypr.send_batch({ { "", "HOME" }, { "", "TAB" } }) end

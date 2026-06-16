@@ -83,15 +83,14 @@ If you'd like an extra config added, raise a feature request or put one together
 
 ### Prerequisites
 
-| Name                                           | Description                                                       |
-| ---------------------------------------------- | ----------------------------------------------------------------- |
-| [Hyprland](https://github.com/hyprwm/Hyprland) | Wayland compositor                                                |
-| `wl-clipboard`                                 | Wayland clipboard utilities (`wl-copy`, `wl-paste`)               |
-| `wtype`                                        | Wayland keyboard input emulation (used by open-editor copy/paste) |
-| A terminal emulator                            | For the `command-mode`, `replace-mode`, `find-mode`, and `help`   |
-| `eww` _(optional)_                             | Widget system for the which-key HUD                               |
-| `jq` _(optional)_                              | Required by the which-key HUD and manual-install updater          |
-| `socat` _(optional)_                           | Required by the which-key HUD daemon                              |
+| Name                                           | Description                                                     |
+| ---------------------------------------------- | --------------------------------------------------------------- |
+| [Hyprland](https://github.com/hyprwm/Hyprland) | Wayland compositor                                              |
+| `wl-clipboard`                                 | Wayland clipboard utilities (`wl-copy`, `wl-paste`)             |
+| A terminal emulator                            | For the `command-mode`, `replace-mode`, `find-mode`, and `help` |
+| `eww` _(optional)_                             | Widget system for the which-key HUD                             |
+| `jq` _(optional)_                              | Required by the which-key HUD and manual-install updater        |
+| `socat` _(optional)_                           | Required by the which-key HUD daemon                            |
 
 ### AUR Install (Coming Soon)
 
@@ -267,7 +266,6 @@ require("hyprvim").setup({
     term_flags = nil,                             -- add entries here for custom terminal launch flags
     lock = "hyprlock",
     editor = "nvim",                              -- `vim` or `nvim`
-    input_method = "wtype",                       -- "wtype" (default) or "paste" (escape hatch if wtype unavailable; n=1 always uses wtype)
   },
   notifications = {
     all = false,                -- Enable to bypass settings below and just enable all

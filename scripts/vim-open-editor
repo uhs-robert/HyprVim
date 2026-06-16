@@ -58,6 +58,19 @@ end
 --- @param cmd string
 local function run(cmd) os.execute(cmd) end
 
+--- Send a shortcut to the active window via hyprctl dispatch.
+--- @param mods string  e.g. "CTRL" or "CTRL SHIFT"
+--- @param key string   e.g. "C", "V"
+local function send_shortcut(mods, key)
+  run(
+    string.format(
+      "hyprctl dispatch 'hl.dsp.send_shortcut({mods=[[%s]],key=[[%s]],window=[[activewindow]]})'",
+      mods,
+      key
+    )
+  )
+end
+
 --- Print an error to stderr and exit with code 1.
 --- @param msg string
 local function die(msg)
@@ -134,9 +147,9 @@ local function kill_existing()
   os.exit(1)
 end
 
---- Verify that all required external commands are installed: editor, wtype, wl-paste, wl-copy.
+--- Verify that all required external commands are installed: editor, wl-paste, wl-copy.
 local function check_deps()
-  for _, dep in ipairs({ cfg.editor, "wtype", "wl-paste", "wl-copy" }) do
+  for _, dep in ipairs({ cfg.editor, "wl-paste", "wl-copy" }) do
     if not cmd_exists(dep) then die("'" .. dep .. "' is required but not installed.") end
   end
 end
@@ -186,9 +199,9 @@ local function copy_selected(tmpfile)
   if selected == "" then
     run("wl-copy --clear")
     if cfg.in_terminal then
-      run("wtype -M ctrl -M shift c -m ctrl -m shift")
+      send_shortcut("CTRL SHIFT", "C")
     else
-      run("wtype -M ctrl c -m ctrl")
+      send_shortcut("CTRL", "C")
     end
     run("sleep 0.3")
     selected = pread("wl-paste --no-newline")
@@ -251,7 +264,7 @@ local function paste_content(tmpfile)
   local before = pread("wl-paste --no-newline")
   wl_write(text, "-n")
   run("sleep 0.2")
-  run("wtype -M ctrl v -m ctrl")
+  send_shortcut("CTRL", "V")
   run("sleep 0.1")
   if before ~= "" then wl_write(before, "-n") end
 end
