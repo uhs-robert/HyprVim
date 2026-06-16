@@ -1,5 +1,17 @@
 # HyprVim Release Notes
 
+## [v2.0.1](https://github.com/uhs-robert/hyprvim/releases/tag/v2.0.1) - 2026-06-16
+
+### Bug Fixes
+
+- **Replace and open-editor no longer break later keystrokes**: `r`/`R` replace and `vim-open-editor` used `wtype`, which swapped Hyprland's active keymap and left subsequent native `send_shortcut` injections (the delete/change cut, paste) silently dropped until reset. Both now use Hyprland's native `send_shortcut` for all key emulation.
+- **Updater skips redundant stable updates**: the auto-updater no longer re-fetches and checks out when HEAD is already at or past the latest release tag.
+
+### Removed
+
+- **`wtype` dependency**: no longer required; all keybind emulation now runs through native `send_shortcut`.
+- **`input_method` config option**: replace always uses native injection with clipboard paste.
+
 ## [v2.0.0](https://github.com/uhs-robert/hyprvim/releases/tag/v2.0.0) - 2026-06-13
 
 ### Breaking Changes
