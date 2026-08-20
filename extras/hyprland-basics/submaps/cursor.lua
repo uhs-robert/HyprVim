@@ -75,6 +75,15 @@ hl.define_submap("Cursor", function()
     { key = "L", arrow = "RIGHT", x = 1, y = 0 },
   }
 
+  -- Diagonal (omni-direction) movement, chording two direction keys.
+  -- Chord order matters ("H+K" fires, "K+H" doesn't), so both are bound.
+  local move_diags = {
+    { keys = { "H+K", "K+H" }, desc = "Up-Left", x = -1, y = -1 },
+    { keys = { "L+K", "K+L" }, desc = "Up-Right", x = 1, y = -1 },
+    { keys = { "H+J", "J+H" }, desc = "Down-Left", x = -1, y = 1 },
+    { keys = { "L+J", "J+L" }, desc = "Down-Right", x = 1, y = 1 },
+  }
+
   local move_tiers = {
     { mod = "", step = 10, label = "" },
     { mod = "SHIFT + ", step = 100, label = " (Fast)" },
@@ -82,12 +91,21 @@ hl.define_submap("Cursor", function()
     { mod = "CTRL + SHIFT + ", step = 300, label = " (Ultra)" },
   }
 
+  local function bind_move(tier, keys, desc, x, y)
+    local cmd = string.format("wlrctl pointer move %d %d", x * tier.step, y * tier.step)
+    local action = exec(cmd)
+    local opts = { desc = "Cursor " .. desc .. tier.label, repeating = true }
+    for _, key in ipairs(keys) do
+      hl.bind(tier.mod .. key, action, opts)
+    end
+  end
+
   for _, tier in ipairs(move_tiers) do
     for _, d in ipairs(move_dirs) do
-      local cmd = string.format("wlrctl pointer move %d %d", d.x * tier.step, d.y * tier.step)
-      local opts = { desc = "Cursor " .. d.key .. tier.label, repeating = true }
-      hl.bind(tier.mod .. d.key, exec(cmd), opts)
-      hl.bind(tier.mod .. d.arrow, exec(cmd), opts)
+      bind_move(tier, { d.key, d.arrow }, d.key, d.x, d.y)
+    end
+    for _, d in ipairs(move_diags) do
+      bind_move(tier, d.keys, d.desc, d.x, d.y)
     end
   end
 
